@@ -1,0 +1,4 @@
+{
+  "email_invalid": "El email no es válido",
+  "required": "El campo $property es obligatorio"
+}

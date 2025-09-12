@@ -1,0 +1,17 @@
+# api/docker-compose.yml
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: Vicent@1973
+      POSTGRES_DB: rentixdb
+    ports: ["5432:5432"]
+    volumes: [ "postgres_data:/var/lib/postgresql/data" ]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rentix -d rentix"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes: { postgres_data: {} }

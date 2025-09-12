@@ -1,0 +1,49 @@
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    UpdateDateColumn,
+    OneToMany,
+    ManyToOne
+} from 'typeorm';
+
+import { User } from '../../user/entities/user.entity'
+import { Company } from 'src/company/entities/company.entity';
+
+@Entity('client-profiles')
+export class ClientProfile {
+
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
+
+    @Column()
+    name: string;
+
+    @Column()
+    nif: string;
+
+    @Column({ nullable: true })
+    email?: string;
+
+
+    @Column({ nullable: true })
+    phone?: string;
+
+     @Column ( {default:true})
+    isActive: true;
+
+    @CreateDateColumn()
+    created_at: Date;
+
+    @UpdateDateColumn()
+    updated_at: Date;
+
+    @ManyToOne( ()=> Company, (company) => company.clientProfiles, {onDelete: 'CASCADE'})
+    company: Company;
+
+    @ManyToOne( ()=> User, (user)=> user.clientProfiles, {nullable:true, onDelete:'CASCADE'})
+    user?: User;
+
+
+}
