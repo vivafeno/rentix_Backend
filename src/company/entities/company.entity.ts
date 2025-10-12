@@ -18,7 +18,7 @@ export class Company {
     name: string;
 
      @Column ( {default:true})
-    isActive: true;
+    isActive: boolean;
 
     @CreateDateColumn()
     created_at: Date;

@@ -1,50 +1,123 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { UserDto } from './dto/user.dto';
+import * as bcrypt from 'bcrypt';
+import { MeDto } from './dto/me.dto';
 
 @Injectable()
 export class UserService {
-constructor(
+  constructor(
     @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-  ) {}
+    private readonly userRepository: Repository<User>,
+  ) { }
 
-
-
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  /** 🔹 Mapper para ocultar password y refreshTokenHash */
+  private toDto(user: User): UserDto {
+    const { id, email, globalRole, isActive, created_at, updated_at } = user;
+    return { id, email, globalRole, isActive, created_at, updated_at };
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async create(createUserDto: CreateUserDto): Promise<UserDto> {
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+    const user = this.userRepository.create({
+      ...createUserDto,
+      password: hashedPassword,
+    });
+
+    const saved = await this.userRepository.save(user);
+    return this.toDto(saved);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findAll(): Promise<UserDto[]> {
+    const users = await this.userRepository.find({
+      where: { isActive: true },
+      relations: ['companyRoles', 'clientProfiles'],
+    });
+    return users.map((u) => this.toDto(u));
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async findOne(id: string): Promise<UserDto> {
+    const user = await this.userRepository.findOne({
+      where: { id, isActive: true },
+      relations: ['companyRoles', 'clientProfiles'],
+    });
+    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    return this.toDto(user);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDto> {
+    const user = await this.userRepository.findOne({
+      where: { id, isActive: true },
+    });
+    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    Object.assign(user, updateUserDto);
+    const updated = await this.userRepository.save(user);
+    return this.toDto(updated);
   }
 
- async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
+  async remove(id: string): Promise<{ message: string }> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+    });
+    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+
+    user.isActive = false;
+    await this.userRepository.save(user);
+
+    return { message: 'Usuario desactivado correctamente' };
+  }
+
+  /** 🔹 Métodos auxiliares usados en Auth */
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { email } });
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
+    return this.userRepository.findOne({ where: { id } });
   }
 
   async updateRefreshToken(id: string, refreshTokenHash: string | null) {
-    await this.usersRepository.update(id, { refreshTokenHash: refreshTokenHash ?? undefined});
+    await this.userRepository.update(id, {
+      refreshTokenHash: refreshTokenHash ?? undefined,
+    });
   }
+
+
+  async findMe(userId: string): Promise<MeDto> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId, isActive: true },
+      relations: ['companyRoles', 'companyRoles.company', 'clientProfiles'],
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    return {
+      id: user.id,
+      email: user.email,
+      globalRole: user.globalRole,
+      isActive: user.isActive,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+      companyRoles: user.companyRoles?.map((cr) => ({
+        companyId: cr.company.id,
+        companyName: cr.company.name,
+        role: cr.role,
+      })),
+      clientProfiles: user.clientProfiles ?? [],
+    };
+  }
+
+
 
 
 }

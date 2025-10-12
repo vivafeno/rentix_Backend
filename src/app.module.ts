@@ -11,6 +11,11 @@ import { UserCompanyRoleModule } from './user-company-role/user-company-role.mod
 import { CompanyModule } from './company/company.module';
 import { ClientProfileModule } from './client-profile/client-profile.module';
 import { AuthModule } from './auth/auth.module';
+import { CompanyContextModule } from './company-context/company-context.module';
+import { SeederModule } from './config/seeder.module';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './auth/guards/roles.guard';
+
 
 @Module({
   imports: [
@@ -37,35 +42,42 @@ import { AuthModule } from './auth/auth.module';
           namingStrategy: new SnakeNamingStrategy(),
           ssl: isProd ? { rejectUnauthorized: false } : false,
         };
-      }    
+      }
     }),
 
-// i18n (ES por defecto)
-NestI18nModule.forRoot({
-  fallbackLanguage: 'es',
-  loaderOptions: {
-    path: path.join(__dirname, 'i18n'),
-    watch: true,
-  },
-  resolvers: [
-    // orden de resolución del idioma
-    new QueryResolver(['lang']),
-    new HeaderResolver(['x-lang', 'x-locale']),
-    new AcceptLanguageResolver(),
-  ],
-  typesOutputPath: path.join(__dirname, 'i18n', 'generated-i18n-types.d.ts'),
-}),
+    // i18n (ES por defecto)
+    NestI18nModule.forRoot({
+      fallbackLanguage: 'es',
+      loaderOptions: {
+        path: path.join(__dirname, 'i18n'),
+        watch: true,
+      },
+      resolvers: [
+        // orden de resolución del idioma
+        new QueryResolver(['lang']),
+        new HeaderResolver(['x-lang', 'x-locale']),
+        new AcceptLanguageResolver(),
+      ],
+      typesOutputPath: path.join(__dirname, 'i18n', 'generated-i18n-types.d.ts'),
+    }),
 
-  // Módulos de dominio   d
-  HealthModule,
-  HealthModule,
-  UserModule,
-  UserCompanyRoleModule,
-  CompanyModule,
-  ClientProfileModule,
-  AuthModule,   
+    // Seeder
+    SeederModule,
+
+    // Módulos de dominio
+    HealthModule,
+    HealthModule,
+    UserModule,
+    UserCompanyRoleModule,
+    CompanyModule,
+    ClientProfileModule,
+    AuthModule,
+    CompanyContextModule,
   ],
-controllers: [],
-  providers: [],
+  controllers: [],
+  providers: [ {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },],
 })
 export class AppModule { }

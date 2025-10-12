@@ -31,7 +31,7 @@ export class ClientProfile {
     phone?: string;
 
      @Column ( {default:true})
-    isActive: true;
+    isActive: boolean;
 
     @CreateDateColumn()
     created_at: Date;

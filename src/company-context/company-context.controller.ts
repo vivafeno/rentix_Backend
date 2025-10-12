@@ -1,0 +1,24 @@
+// src/company-context/company-context.controller.ts
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags, ApiOkResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { CompanyContextService } from './company-context.service';
+import { SelectCompanyDto } from './dto/select-company.dto';
+
+@ApiTags('context')
+@Controller('context')
+export class CompanyContextController {
+  constructor(private readonly companyContextService: CompanyContextService) {}
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: 'Nuevo accessToken con empresa seleccionada' })
+  @Post('select-company')
+  async selectCompany(
+    @GetUser('sub') userId: string,
+    @Body() dto: SelectCompanyDto,
+  ) {
+    return this.companyContextService.selectCompany(userId, dto);
+  }
+}
