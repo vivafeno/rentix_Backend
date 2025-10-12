@@ -15,6 +15,7 @@ import { CompanyContextModule } from './company-context/company-context.module';
 import { SeederModule } from './config/seeder.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guards/roles.guard';
+import { AddressModule } from './address/address.module';
 
 
 @Module({
@@ -73,6 +74,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     ClientProfileModule,
     AuthModule,
     CompanyContextModule,
+    AddressModule,
   ],
   controllers: [],
   providers: [ {
