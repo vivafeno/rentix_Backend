@@ -4,28 +4,18 @@ import {
     Column,
     CreateDateColumn,
     UpdateDateColumn,
-    OneToMany
+    OneToMany,
+    BaseEntity
 } from 'typeorm';
 import { UserCompanyRole } from '../../user-company-role/entities/user-company-role.entity';
 import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
 import { Address } from 'src/address/entities/address.entity';
 
 @Entity('companies')
-export class Company {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class Company extends BaseEntity {
 
     @Column()
-    name: string;
-
-    @Column({ default: true })
-    isActive: boolean;
-
-    @CreateDateColumn()
-    created_at: Date;
-
-    @UpdateDateColumn()
-    updated_at: Date;
+    name: string;  
 
     @OneToMany(() => UserCompanyRole, (ucr) => ucr.user)
     companyRoles: UserCompanyRole[];
@@ -35,7 +25,4 @@ export class Company {
 
     @OneToMany(() => Address, address => address.company, { cascade: true })
     addresses: Address[];
-
-
-
 }
