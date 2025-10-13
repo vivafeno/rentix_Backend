@@ -5,7 +5,6 @@ import { SeederService } from './config/seeder.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
   const config = new DocumentBuilder()
     .setTitle('Rentix API')
     .setDescription('Documentación de la API Rentix')

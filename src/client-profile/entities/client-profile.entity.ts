@@ -10,6 +10,7 @@ import {
 
 import { User } from '../../user/entities/user.entity'
 import { Company } from 'src/company/entities/company.entity';
+import { Address } from 'src/address/entities/address.entity';
 
 @Entity('client-profiles')
 export class ClientProfile {
@@ -30,7 +31,7 @@ export class ClientProfile {
     @Column({ nullable: true })
     phone?: string;
 
-     @Column ( {default:true})
+    @Column({ default: true })
     isActive: boolean;
 
     @CreateDateColumn()
@@ -39,11 +40,13 @@ export class ClientProfile {
     @UpdateDateColumn()
     updated_at: Date;
 
-    @ManyToOne( ()=> Company, (company) => company.clientProfiles, {onDelete: 'CASCADE'})
+    @ManyToOne(() => Company, (company) => company.clientProfiles, { onDelete: 'CASCADE' })
     company: Company;
 
-    @ManyToOne( ()=> User, (user)=> user.clientProfiles, {nullable:true, onDelete:'CASCADE'})
+    @ManyToOne(() => User, (user) => user.clientProfiles, { nullable: true, onDelete: 'CASCADE' })
     user?: User;
 
+    @OneToMany(() => Address, address => address.client, { cascade: true })
+    addresses: Address[];
 
 }

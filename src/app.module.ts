@@ -16,6 +16,7 @@ import { SeederModule } from './config/seeder.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { AddressModule } from './address/address.module';
+import { ContactModule } from './contact/contact.module';
 
 
 @Module({
@@ -75,6 +76,7 @@ import { AddressModule } from './address/address.module';
     AuthModule,
     CompanyContextModule,
     AddressModule,
+    ContactModule,
   ],
   controllers: [],
   providers: [ {
