@@ -1,10 +1,11 @@
-import {
-    IsEmail, IsOptional,  IsString, MinLength
-} from 'class-validator'
-
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 
 export class CreateCompanyDto {
-@IsString()
-name: string;
-
+  @ApiProperty({
+    example: 'Industria Soluciones SL',
+    description: 'Nombre de la empresa o razón social'
+  })
+  @IsString()
+  name: string;
 }

@@ -12,15 +12,15 @@ export class UserCompanyRoleService {
     return `This action returns all userCompanyRole`;
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} userCompanyRole`;
   }
 
-  update(id: number, updateUserCompanyRoleDto: UpdateUserCompanyRoleDto) {
+  update(id: string, updateUserCompanyRoleDto: UpdateUserCompanyRoleDto) {
     return `This action updates a #${id} userCompanyRole`;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} userCompanyRole`;
   }
 }

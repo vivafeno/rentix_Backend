@@ -17,8 +17,8 @@ export class UserService {
 
   /** 🔹 Mapper para ocultar password y refreshTokenHash */
   private toDto(user: User): UserDto {
-    const { id, email, globalRole, isActive, created_at, updated_at } = user;
-    return { id, email, globalRole, isActive, created_at, updated_at };
+    const { id, email, globalRole, isActive, createdAt, updatedAt } = user;
+    return { id, email, globalRole, isActive, createdAt, updatedAt };
   }
 
   async create(createUserDto: CreateUserDto): Promise<UserDto> {
@@ -92,7 +92,6 @@ export class UserService {
     });
   }
 
-
   async findMe(userId: string): Promise<MeDto> {
     const user = await this.userRepository.findOne({
       where: { id: userId, isActive: true },
@@ -106,8 +105,8 @@ export class UserService {
       email: user.email,
       globalRole: user.globalRole,
       isActive: user.isActive,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
       companyRoles: user.companyRoles?.map((cr) => ({
         companyId: cr.company.id,
         companyName: cr.company.name,
