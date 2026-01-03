@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from '../user/entities/user.entity';
+import { UserGlobalRole, User } from '../user/entities/user.entity';
 import { Company } from '../company/entities/company.entity';
 import { RoleType, UserCompanyRole } from '../user-company-role/entities/user-company-role.entity';
 
@@ -26,7 +26,7 @@ export class SeederService {
             user = this.userRepo.create({
                 email: 'admin@rentix.com',
                 password: hash,
-                globalRole: 'superadmin',
+                userGlobalRole: UserGlobalRole.SUPERADMIN,
             });
             await this.userRepo.save(user);
             this.logger.log('Usuario superadmin creado');

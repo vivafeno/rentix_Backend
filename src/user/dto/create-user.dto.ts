@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsEnum, IsString, MinLength } from 'class-validator';
+import { UserGlobalRole } from '../entities/user.entity'; 
 
 export class CreateUserDto {
   @ApiProperty({
@@ -19,9 +20,9 @@ export class CreateUserDto {
   password: string;
 
   @ApiPropertyOptional({
-    description: 'Rol global opcional del usuario (ej. superadmin)',
-    example: 'superadmin',
+    description: 'Rol global del usuario (ej. superadmin)',
+    example: 'superadmin, admin, user',
   })
-  @IsOptional()
-  globalRole?: string;
+  @IsEnum(UserGlobalRole)
+  userGlobalRole: UserGlobalRole;
 }

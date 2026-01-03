@@ -17,8 +17,8 @@ export class UserService {
 
   /** 🔹 Mapper para ocultar password y refreshTokenHash */
   private toDto(user: User): UserDto {
-    const { id, email, globalRole, isActive, createdAt, updatedAt } = user;
-    return { id, email, globalRole, isActive, createdAt, updatedAt };
+    const { id, email, userGlobalRole, isActive, createdAt, updatedAt } = user;
+    return { id, email, userGlobalRole, isActive, createdAt, updatedAt };
   }
 
   async create(createUserDto: CreateUserDto): Promise<UserDto> {
@@ -103,7 +103,7 @@ export class UserService {
     return {
       id: user.id,
       email: user.email,
-      globalRole: user.globalRole,
+      userGlobalRole: user.userGlobalRole,
       isActive: user.isActive,
       created_at: user.createdAt,
       updated_at: user.updatedAt,

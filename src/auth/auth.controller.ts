@@ -38,7 +38,6 @@ export class AuthController {
   @Post('refresh')
   @ApiOperation({ summary: 'Generar un nuevo access token usando refresh' })
   @ApiResponse({ status: 201, description: 'Tokens renovados', type: TokensDto })
-  @ApiBearerAuth('access-token')
   async refresh(@Body() body: { refreshToken: string }) {
     return this.authService.refresh(body.refreshToken);
   }
@@ -50,7 +49,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Cerrar sesión e invalidar refresh token' })
   @ApiResponse({ status: 200, description: 'Logout correcto' })
   @ApiBearerAuth('access-token')
-  async logout(@User('userId') userId: string) {
-    return this.authService.logout(userId);
+  async logout(@User() user) {
+    return this.authService.logout(user.id);
   }
 }

@@ -60,7 +60,7 @@ import { ContactModule } from './contact/contact.module';
         new HeaderResolver(['x-lang', 'x-locale']),
         new AcceptLanguageResolver(),
       ],
-      typesOutputPath: path.join(__dirname, 'i18n', 'generated-i18n-types.d.ts'),
+      typesOutputPath: path.join(process.cwd(), 'src/i18n/generated-i18n-types.d.ts'),     
     }),
 
     // Seeder
@@ -79,9 +79,6 @@ import { ContactModule } from './contact/contact.module';
     ContactModule,
   ],
   controllers: [],
-  providers: [ {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },],
+  providers: [],
 })
 export class AppModule { }

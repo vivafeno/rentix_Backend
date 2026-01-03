@@ -2,10 +2,10 @@ import {
   Entity,
   Column,
   ManyToOne,
-  BaseEntity,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { Company } from 'src/company/entities/company.entity';
+import { BaseEntity } from 'src/common/base/base.entity';
 
 export enum RoleType {
   OWNER = 'owner',

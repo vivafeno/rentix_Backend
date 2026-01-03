@@ -19,12 +19,12 @@ export class AuthService {
 
     const isMatch = await bcrypt.compare(pass, user.password);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
-
+    console.log('Validated user:', user);
     return user;
   }
 
   async login(user: any): Promise<TokensDto> {
-    const payload = { sub: user.id, email: user.email, globalRole: user.globalRole };
+    const payload = { sub: user.id, email: user.email, userGlobalRole: user.userGlobalRole };
 
     // Access token → config de JwtModule
     const accessToken = await this.jwtService.signAsync(payload);

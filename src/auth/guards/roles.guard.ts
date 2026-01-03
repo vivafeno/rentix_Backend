@@ -24,13 +24,13 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    if (!user || !user.globalRole) {
+    if (!user || !user.userGlobalRole) {
       throw new ForbiddenException('Usuario no autenticado o sin rol');
     }
 
-    if (!requiredRoles.includes(user.globalRole)) {
+    if (!requiredRoles.includes(user.userGlobalRole)) {
       throw new ForbiddenException(
-        `Acceso denegado para el rol ${user.globalRole}`,
+        `Acceso denegado para el rol ${user.userGlobalRole}`,
       );
     }
 

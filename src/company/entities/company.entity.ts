@@ -2,12 +2,12 @@ import {
   Entity,
   Column,
   OneToMany,
-  BaseEntity
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserCompanyRole } from '../../user-company-role/entities/user-company-role.entity';
 import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
 import { Address } from 'src/address/entities/address.entity';
+import { BaseEntity } from 'src/common/base/base.entity';
 
 @Entity('companies')
 export class Company extends BaseEntity {

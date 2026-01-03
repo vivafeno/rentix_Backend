@@ -25,17 +25,21 @@ export class CompanyContextService {
     if (!user) throw new UnauthorizedException('Usuario no encontrado o inactivo');
 
     // 2. Comprobar que el usuario pertenece a esa empresa
-    const relation = await this.userCompanyRoleRepo.findOne({
-      where: { user: { id: userId }, company: { id: companyId }, isActive: true },
-      relations: ['company'],
-    });
+    const relation = await this.userCompanyRoleRepo
+      .createQueryBuilder('ucr')
+      .innerJoinAndSelect('ucr.company', 'company')
+      .innerJoin('ucr.user', 'user')
+      .where('user.id = :userId', { userId })
+      .andWhere('company.id = :companyId', { companyId })
+      .andWhere('ucr.isActive = true')
+      .getOne();
 
     if (!relation) throw new UnauthorizedException('No tienes acceso a esa empresa');
 
     // 3. Crear un nuevo accessToken contextualizado
     const payload = {
       sub: user.id,
-      globalRole: user.globalRole,
+      userGlobalRole: user.userGlobalRole,
       companyId: relation.company.id,
       companyRole: relation.role,
     };

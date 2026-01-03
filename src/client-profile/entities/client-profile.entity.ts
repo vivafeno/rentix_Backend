@@ -6,9 +6,9 @@ import {
     UpdateDateColumn,
     OneToMany,
     ManyToOne,
-    BaseEntity
 } from 'typeorm';
 
+import { BaseEntity } from 'src/common/base/base.entity';
 import { User } from '../../user/entities/user.entity'
 import { Company } from 'src/company/entities/company.entity';
 import { Address } from 'src/address/entities/address.entity';

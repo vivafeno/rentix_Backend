@@ -1,11 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { UserCompanyRoleService } from './user-company-role.service';
 import { CreateUserCompanyRoleDto } from './dto/create-user-company-role.dto';
 import { UpdateUserCompanyRoleDto } from './dto/update-user-company-role.dto';
 import { UserCompanyRole } from './entities/user-company-role.entity';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { UserGlobalRole } from 'src/user/entities/user.entity';
 
 @ApiTags('UserCompanyRole')
+@ApiBearerAuth('access-token')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
 @Controller('user-company-role')
 export class UserCompanyRoleController {
   constructor(private readonly userCompanyRoleService: UserCompanyRoleService) {}

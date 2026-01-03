@@ -1,11 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { ClientProfileService } from './client-profile.service';
 import { CreateClientProfileDto } from './dto/create-client-profile.dto';
 import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
 import { ClientProfile } from './entities/client-profile.entity'; // Suponiendo que existe la entidad
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { UserGlobalRole } from 'src/user/entities/user.entity';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @ApiTags('ClientProfile')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN, UserGlobalRole.USER)
 @Controller('client-profile')
 export class ClientProfileController {
   constructor(private readonly clientProfileService: ClientProfileService) {}

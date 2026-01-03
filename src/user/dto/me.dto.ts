@@ -19,8 +19,8 @@ export class MeDto {
   @ApiProperty()
   email: string;
 
-  @ApiProperty({ required: false, nullable: true })
-  globalRole?: string;
+  @ApiProperty({ required: true, nullable: false })
+  userGlobalRole?: string;
 
   @ApiProperty({ type: [CompanyRoleDto], required: false })
   companyRoles?: CompanyRoleDto[];

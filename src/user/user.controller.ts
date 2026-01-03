@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -8,8 +8,13 @@ import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { MeDto } from './dto/me.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { UserGlobalRole } from './entities/user.entity';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @ApiTags('user')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
+@ApiBearerAuth('access-token')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) { }
@@ -24,18 +29,16 @@ export class UserController {
   @Get()
   @ApiOperation({ summary: 'Listar todos los usuarios activos' })
   @ApiResponse({ status: 200, type: [UserDto] })
-  @Roles('superadmin')
   findAll(): Promise<UserDto[]> {
     return this.userService.findAll();
   }
 
-  // 👇 mover "me" ANTES de ":id"
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('access-token')
+
   @ApiOkResponse({ type: MeDto })
+  @Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN, UserGlobalRole.USER)
   @Get('me')
-  getMe(@GetUser('sub') userId: string) {
-    return this.userService.findMe(userId);
+  getMe(@GetUser() user: {id: string}) {
+    return this.userService.findMe(user.id);
   }
 
   @Get(':id')
@@ -46,7 +49,6 @@ export class UserController {
   }
 
   @Patch(':id')
-  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Actualizar un usuario' })
   @ApiResponse({ status: 200, type: UserDto })
   update(@Param('id') id: string, @Body() dto: UpdateUserDto): Promise<UserDto> {
@@ -54,7 +56,6 @@ export class UserController {
   }
 
   @Delete(':id')
-  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Desactivar un usuario (soft delete)' })
   @ApiResponse({ status: 200, schema: { example: { message: 'Usuario desactivado correctamente' } } })
   remove(@Param('id') id: string) {
