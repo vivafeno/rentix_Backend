@@ -10,8 +10,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!secret) {
       throw new Error('JWT_ACCESS_SECRET is not defined in environment variables');
     }
-    console.log('👉 JWT_ACCESS_SECRET leído en strategy:', secret);
-
+  
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -19,7 +18,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: any) {
-    return { sub: payload.sub, email: payload.email, userGlobalRole: payload.userGlobalRole };
-  }
+async validate(payload: any) {
+  return {
+    id: payload.sub,                 // 👈 CLAVE
+    email: payload.email,
+    userGlobalRole: payload.userGlobalRole,
+    companyId: payload.companyId ?? null,
+    companyRole: payload.companyRole ?? null,
+  };
+}
+
 }

@@ -1,0 +1,6 @@
+export enum PropertyStatus {
+    DISPONIBLE = 'DISPONIBLE',
+    ALQUILADO = 'ALQUILADO',
+    BLOQUEADO = 'BLOQUEADO',
+    INACTIVO = 'INACTIVO',
+}

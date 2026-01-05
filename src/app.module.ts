@@ -8,7 +8,6 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
 import { UserCompanyRoleModule } from './user-company-role/user-company-role.module';
-import { CompanyModule } from './company/company.module';
 import { ClientProfileModule } from './client-profile/client-profile.module';
 import { AuthModule } from './auth/auth.module';
 import { CompanyContextModule } from './company-context/company-context.module';
@@ -17,6 +16,11 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { AddressModule } from './address/address.module';
 import { ContactModule } from './contact/contact.module';
+import { FacturaeModule } from './facturae/facturae.module';
+import { CompanyModule } from './company/company.module';
+import { ClientModule } from './client/client.module';
+import { PropertyModule } from './property/property.module';
+import { ContractModule } from './contract/contract.module';
 
 
 @Module({
@@ -38,6 +42,7 @@ import { ContactModule } from './contact/contact.module';
           username: config.get<string>('DB_USER'),
           password: config.get<string>('DB_PASS'),
           database: config.get<string>('DB_NAME'),
+          schema: 'public',
           autoLoadEntities: true,
           synchronize: !isProd,
           logging: !isProd,
@@ -60,7 +65,7 @@ import { ContactModule } from './contact/contact.module';
         new HeaderResolver(['x-lang', 'x-locale']),
         new AcceptLanguageResolver(),
       ],
-      typesOutputPath: path.join(process.cwd(), 'src/i18n/generated-i18n-types.d.ts'),     
+      typesOutputPath: path.join(process.cwd(), 'src/i18n/generated-i18n-types.d.ts'),
     }),
 
     // Seeder
@@ -77,6 +82,10 @@ import { ContactModule } from './contact/contact.module';
     CompanyContextModule,
     AddressModule,
     ContactModule,
+    FacturaeModule,
+    ClientModule,
+    PropertyModule,
+    ContractModule,
   ],
   controllers: [],
   providers: [],

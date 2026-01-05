@@ -1,35 +1,76 @@
-import { IsString, IsEnum, IsOptional } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsEnum,
+  IsISO31661Alpha2,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { AddressType } from '../enums/addres-type.enum';
 
 export class CreateAddressDto {
-  @ApiProperty({ example: 'Calle Falsa 123', description: 'Calle y número de la dirección' })
-  @IsString()
-  street: string;
 
-  @ApiProperty({ example: 'Madrid', description: 'Ciudad' })
-  @IsString()
-  city: string;
+  @ApiProperty({
+    description: 'Tipo de dirección',
+    enum: AddressType,
+    example: AddressType.FISCAL,
+  })
+  @IsEnum(AddressType)
+  type: AddressType;
 
-  @ApiProperty({ example: 'Madrid', description: 'Provincia' })
+  @ApiProperty({
+    description: 'Dirección principal',
+    example: 'Calle Mayor 12',
+  })
   @IsString()
-  province: string;
+  addressLine1: string;
 
-  @ApiProperty({ example: '28080', description: 'Código postal' })
+  @ApiProperty({
+    description: 'Información adicional de la dirección',
+    example: '2º B',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  addressLine2?: string;
+
+  @ApiProperty({
+    description: 'Código postal',
+    example: '46060',
+  })
   @IsString()
   postalCode: string;
 
-  @ApiProperty({ example: 'España', description: 'País' })
-  @IsString()
-  country: string;
-
-  @ApiPropertyOptional({
-    enum: AddressType,
-    example: AddressType.Fiscal,
-    description: 'Tipo de dirección (por defecto: Fiscal)',
-    default: AddressType.Fiscal
+  @ApiProperty({
+    description: 'Ciudad',
+    example: 'Valencia',
   })
-  @IsEnum(AddressType)
+  @IsString()
+  city: string;
+
+  @ApiProperty({
+    description: 'Provincia',
+    example: 'Valencia',
+  })
+  @IsString()
+  province: string;
+
+  @ApiProperty({
+    description: 'Código de país ISO-3166-1 alpha-2',
+    example: 'ES',
+    default: 'ES',
+    required: false,
+  })
   @IsOptional()
-  type?: AddressType = AddressType.Fiscal;
+  @IsISO31661Alpha2()
+  countryCode?: string;
+
+  @ApiProperty({
+    description: 'Indica si es la dirección principal para su tipo',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isDefault?: boolean;
 }

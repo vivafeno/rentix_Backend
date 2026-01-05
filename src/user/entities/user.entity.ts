@@ -6,18 +6,15 @@ import {
     UpdateDateColumn,
     OneToMany
 } from 'typeorm';
-import { UserCompanyRole } from '../../user-company-role/entities/user-company-role.entity';
+import { CompanyRole } from 'src/user-company-role/enums/company-role.enum';
 import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
 import { BaseEntity } from 'src/common/base/base.entity';
+import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { UserCompanyRole } from 'src/user-company-role/entities/user-company-role.entity';
 
-export enum UserGlobalRole {
-  SUPERADMIN = 'SUPERADMIN',
-  ADMIN = 'ADMIN',
-  USER = 'USER',
-}
 
 @Entity('users')
-export class User extends BaseEntity{
+export class User extends BaseEntity {
 
     @Column({ unique: true })
     email: string;
@@ -29,9 +26,9 @@ export class User extends BaseEntity{
     refreshTokenHash: string | null;
 
     @Column({
-    type: 'enum',
-    enum: UserGlobalRole,
-    default: UserGlobalRole.USER,
+        type: 'enum',
+        enum: UserGlobalRole,
+        default: UserGlobalRole.USER,
     })
     userGlobalRole: UserGlobalRole;
 

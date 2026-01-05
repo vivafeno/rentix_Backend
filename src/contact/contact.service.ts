@@ -31,7 +31,6 @@ export class ContactService {
   // FIND INACTIVE
   async findInactive(): Promise<Contact[]> {
     const res = this.contactRepository.find({ where: { isActive: false } });
-    console.log(res);
     return res;
   }
 
@@ -39,12 +38,12 @@ export class ContactService {
   async update(id: string, updateContactDto: UpdateContactDto): Promise<Contact> {
     const contact = await this.contactRepository.findOne({ where: { id } });
     if (!contact) throw new NotFoundException('Contacto no encontrado');
-   
+
     if (updateContactDto.isActive === true) {
-    contact.isActive = true;
-    contact.deletedAt = null;
-  }   
-    Object.assign(contact, updateContactDto);    
+      contact.isActive = true;
+      contact.deletedAt = null;
+    }
+    Object.assign(contact, updateContactDto);
     return this.contactRepository.save(contact);
   }
 

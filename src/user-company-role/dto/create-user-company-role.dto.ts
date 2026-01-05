@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsUUID } from 'class-validator';
-import { RoleType } from '../entities/user-company-role.entity';
+import { Company } from 'src/company/entities/company.entity';
+import { CompanyRole } from 'src/user-company-role/enums/company-role.enum';
 
 export class CreateUserCompanyRoleDto {
   @ApiProperty({
@@ -18,10 +19,10 @@ export class CreateUserCompanyRoleDto {
   companyId: string;
 
   @ApiProperty({
-    enum: RoleType,
-    example: RoleType.OWNER,
+    enum: CompanyRole,
+    example: CompanyRole.OWNER,
     description: 'Tipo de rol dentro de la empresa: owner, manager, client, etc.'
   })
-  @IsEnum(RoleType)
-  role: RoleType;
+  @IsEnum(CompanyRole)
+  role: CompanyRole;
 }

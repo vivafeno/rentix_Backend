@@ -36,7 +36,7 @@ export class UserService {
   async findAll(): Promise<UserDto[]> {
     const users = await this.userRepository.find({
       where: { isActive: true },
-      relations: ['companyRoles', 'clientProfiles'],
+      relations: ['companyRoles',],
     });
     return users.map((u) => this.toDto(u));
   }
@@ -95,7 +95,12 @@ export class UserService {
   async findMe(userId: string): Promise<MeDto> {
     const user = await this.userRepository.findOne({
       where: { id: userId, isActive: true },
-      relations: ['companyRoles', 'companyRoles.company', 'clientProfiles'],
+      relations: [
+        'companyRoles',
+        'companyRoles.company',
+        'companyRoles.company.facturaeParty',
+        'clientProfiles'
+      ],
     });
 
     if (!user) throw new NotFoundException('User not found');
@@ -109,14 +114,10 @@ export class UserService {
       updated_at: user.updatedAt,
       companyRoles: user.companyRoles?.map((cr) => ({
         companyId: cr.company.id,
-        companyName: cr.company.name,
+        companyName: cr.company.facturaeParty?.legalName ?? 'Empresa sin nombre',
         role: cr.role,
       })),
       clientProfiles: user.clientProfiles ?? [],
     };
   }
-
-
-
-
 }

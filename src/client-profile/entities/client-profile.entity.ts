@@ -1,40 +1,93 @@
 import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    CreateDateColumn,
-    UpdateDateColumn,
-    OneToMany,
-    ManyToOne,
+  Entity,
+  Column,
+  ManyToOne,
+  OneToMany,
 } from 'typeorm';
 
 import { BaseEntity } from 'src/common/base/base.entity';
-import { User } from '../../user/entities/user.entity'
+import { User } from 'src/user/entities/user.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { Address } from 'src/address/entities/address.entity';
 
-@Entity('client-profiles')
+/**
+ * 👤 ClientProfile
+ *
+ * Representa un cliente de una empresa:
+ * - Puede ser una persona física o jurídica
+ * - Pertenece SIEMPRE a una empresa
+ * - Puede estar vinculado opcionalmente a un usuario (portal cliente futuro)
+ * - Puede tener múltiples direcciones (fiscal, envío, postal, etc.)
+ */
+@Entity('client_profiles')
 export class ClientProfile extends BaseEntity {
- 
-    @Column()
-    name: string;
 
-    @Column()
-    nif: string;
+  /**
+   * Nombre comercial o razón social del cliente
+   */
+  @Column()
+  name: string;
 
-    @Column({ nullable: true })
-    email?: string;
+  /**
+   * NIF / CIF del cliente
+   * ⚠️ NO es único globalmente, solo dentro de una empresa
+   */
+  @Column()
+  nif: string;
 
-    @Column({ nullable: true })
-    phone?: string;
+  /**
+   * Email de contacto del cliente (opcional)
+   */
+  @Column({ nullable: true })
+  email?: string;
 
-    @ManyToOne(() => Company, (company) => company.clientProfiles, { onDelete: 'CASCADE' })
-    company: Company;
+  /**
+   * Teléfono de contacto (opcional)
+   */
+  @Column({ nullable: true })
+  phone?: string;
 
-    @ManyToOne(() => User, (user) => user.clientProfiles, { nullable: true, onDelete: 'CASCADE' })
-    user?: User;
+  /**
+   * 🏢 Empresa propietaria del cliente
+   * - Un cliente SIEMPRE pertenece a una empresa
+   * - Si se borra la empresa → se borran sus clientes
+   */
+  @ManyToOne(() => Company, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
+  company: Company;
 
-    @OneToMany(() => Address, address => address.client, { cascade: true })
-    addresses: Address[];
+  /**
+   * 👤 Usuario vinculado (opcional)
+   * - Útil para portales de cliente / acceso externo
+   * - Si se borra el usuario → se elimina el vínculo
+   */
+  @ManyToOne(() => User, (user) => user.clientProfiles, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  user?: User;
 
+  /**
+   * 📍 Direcciones del cliente
+   * - Fiscal
+   * - Envío
+   * - Postal
+   * - Etc.
+   *
+   * cascade:
+   * - insert → se crean junto al cliente
+   * - update → se actualizan automáticamente
+   *
+   * ❌ NO cascade delete: el borrado se controla vía isActive
+   */
+  @OneToMany(
+    () => Address,
+    (address) => address.clientProfile,
+    {
+      cascade: ['insert', 'update'],
+    },
+  )
+  addresses: Address[];
 }

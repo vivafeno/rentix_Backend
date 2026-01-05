@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RoleType } from 'src/user-company-role/entities/user-company-role.entity';
+import { CompanyRole } from 'src/user-company-role/enums/company-role.enum';
+import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 
 export class CompanyRoleDto {
   @ApiProperty()
@@ -8,8 +9,8 @@ export class CompanyRoleDto {
   @ApiProperty()
   companyName: string;
 
-  @ApiProperty({ enum: RoleType })
-  role: RoleType;
+  @ApiProperty({ enum: CompanyRole })
+  role: CompanyRole;
 }
 
 export class MeDto {
@@ -19,8 +20,8 @@ export class MeDto {
   @ApiProperty()
   email: string;
 
-  @ApiProperty({ required: true, nullable: false })
-  userGlobalRole?: string;
+  @ApiProperty({ enum: UserGlobalRole })
+  userGlobalRole: UserGlobalRole;
 
   @ApiProperty({ type: [CompanyRoleDto], required: false })
   companyRoles?: CompanyRoleDto[];

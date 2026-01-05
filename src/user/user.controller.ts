@@ -8,7 +8,7 @@ import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { MeDto } from './dto/me.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserGlobalRole } from './entities/user.entity';
+import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @ApiTags('user')

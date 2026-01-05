@@ -1,11 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsUUID } from 'class-validator';
 
 export class CreateCompanyDto {
+
   @ApiProperty({
-    example: 'Industria Soluciones SL',
-    description: 'Nombre de la empresa o razón social'
+    description: 'Identidad fiscal (FacturaeParty)',
+    example: 'a7c9b2e1-1234-4cde-9a88-ffeeddccbbaa',
   })
-  @IsString()
-  name: string;
+  @IsUUID()
+  facturaePartyId: string;
+
+  @ApiProperty({
+    description: 'Dirección fiscal de la empresa',
+    example: 'b8d1c9a2-5678-4fbc-8123-aabbccddeeff',
+  })
+  @IsUUID()
+  fiscalAddressId: string;
 }

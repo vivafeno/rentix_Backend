@@ -6,7 +6,7 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import { CompanyContextService } from './company-context.service';
 import { SelectCompanyDto } from './dto/select-company.dto';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { UserGlobalRole } from 'src/user/entities/user.entity';
+import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @ApiTags('context')

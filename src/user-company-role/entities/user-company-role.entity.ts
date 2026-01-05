@@ -6,21 +6,16 @@ import {
 import { User } from '../../user/entities/user.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { BaseEntity } from 'src/common/base/base.entity';
-
-export enum RoleType {
-  OWNER = 'owner',
-  MANAGER = 'manager',
-  CLIENT = 'client',
-}
+import { CompanyRole } from '../enums/company-role.enum';
 
 @Entity('user_company_roles')
 export class UserCompanyRole extends BaseEntity{
 
   @Column({
     type: 'enum',
-    enum: RoleType,
+    enum: CompanyRole,
   })
-  role: RoleType;
+  role: CompanyRole;
 
   // 👇 Cada rol pertenece a un usuario
   @ManyToOne(() => User, (user) => user.companyRoles, { onDelete: 'CASCADE' })

@@ -1,64 +1,69 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+
 import { ClientProfileService } from './client-profile.service';
 import { CreateClientProfileDto } from './dto/create-client-profile.dto';
 import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
-import { ClientProfile } from './entities/client-profile.entity'; // Suponiendo que existe la entidad
+
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { UserGlobalRole } from 'src/user/entities/user.entity';
-import { Roles } from 'src/auth/decorators/roles.decorator';
 
-@ApiTags('ClientProfile')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN, UserGlobalRole.USER)
-@Controller('client-profile')
+@ApiTags('Client Profiles')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('client-profiles')
 export class ClientProfileController {
-  constructor(private readonly clientProfileService: ClientProfileService) {}
+  constructor(
+    private readonly clientProfileService: ClientProfileService,
+  ) {}
 
-  @ApiOperation({ summary: 'Crear perfil de cliente' })
-  @ApiBody({ type: CreateClientProfileDto })
-  @ApiResponse({ status: 201, description: 'Cliente creado', type: ClientProfile })
-  @Post()
-  create(@Body() createClientProfileDto: CreateClientProfileDto) {
-    return this.clientProfileService.create(createClientProfileDto);
+  // ➕ Crear cliente para empresa
+  @Post('company/:companyId')
+  @ApiOperation({ summary: 'Crear cliente para una empresa' })
+  @ApiParam({ name: 'companyId', description: 'UUID de la empresa' })
+  create(
+    @Param('companyId') companyId: string,
+    @Body() dto: CreateClientProfileDto,
+  ) {
+    return this.clientProfileService.createForCompany(companyId, dto);
   }
 
-  @ApiOperation({ summary: 'Listar todos los perfiles de cliente' })
-  @ApiResponse({ status: 200, description: 'Lista de client profiles', type: [ClientProfile] })
-  @Get()
-  findAll() {
-    return this.clientProfileService.findAll();
+  // 📄 Listar clientes de empresa
+  @Get('company/:companyId')
+  @ApiOperation({ summary: 'Listar clientes de una empresa' })
+  findAll(@Param('companyId') companyId: string) {
+    return this.clientProfileService.findAllForCompany(companyId);
   }
 
-  @ApiOperation({ summary: 'Obtener perfil de cliente por ID' })
-  @ApiParam({ name: 'id', type: String, description: 'UUID del perfil de cliente', required: true })
-  @ApiResponse({ status: 200, description: 'Cliente encontrado', type: ClientProfile })
-  @ApiResponse({ status: 404, description: 'No encontrado' })
+  // 🔍 Obtener cliente
   @Get(':id')
+  @ApiOperation({ summary: 'Obtener cliente por ID' })
   findOne(@Param('id') id: string) {
     return this.clientProfileService.findOne(id);
-    // Si quieres lanzar 404, agrega comprobación y NotFoundException
   }
 
-  @ApiOperation({ summary: 'Actualizar perfil de cliente por ID' })
-  @ApiParam({ name: 'id', type: String, description: 'UUID del perfil de cliente', required: true })
-  @ApiBody({ type: UpdateClientProfileDto })
-  @ApiResponse({ status: 200, description: 'Perfil actualizado', type: ClientProfile })
-  @ApiResponse({ status: 404, description: 'No encontrado' })
+  // ✏️ Actualizar cliente
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateClientProfileDto: UpdateClientProfileDto) {
-    return this.clientProfileService.update(id, updateClientProfileDto);
-    // Si quieres lanzar 404, agrega comprobación y NotFoundException
+  @ApiOperation({ summary: 'Actualizar cliente' })
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateClientProfileDto,
+  ) {
+    return this.clientProfileService.update(id, dto);
   }
 
-  @ApiOperation({ summary: 'Eliminar perfil de cliente por ID' })
-  @ApiParam({ name: 'id', type: String, description: 'UUID del perfil de cliente', required: true })
-  @ApiResponse({ status: 200, description: 'Cliente eliminado', type: ClientProfile })
-  @ApiResponse({ status: 404, description: 'No encontrado' })
+  // 🗑️ Soft delete
   @Delete(':id')
+  @ApiOperation({ summary: 'Desactivar cliente (soft delete)' })
   remove(@Param('id') id: string) {
-    return this.clientProfileService.remove(id);
-    // Si quieres lanzar 404, agrega comprobación y NotFoundException
+    return this.clientProfileService.softDelete(id);
   }
 }

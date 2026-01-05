@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from 'src/common/base/base.entity';
-import { UserGlobalRole } from '../entities/user.entity';
+import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 
 export class UserDto extends BaseEntity{
 

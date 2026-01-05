@@ -28,6 +28,7 @@ export class CompanyContextService {
     const relation = await this.userCompanyRoleRepo
       .createQueryBuilder('ucr')
       .innerJoinAndSelect('ucr.company', 'company')
+      .innerJoinAndSelect('company.facturaeParty', 'facturaeParty')
       .innerJoin('ucr.user', 'user')
       .where('user.id = :userId', { userId })
       .andWhere('company.id = :companyId', { companyId })
@@ -52,7 +53,7 @@ export class CompanyContextService {
       accessToken,
       company: {
         id: relation.company.id,
-        name: relation.company.name,
+        name: relation.company.facturaeParty.legalName,
         role: relation.role,
       },
     };

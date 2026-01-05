@@ -1,64 +1,61 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { Company } from './entities/company.entity';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { ApiTags } from '@nestjs/swagger';
+import { UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+
+import { CreateCompanyLegalDto } from './dto/create-company-legal.dto';
+
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { UserGlobalRole } from 'src/user/entities/user.entity';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { User } from 'src/user/entities/user.entity';
+import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 
-@ApiTags('Company')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
-@Controller('company')
+
+@ApiTags('companies')
+@ApiBearerAuth()
+@Controller('companies')
+@UseGuards(JwtAuthGuard)
 export class CompanyController {
-  constructor(private readonly companyService: CompanyService) {}
+  constructor(private readonly companyService: CompanyService) { }
 
-  @ApiOperation({ summary: 'Crear nueva empresa' })
-  @ApiBody({ type: CreateCompanyDto })
-  @ApiResponse({ status: 201, description: 'Empresa creada', type: Company })
-  @Post()
-  create(@Body() createCompanyDto: CreateCompanyDto) {
-    return this.companyService.create(createCompanyDto);
+  @Post('legal')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Crear empresa (flujo legal completo)',
+    description: 'Crea empresa + identidad fiscal + dirección fiscal y asigna OWNER al creador',
+  })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
+  createLegalCompany(
+    @Body() dto: CreateCompanyLegalDto,
+    @GetUser() user: User,
+  ) {
+    return this.companyService.createLegalCompany(dto, user.id);
   }
 
-  @ApiOperation({ summary: 'Listar todas las empresas' })
-  @ApiResponse({ status: 200, description: 'Lista de empresas', type: [Company] })
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Empresas del usuario autenticado',
+    description: 'Devuelve las empresas a las que pertenece el usuario con su rol',
+  })
+  @UseGuards(JwtAuthGuard)
+  getMyCompanies(@GetUser() user: User) {
+    return this.companyService.getCompaniesForUser(user.id);
+  }
+
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
   findAll() {
     return this.companyService.findAll();
   }
 
-  @ApiOperation({ summary: 'Obtener empresa por ID' })
-  @ApiParam({ name: 'id', type: String, description: 'UUID de la empresa', required: true })
-  @ApiResponse({ status: 200, description: 'Empresa encontrada', type: Company })
-  @ApiResponse({ status: 404, description: 'No encontrada' })
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.companyService.findOne(id);
-    // Si manejas not found, agrega lanzado de excepción aquí
-  }
 
-  @ApiOperation({ summary: 'Actualizar empresa por ID' })
-  @ApiParam({ name: 'id', type: String, description: 'UUID de la empresa', required: true })
-  @ApiBody({ type: UpdateCompanyDto })
-  @ApiResponse({ status: 200, description: 'Empresa actualizada', type: Company })
-  @ApiResponse({ status: 404, description: 'No encontrada' })
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-    return this.companyService.update(id, updateCompanyDto);
-    // Si manejas not found, agrega lanzado de excepción aquí
-  }
-
-  @ApiOperation({ summary: 'Eliminar empresa por ID' })
-  @ApiParam({ name: 'id', type: String, description: 'UUID de la empresa', required: true })
-  @ApiResponse({ status: 200, description: 'Empresa eliminada', type: Company })
-  @ApiResponse({ status: 404, description: 'No encontrada' })
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.companyService.remove(id);
-    // Si manejas not found, agrega lanzado de excepción aquí
-  }
 }
