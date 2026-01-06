@@ -9,14 +9,17 @@ import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
-  ApiResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiBody,
 } from '@nestjs/swagger';
+import type { Request } from 'express';
+
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { LoginDto } from './dto/login.dto';
-import { TokensDto } from './dto/tokens.dto';
-import { Request } from 'express';
+
+import { LoginDto, TokensDto } from './dto';
 import { User } from './decorators/user.decorator';
 
 @ApiTags('auth')
@@ -28,28 +31,69 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @ApiOperation({ summary: 'Login con email y password' })
-  @ApiResponse({ status: 201, description: 'Login correcto', type: TokensDto })
-  async login(@Body() _loginDto: LoginDto, @Req() req) {
-    // LocalAuthGuard ya valida el usuario y lo inyecta en req.user
+  @ApiBody({ type: LoginDto })
+  @ApiCreatedResponse({
+    description: 'Login correcto',
+    type: TokensDto,
+  })
+  async login(
+    @Body() _loginDto: LoginDto,
+    @Req() req: Request,
+  ): Promise<TokensDto> {
+    // LocalAuthGuard valida el usuario y lo inyecta en req.user
     return this.authService.login(req.user);
   }
 
   // ♻️ REFRESH TOKEN
   @Post('refresh')
-  @ApiOperation({ summary: 'Generar un nuevo access token usando refresh' })
-  @ApiResponse({ status: 201, description: 'Tokens renovados', type: TokensDto })
-  async refresh(@Body() body: { refreshToken: string }) {
+  @ApiOperation({
+    summary: 'Generar un nuevo access token usando refresh token',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        refreshToken: {
+          type: 'string',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
+      },
+      required: ['refreshToken'],
+    },
+  })
+  @ApiCreatedResponse({
+    description: 'Tokens renovados correctamente',
+    type: TokensDto,
+  })
+  async refresh(
+    @Body() body: { refreshToken: string },
+  ): Promise<TokensDto> {
     return this.authService.refresh(body.refreshToken);
   }
 
   // 🚪 LOGOUT
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cerrar sesión e invalidar refresh token' })
-  @ApiResponse({ status: 200, description: 'Logout correcto' })
   @ApiBearerAuth('access-token')
-  async logout(@User() user) {
-    return this.authService.logout(user.id);
+  @ApiOperation({
+    summary: 'Cerrar sesión e invalidar refresh token',
+  })
+  @ApiOkResponse({
+    description: 'Logout correcto',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Logout correcto',
+        },
+      },
+    },
+  })
+  async logout(
+    @User() user: { id: string },
+  ): Promise<{ message: string }> {
+    await this.authService.logout(user.id);
+    return { message: 'Logout correcto' };
   }
 }

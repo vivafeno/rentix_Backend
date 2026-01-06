@@ -21,15 +21,15 @@ import { CompanyRole } from '../user-company-role/enums/company-role.enum';
 /* ─────────────────────────────────────
  * FACTURAE (IDENTIDAD LEGAL)
  * ───────────────────────────────────── */
-import { FacturaeParty } from '../facturae/entities/facturae-party.entity';
-import { PersonType } from '../facturae/enums/person-type.enum';
-import { TaxIdType } from '../facturae/enums/tax-id-type.enum';
+import { FacturaeParty } from '../facturae/entities/facturaeParty.entity';
+import { PersonType } from '../facturae/enums/personType.enum';
+import { TaxIdType } from '../facturae/enums/taxIdTtype.enum';
 
 /* ─────────────────────────────────────
  * ADDRESS
  * ───────────────────────────────────── */
 import { Address } from '../address/entities/address.entity';
-import { AddressType } from '../address/enums/addres-type.enum';
+import { AddressType } from '../address/enums/addressType.enum';
 
 /* ─────────────────────────────────────
  * TAXES (CATÁLOGOS)

@@ -8,10 +8,15 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 import { BaseEntity } from 'src/common/base/base.entity';
-import { AddressType } from '../enums/addres-type.enum';
+import { AddressType } from '../enums/addressType.enum';
 import { Company } from 'src/company/entities/company.entity';
 import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
 
+/**
+ * Entidad Address
+ * Puede ser utilizada como response DTO en OpenAPI.
+ * Todos los campos están explícitamente documentados para Swagger.
+ */
 @Entity('addresses')
 @Index(['companyId'])
 @Index(['clientProfileId'])
@@ -23,7 +28,7 @@ export class Address extends BaseEntity {
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
-    description: 'Empresa propietaria de la dirección',
+    description: 'ID de la empresa propietaria de la dirección',
     format: 'uuid',
   })
   @Column({ name: 'company_id', type: 'uuid' })
@@ -36,13 +41,13 @@ export class Address extends BaseEntity {
   /* ------------------------------------------------------------------
    * RELACIÓN CON CLIENTE
    * Opcional: una dirección puede no pertenecer a un cliente concreto
-   * (ej. direcciones genéricas de empresa)
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
-    description: 'Cliente asociado a la dirección (opcional)',
+    description: 'ID del cliente asociado a la dirección',
     format: 'uuid',
     required: false,
+    nullable: true,
   })
   @Column({ name: 'client_profile_id', type: 'uuid', nullable: true })
   clientProfileId?: string;
@@ -74,45 +79,59 @@ export class Address extends BaseEntity {
    * DATOS POSTALES
    * ------------------------------------------------------------------ */
 
-  @ApiProperty({ example: 'Calle Mayor 12' })
+  @ApiProperty({
+    description: 'Dirección principal',
+    example: 'Calle Mayor 12',
+  })
   @Column({ name: 'address_line1' })
   addressLine1: string;
 
   @ApiProperty({
+    description: 'Información adicional de la dirección',
     example: '3º izquierda',
     required: false,
+    nullable: true,
   })
   @Column({ name: 'address_line2', nullable: true })
   addressLine2?: string;
 
-  @ApiProperty({ example: '28001' })
+  @ApiProperty({
+    description: 'Código postal',
+    example: '28001',
+  })
   @Column({ name: 'postal_code' })
   postalCode: string;
 
-  @ApiProperty({ example: 'Madrid' })
+  @ApiProperty({
+    description: 'Ciudad / municipio',
+    example: 'Madrid',
+  })
   @Column()
   city: string;
 
-  @ApiProperty({ example: 'Madrid' })
+  @ApiProperty({
+    description: 'Provincia',
+    example: 'Madrid',
+  })
   @Column()
   province: string;
 
   @ApiProperty({
-    example: 'ES',
     description: 'Código de país ISO-3166-1 alpha-2',
+    example: 'ES',
+    default: 'ES',
   })
   @Column({ name: 'country_code', length: 2, default: 'ES' })
   countryCode: string;
 
   /* ------------------------------------------------------------------
    * CONTROL DE DIRECCIÓN PRINCIPAL
-   * Reglas:
-   * - Solo una por cliente y tipo (validado en service)
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
-    example: true,
     description: 'Indica si es la dirección principal para su tipo',
+    example: true,
+    default: false,
   })
   @Column({ name: 'is_default', default: false })
   isDefault: boolean;

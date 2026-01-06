@@ -13,10 +13,12 @@ import {
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiQuery,
   ApiBearerAuth,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 
 import { AddressService } from './address.service';
@@ -29,10 +31,7 @@ import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
-import { HttpCode, HttpStatus } from '@nestjs/common';
-
-
-@ApiTags('Addresses')
+@ApiTags('addresses')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(
@@ -59,15 +58,15 @@ export class AddressController {
     description: 'UUID de la empresa',
     example: '87366cda-54c1-4ce3-9e51-4d7a62d8d9de',
   })
-  @ApiResponse({
-    status: 201,
+  @ApiBody({ type: CreateAddressDto })
+  @ApiCreatedResponse({
     description: 'Dirección creada correctamente',
     type: Address,
   })
   createForCompany(
     @Param('companyId') companyId: string,
     @Body() dto: CreateAddressDto,
-  ) {
+  ): Promise<Address> {
     return this.addressService.createForCompany(companyId, dto);
   }
 
@@ -91,15 +90,15 @@ export class AddressController {
     type: Boolean,
     description: 'Incluye direcciones inactivas',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Listado de direcciones',
-    type: [Address],
+    type: Address,
+    isArray: true,
   })
   findAllForCompany(
     @Param('companyId') companyId: string,
     @Query('showInactive') showInactive?: 'true' | 'false',
-  ) {
+  ): Promise<Address[]> {
     return this.addressService.findAllForCompany(companyId, {
       includeInactive: showInactive === 'true',
     });
@@ -114,15 +113,14 @@ export class AddressController {
   })
   @ApiParam({ name: 'companyId', description: 'UUID de la empresa' })
   @ApiParam({ name: 'addressId', description: 'UUID de la dirección' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Dirección encontrada',
     type: Address,
   })
   async findOneForCompany(
     @Param('companyId') companyId: string,
     @Param('addressId') addressId: string,
-  ) {
+  ): Promise<Address> {
     const address = await this.addressService.findOneForCompany(
       companyId,
       addressId,
@@ -144,8 +142,8 @@ export class AddressController {
   })
   @ApiParam({ name: 'companyId', description: 'UUID de la empresa' })
   @ApiParam({ name: 'addressId', description: 'UUID de la dirección' })
-  @ApiResponse({
-    status: 200,
+  @ApiBody({ type: UpdateAddressDto })
+  @ApiOkResponse({
     description: 'Dirección actualizada',
     type: Address,
   })
@@ -153,7 +151,7 @@ export class AddressController {
     @Param('companyId') companyId: string,
     @Param('addressId') addressId: string,
     @Body() dto: UpdateAddressDto,
-  ) {
+  ): Promise<Address> {
     const address = await this.addressService.updateForCompany(
       companyId,
       addressId,
@@ -177,14 +175,22 @@ export class AddressController {
   })
   @ApiParam({ name: 'companyId', description: 'UUID de la empresa' })
   @ApiParam({ name: 'addressId', description: 'UUID de la dirección' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Dirección desactivada correctamente',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Dirección desactivada correctamente',
+        },
+      },
+    },
   })
   async removeForCompany(
     @Param('companyId') companyId: string,
     @Param('addressId') addressId: string,
-  ) {
+  ): Promise<{ message: string }> {
     const ok = await this.addressService.softDeleteForCompany(
       companyId,
       addressId,

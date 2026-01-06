@@ -1,23 +1,17 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
-import { CreateCompanyDto } from './dto/create-company.dto';
-import { UpdateCompanyDto } from './dto/update-company.dto';
-import { CreateCompanyLegalDto } from './dto/create-company-legal.dto';
-
+import { CreateCompanyLegalDto } from './dto/createCompanyLegal.dto';
 import { Company } from './entities/company.entity';
-import { FacturaeParty } from 'src/facturae/entities/facturae-party.entity';
+import { FacturaeParty } from 'src/facturae/entities/facturaeParty.entity';
 import { Address } from 'src/address/entities/address.entity';
-import { AddressType } from 'src/address/enums/addres-type.enum';
+import { AddressType } from 'src/address/enums/addressType.enum';
 import { CompanyRole } from 'src/user-company-role/enums/company-role.enum';
 import { UserCompanyRole } from 'src/user-company-role/entities/user-company-role.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { create } from 'domain';
-import { async } from 'rxjs';
 
 @Injectable()
 export class CompanyService {
-
   constructor(
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
@@ -29,59 +23,61 @@ export class CompanyService {
     private readonly userCompanyRoleRepo: Repository<UserCompanyRole>,
 
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   /**
-     * 🔹 Flujo LEGAL de creación de empresa
-     * - Crea identidad fiscal (FacturaeParty)
-     * - Crea dirección fiscal
-     * - Crea empresa
-     * - Asigna rol OWNER al usuario creador
-     */
-
-  /**
-    * Crea una empresa completa a nivel legal
-    */
-  async createLegalCompany(dto: CreateCompanyLegalDto, userId: string) {
+   * 🔹 Flujo LEGAL de creación de empresa
+   * - Valida unicidad por NIF/CIF
+   * - Crea FacturaeParty
+   * - Crea dirección fiscal
+   * - Crea Company
+   * - Asigna OWNER
+   */
+  async createLegalCompany(dto: CreateCompanyLegalDto) {
     return this.dataSource.transaction(async (manager) => {
-      // 1️⃣ Comprobar que no exista ese NIF/CIF
+
+      // 1️⃣ Comprobar unicidad REAL (facturae_parties)
       const existingParty = await manager.findOne(FacturaeParty, {
-        where: { taxId: dto.taxId },
+        where: {
+          taxId: dto.facturaeParty.taxId,
+        },
       });
 
       if (existingParty) {
-        throw new ConflictException('Ya existe una empresa con ese NIF/CIF');
+        throw new ConflictException(
+          'Ya existe una empresa con ese NIF/CIF',
+        );
       }
 
-      // 2️⃣ Crear identidad legal (FacturaeParty)
+      // 2️⃣ Crear identidad fiscal
       const facturaeParty = manager.create(FacturaeParty, {
-        personType: dto.personType,
-        taxIdType: dto.taxIdType,
-        taxId: dto.taxId,
-        legalName: dto.legalName,
-        tradeName: dto.tradeName,
-        taxRegime: dto.taxRegime,
-        subjectType: dto.subjectType,
+        ...dto.facturaeParty,
       });
-
       await manager.save(facturaeParty);
 
-      // 3️⃣ Crear empresa
+      // 3️⃣ Crear dirección fiscal
+      const fiscalAddress = manager.create(Address, {
+        ...dto.fiscalAddress,
+        type: AddressType.FISCAL,
+      });
+      await manager.save(fiscalAddress);
+
+      // 4️⃣ Crear empresa
       const company = manager.create(Company, {
         facturaeParty,
-        facturaePartyId: facturaeParty.id,
+        fiscalAddress,
+        email: dto.email,
+        phone: dto.phone,
       });
-
       await manager.save(company);
 
-      // 4️⃣ Asignar OWNER al creador
-      const role = manager.create(UserCompanyRole, {
-        user: { id: userId },
-        company: { id: company.id },
+      // 5️⃣ Asignar OWNER
+      const ownerRole = manager.create(UserCompanyRole, {
+        user: { id: dto.ownerUserId },
+        company,
         role: CompanyRole.OWNER,
       });
-
-      await manager.save(role);
+      await manager.save(ownerRole);
 
       return {
         id: company.id,
@@ -99,7 +95,7 @@ export class CompanyService {
       },
       relations: ['company', 'company.facturaeParty'],
     });
-    
+
     return relations.map(r => ({
       companyId: r.company.id,
       legalName: r.company.facturaeParty.legalName,
@@ -108,24 +104,18 @@ export class CompanyService {
     }));
   }
 
+  findOne(id: string) {
+    return this.companyRepo.findOne({
+      where: { id, isActive: true },
+      relations: ['facturaeParty', 'fiscalAddress'],
+    });
+  }
 
-findOne(id: string) {
-  return this.companyRepo.findOne({
-    where: { id, isActive: true },
-    relations: ['facturaeParty', 'fiscalAddress'],
-  });
-}
-
-async findAll() {
-  return this.companyRepo.find({
-    where: { isActive: true },
-    relations: [
-      'facturaeParty',
-      'fiscalAddress',
-    ],
-    order: {
-      createdAt: 'DESC',
-    },
-  });
-}
+  async findAll() {
+    return this.companyRepo.find({
+      where: { isActive: true },
+      relations: ['facturaeParty', 'fiscalAddress'],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }

@@ -1,3 +1,9 @@
+/**
+ * Roles globales del usuario dentro del sistema Rentix.
+ *
+ * Determinan el nivel de acceso general a la aplicación,
+ * independientemente de los roles por empresa.
+ */
 export enum UserGlobalRole {
   SUPERADMIN = 'SUPERADMIN',
   ADMIN = 'ADMIN',

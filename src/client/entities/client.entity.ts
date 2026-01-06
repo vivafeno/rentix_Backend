@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, OneToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from 'src/common/base/base.entity';
 import { Company } from 'src/company/entities/company.entity';
-import { FacturaeParty } from 'src/facturae/entities/facturae-party.entity';
+import { FacturaeParty } from 'src/facturae/entities/facturaeParty.entity';
 import { Address } from 'src/address/entities/address.entity';
 
 @Entity('clients')

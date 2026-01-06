@@ -1,10 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { PersonType } from '../enums/person-type.enum';
-import { TaxIdType } from '../enums/tax-id-type.enum';
-import { TaxRegime } from '../enums/tax-regime.enum';
-import { SubjectType } from '../enums/subject-type.enum';
+import {
+  PersonType,
+  TaxIdType,
+  TaxRegime,
+  SubjectType,
+  ResidenceType,
+} from '../enums';
 
+/**
+ * DTO Facturae – Party (Emisor/Receptor)
+ * Alineado con especificación Facturae (AEAT)
+ */
 export class CreateFacturaePartyDto {
 
   @ApiProperty({
@@ -65,4 +72,14 @@ export class CreateFacturaePartyDto {
   @IsOptional()
   @IsEnum(SubjectType)
   subjectType?: SubjectType;
+
+  @ApiProperty({
+    description: 'Residencia fiscal según Facturae',
+    enum: ResidenceType,
+    example: ResidenceType.RESIDENT,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(ResidenceType)
+  residenceType?: ResidenceType;
 }

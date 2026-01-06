@@ -8,7 +8,7 @@ import { Not, Repository } from 'typeorm';
 import { Address } from './entities/address.entity';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
-import { AddressType } from './enums/addres-type.enum';
+import { AddressType } from './enums/addressType.enum';
 
 @Injectable()
 export class AddressService {

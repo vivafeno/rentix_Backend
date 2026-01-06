@@ -6,17 +6,29 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { AddressType } from '../enums/addres-type.enum';
+import { AddressType, ResidenceType } from '../enums';
 
+/**
+ * DTO para la creación de una dirección.
+ * Define completamente el contrato OpenAPI para requestBody.
+ */
 export class CreateAddressDto {
 
   @ApiProperty({
-    description: 'Tipo de dirección',
+    description: 'Tipo de dirección dentro del sistema',
     enum: AddressType,
     example: AddressType.FISCAL,
   })
   @IsEnum(AddressType)
   type: AddressType;
+
+  @ApiProperty({
+    description: 'Residencia fiscal según Facturae',
+    enum: ResidenceType,
+    example: ResidenceType.IN_SPAIN,
+  })
+  @IsEnum(ResidenceType)
+  residenceType: ResidenceType;
 
   @ApiProperty({
     description: 'Dirección principal',
@@ -42,14 +54,14 @@ export class CreateAddressDto {
   postalCode: string;
 
   @ApiProperty({
-    description: 'Ciudad',
+    description: 'Ciudad / municipio',
     example: 'Valencia',
   })
   @IsString()
   city: string;
 
   @ApiProperty({
-    description: 'Provincia',
+    description: 'Provincia (obligatoria si residenceType = IN_SPAIN)',
     example: 'Valencia',
   })
   @IsString()
@@ -58,17 +70,15 @@ export class CreateAddressDto {
   @ApiProperty({
     description: 'Código de país ISO-3166-1 alpha-2',
     example: 'ES',
-    default: 'ES',
-    required: false,
   })
-  @IsOptional()
   @IsISO31661Alpha2()
-  countryCode?: string;
+  countryCode: string;
 
   @ApiProperty({
     description: 'Indica si es la dirección principal para su tipo',
     example: true,
     required: false,
+    default: false,
   })
   @IsOptional()
   @IsBoolean()

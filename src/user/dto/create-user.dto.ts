@@ -1,8 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsEnum, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsEnum,
+  IsString,
+  MinLength,
+} from 'class-validator';
+
 import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 
+/**
+ * DTO para la creación de usuarios.
+ * Define el contrato OpenAPI para el alta de usuarios.
+ */
 export class CreateUserDto {
+
   @ApiProperty({
     description: 'Correo electrónico único del usuario',
     example: 'user@example.com',
@@ -20,9 +32,12 @@ export class CreateUserDto {
   password: string;
 
   @ApiPropertyOptional({
-    description: 'Rol global del usuario (ej. superadmin)',
-    example: 'superadmin, admin, user',
+    description: 'Rol global del usuario dentro del sistema',
+    enum: UserGlobalRole,
+    example: UserGlobalRole.USER,
+    default: UserGlobalRole.USER,
   })
+  @IsOptional()
   @IsEnum(UserGlobalRole)
-  userGlobalRole: UserGlobalRole;
+  userGlobalRole?: UserGlobalRole;
 }

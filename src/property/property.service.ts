@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { Property } from './entities/property.entity';
 import { CreatePropertyDto, UpdatePropertyDto } from './dto';
 import { Address } from 'src/address/entities/address.entity';
-import { AddressType } from 'src/address/enums/addres-type.enum';
+import { AddressType } from 'src/address/enums/addressType.enum';
 
 @Injectable()
 export class PropertyService {
