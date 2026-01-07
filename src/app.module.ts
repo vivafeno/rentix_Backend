@@ -7,13 +7,11 @@ import * as path from 'path';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
-import { UserCompanyRoleModule } from './user-company-role/user-company-role.module';
+import { UserCompanyRoleModule } from './user-company-role/userCompanyRole.module';
 import { ClientProfileModule } from './client-profile/client-profile.module';
 import { AuthModule } from './auth/auth.module';
 import { CompanyContextModule } from './company-context/company-context.module';
 import { SeederModule } from './config/seeder.module';
-import { APP_GUARD } from '@nestjs/core';
-import { RolesGuard } from './auth/guards/roles.guard';
 import { AddressModule } from './address/address.module';
 import { ContactModule } from './contact/contact.module';
 import { FacturaeModule } from './facturae/facturae.module';
@@ -86,6 +84,7 @@ import { ContractModule } from './contract/contract.module';
     ClientModule,
     PropertyModule,
     ContractModule,
+    FacturaeModule,
   ],
   controllers: [],
   providers: [],

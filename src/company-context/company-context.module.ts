@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { CompanyContextService } from './company-context.service';
 import { CompanyContextController } from './company-context.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserCompanyRole } from '../user-company-role/entities/user-company-role.entity';
+import { UserCompanyRole } from '../user-company-role/entities/userCompanyRole.entity';
 import { User } from '../user/entities/user.entity';
 import { AuthModule } from 'src/auth/auth.module';
 

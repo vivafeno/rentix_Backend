@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { CompanyRole } from 'src/user-company-role/enums/company-role.enum';
+import { CompanyRole } from 'src/user-company-role/enums/userCompanyRole.enum';
 import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 
 /**

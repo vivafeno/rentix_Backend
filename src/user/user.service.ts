@@ -65,16 +65,17 @@ export class UserService {
     return this.toDto(updated);
   }
 
-  async remove(id: string): Promise<{ message: string }> {
+  async remove(id: string): Promise<void> {
     const user = await this.userRepository.findOne({
       where: { id },
     });
-    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+
+    if (!user) {
+      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    }
 
     user.isActive = false;
     await this.userRepository.save(user);
-
-    return { message: 'Usuario desactivado correctamente' };
   }
 
   /** 🔹 Métodos auxiliares usados en Auth */

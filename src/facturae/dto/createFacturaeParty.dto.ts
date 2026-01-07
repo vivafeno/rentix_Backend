@@ -1,21 +1,54 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator';
+
 import {
   PersonType,
   TaxIdType,
-  TaxRegime,
-  SubjectType,
   ResidenceType,
+  SubjectType,
+  TaxRegimeType,
 } from '../enums';
 
 /**
- * DTO Facturae – Party (Emisor/Receptor)
- * Alineado con especificación Facturae (AEAT)
+ * CreateFacturaePartyDto
+ *
+ * Contrato para crear una identidad fiscal (FacturaeParty)
+ *
+ * Se usa en:
+ * - Wizard de creación de empresa
+ * - Creación de clientes / proveedores (futuro)
  */
 export class CreateFacturaePartyDto {
 
+  /* ------------------------------------------------------------------
+   * IDENTIDAD
+   * ------------------------------------------------------------------ */
+
   @ApiProperty({
-    description: 'Tipo de persona fiscal',
+    description: 'Razón social o nombre completo',
+    example: 'ACME SL',
+  })
+  @IsString()
+  legalName: string;
+
+  @ApiPropertyOptional({
+    description: 'Nombre comercial',
+    example: 'ACME',
+  })
+  @IsOptional()
+  @IsString()
+  tradeName?: string;
+
+  /* ------------------------------------------------------------------
+   * CLASIFICACIÓN FACTURAE
+   * ------------------------------------------------------------------ */
+
+  @ApiProperty({
     enum: PersonType,
     example: PersonType.LEGAL_ENTITY,
   })
@@ -23,7 +56,6 @@ export class CreateFacturaePartyDto {
   personType: PersonType;
 
   @ApiProperty({
-    description: 'Tipo de identificación fiscal',
     enum: TaxIdType,
     example: TaxIdType.CIF,
   })
@@ -31,55 +63,52 @@ export class CreateFacturaePartyDto {
   taxIdType: TaxIdType;
 
   @ApiProperty({
-    description: 'Identificador fiscal (NIF, CIF, NIE, etc.)',
+    description: 'Identificador fiscal (NIF, CIF, NIE, VAT, etc.)',
     example: 'B12345678',
   })
   @IsString()
+  @Length(3, 32)
   taxId: string;
 
-  @ApiProperty({
-    description: 'Nombre legal o razón social',
-    example: 'Industria Soluciones SL',
-  })
-  @IsString()
-  legalName: string;
+  /* ------------------------------------------------------------------
+   * RESIDENCIA Y RÉGIMEN
+   * ------------------------------------------------------------------ */
 
-  @ApiProperty({
-    description: 'Nombre comercial',
-    example: 'InduSol',
-    required: false,
+  @ApiPropertyOptional({
+    enum: ResidenceType,
+    example: ResidenceType.RESIDENT,
+    description: 'Residencia fiscal según Facturae (por defecto RESIDENT)',
   })
   @IsOptional()
-  @IsString()
-  tradeName?: string;
+  @IsEnum(ResidenceType)
+  residenceType?: ResidenceType;
 
-  @ApiProperty({
-    description: 'Régimen fiscal',
-    enum: TaxRegime,
-    default: TaxRegime.GENERAL,
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(TaxRegime)
-  taxRegime?: TaxRegime;
-
-  @ApiProperty({
-    description: 'Sujeto o exento de impuestos',
+  @ApiPropertyOptional({
     enum: SubjectType,
-    default: SubjectType.SUBJECT,
-    required: false,
+    example: SubjectType.SUBJECT,
   })
   @IsOptional()
   @IsEnum(SubjectType)
   subjectType?: SubjectType;
 
-  @ApiProperty({
-    description: 'Residencia fiscal según Facturae',
-    enum: ResidenceType,
-    example: ResidenceType.RESIDENT,
-    required: false,
+  @ApiPropertyOptional({
+    enum: TaxRegimeType,
+    example: TaxRegimeType.GENERAL,
   })
   @IsOptional()
-  @IsEnum(ResidenceType)
-  residenceType?: ResidenceType;
+  @IsEnum(TaxRegimeType)
+  taxRegime?: TaxRegimeType;
+
+  /* ------------------------------------------------------------------
+   * PAÍS
+   * ------------------------------------------------------------------ */
+
+  @ApiPropertyOptional({
+    description: 'Código de país ISO 3166-1 alpha-2 (por defecto ES)',
+    example: 'ES',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(2, 2)
+  countryCode?: string;
 }

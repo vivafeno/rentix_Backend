@@ -7,7 +7,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { BaseEntity } from 'src/common/base/base.entity';
 import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
-import { UserCompanyRole } from 'src/user-company-role/entities/user-company-role.entity';
+import { UserCompanyRole } from 'src/user-company-role/entities/userCompanyRole.entity';
 import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
 
 /**

@@ -11,36 +11,57 @@ import { BaseEntity } from 'src/common/base/base.entity';
 import { AddressType } from '../enums/addressType.enum';
 import { Company } from 'src/company/entities/company.entity';
 import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
+import { AddressStatus } from '../enums/addressStatus.enum';
 
 /**
  * Entidad Address
- * Puede ser utilizada como response DTO en OpenAPI.
- * Todos los campos están explícitamente documentados para Swagger.
+ *
+ * Soporta creación previa a Company mediante status = DRAFT.
+ * Pensada para flujos multi-step (user → address → company).
  */
 @Entity('addresses')
 @Index(['companyId'])
 @Index(['clientProfileId'])
+@Index(['status'])
 export class Address extends BaseEntity {
 
   /* ------------------------------------------------------------------
    * MULTIEMPRESA
-   * Toda dirección pertenece SIEMPRE a una empresa
+   * Una dirección puede existir SIN empresa (status = DRAFT)
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
     description: 'ID de la empresa propietaria de la dirección',
     format: 'uuid',
+    required: false,
+    nullable: true,
   })
-  @Column({ name: 'company_id', type: 'uuid' })
-  companyId: string;
+  @Column({ name: 'company_id', type: 'uuid', nullable: true })
+  companyId?: string | null;
 
-  @ManyToOne(() => Company, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Company, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'company_id' })
-  company: Company;
+  company?: Company;
+
+  /* ------------------------------------------------------------------
+   * ESTADO DE LA DIRECCIÓN
+   * ------------------------------------------------------------------ */
+
+  @ApiProperty({
+    description: 'Estado de la dirección dentro del flujo de negocio',
+    enum: AddressStatus,
+    example: AddressStatus.DRAFT,
+    default: AddressStatus.DRAFT,
+  })
+  @Column({
+    type: 'enum',
+    enum: AddressStatus,
+    default: AddressStatus.DRAFT,
+  })
+  status: AddressStatus;
 
   /* ------------------------------------------------------------------
    * RELACIÓN CON CLIENTE
-   * Opcional: una dirección puede no pertenecer a un cliente concreto
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
@@ -61,7 +82,6 @@ export class Address extends BaseEntity {
 
   /* ------------------------------------------------------------------
    * TIPO DE DIRECCIÓN
-   * FISCAL | COMMERCIAL | PROPERTY | OTHER
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
@@ -79,10 +99,7 @@ export class Address extends BaseEntity {
    * DATOS POSTALES
    * ------------------------------------------------------------------ */
 
-  @ApiProperty({
-    description: 'Dirección principal',
-    example: 'Calle Mayor 12',
-  })
+  @ApiProperty({ description: 'Dirección principal', example: 'Calle Mayor 12' })
   @Column({ name: 'address_line1' })
   addressLine1: string;
 
@@ -95,24 +112,15 @@ export class Address extends BaseEntity {
   @Column({ name: 'address_line2', nullable: true })
   addressLine2?: string;
 
-  @ApiProperty({
-    description: 'Código postal',
-    example: '28001',
-  })
+  @ApiProperty({ description: 'Código postal', example: '28001' })
   @Column({ name: 'postal_code' })
   postalCode: string;
 
-  @ApiProperty({
-    description: 'Ciudad / municipio',
-    example: 'Madrid',
-  })
+  @ApiProperty({ description: 'Ciudad / municipio', example: 'Madrid' })
   @Column()
   city: string;
 
-  @ApiProperty({
-    description: 'Provincia',
-    example: 'Madrid',
-  })
+  @ApiProperty({ description: 'Provincia', example: 'Madrid' })
   @Column()
   province: string;
 

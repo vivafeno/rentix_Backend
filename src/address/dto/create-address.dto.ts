@@ -6,13 +6,37 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { AddressType, ResidenceType } from '../enums';
+
+import { AddressType } from '../enums/addressType.enum';
+import { AddressStatus } from '../enums/addressStatus.enum';
 
 /**
  * DTO para la creación de una dirección.
- * Define completamente el contrato OpenAPI para requestBody.
+ *
+ * Pensado para flujos multi-step:
+ * - creación en estado DRAFT
+ * - asociación posterior a Company o ClientProfile
  */
 export class CreateAddressDto {
+
+  /* ------------------------------------------------------------------
+   * ESTADO
+   * ------------------------------------------------------------------ */
+
+  @ApiProperty({
+    description: 'Estado inicial de la dirección',
+    enum: AddressStatus,
+    example: AddressStatus.DRAFT,
+    default: AddressStatus.DRAFT,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(AddressStatus)
+  status?: AddressStatus;
+
+  /* ------------------------------------------------------------------
+   * TIPO DE DIRECCIÓN
+   * ------------------------------------------------------------------ */
 
   @ApiProperty({
     description: 'Tipo de dirección dentro del sistema',
@@ -22,13 +46,9 @@ export class CreateAddressDto {
   @IsEnum(AddressType)
   type: AddressType;
 
-  @ApiProperty({
-    description: 'Residencia fiscal según Facturae',
-    enum: ResidenceType,
-    example: ResidenceType.IN_SPAIN,
-  })
-  @IsEnum(ResidenceType)
-  residenceType: ResidenceType;
+  /* ------------------------------------------------------------------
+   * DATOS POSTALES
+   * ------------------------------------------------------------------ */
 
   @ApiProperty({
     description: 'Dirección principal',
@@ -61,18 +81,25 @@ export class CreateAddressDto {
   city: string;
 
   @ApiProperty({
-    description: 'Provincia (obligatoria si residenceType = IN_SPAIN)',
+    description: 'Provincia (opcional fuera de España)',
     example: 'Valencia',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  province: string;
+  province?: string;
 
   @ApiProperty({
     description: 'Código de país ISO-3166-1 alpha-2',
     example: 'ES',
+    default: 'ES',
   })
   @IsISO31661Alpha2()
   countryCode: string;
+
+  /* ------------------------------------------------------------------
+   * CONTROL
+   * ------------------------------------------------------------------ */
 
   @ApiProperty({
     description: 'Indica si es la dirección principal para su tipo',

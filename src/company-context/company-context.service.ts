@@ -3,7 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserCompanyRole } from '../user-company-role/entities/user-company-role.entity';
+import { UserCompanyRole } from '../user-company-role/entities/userCompanyRole.entity';
 import { User } from '../user/entities/user.entity';
 import { SelectCompanyDto } from './dto/select-company.dto';
 

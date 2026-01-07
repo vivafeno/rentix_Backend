@@ -16,6 +16,7 @@ import {
   ApiCreatedResponse,
   ApiBody,
   ApiParam,
+  ApiNoContentResponse
 } from '@nestjs/swagger';
 
 import { UserService } from './user.service';
@@ -30,13 +31,16 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 
+import { HttpCode } from '@nestjs/common';
+
+
 @ApiTags('user')
 @ApiBearerAuth()
 @Controller('user')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   /**
    * 🔹 Crear un nuevo usuario
@@ -129,24 +133,16 @@ export class UserController {
    * 🔹 Desactivar un usuario (soft delete)
    */
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Desactivar un usuario (soft delete)' })
   @ApiParam({
     name: 'id',
     description: 'UUID del usuario',
   })
-  @ApiOkResponse({
+  @ApiNoContentResponse({
     description: 'Usuario desactivado correctamente',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: 'Usuario desactivado correctamente',
-        },
-      },
-    },
   })
-  remove(@Param('id') id: string): Promise<{ message: string }> {
+  remove(@Param('id') id: string): Promise<void> {
     return this.userService.remove(id);
   }
 }

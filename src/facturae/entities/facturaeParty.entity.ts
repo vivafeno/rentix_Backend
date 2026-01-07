@@ -1,103 +1,116 @@
-import { Entity, Column } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { BaseEntity } from 'src/common/base/base.entity';
-import {
-  PersonType,
-  TaxIdType,
-  TaxRegime,
-  SubjectType,
-} from '../enums';
+// src/facturae/entities/facturaeParty.entity.ts
+
+import { Column, Entity } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { BaseEntity } from '../../common/base/base.entity';
+
+import { PersonType } from '../enums/personType.enum';
+import { TaxIdType } from '../enums/taxIdTtype.enum';
+import { ResidenceType } from '../enums/residenceType.enum';
+import { SubjectType } from '../enums/subjectType.enum';
+import { TaxRegimeType } from '../enums/taxRegimeType.enum';
 
 @Entity('facturae_parties')
 export class FacturaeParty extends BaseEntity {
 
+  /* ------------------------------------------------------------------
+   * IDENTIDAD
+   * ------------------------------------------------------------------ */
+
   @ApiProperty({
-    description: 'Tipo de persona fiscal según Facturae',
+    description: 'Razón social o nombre completo',
+    example: 'ACME SL',
+  })
+  @Column()
+  legalName: string;
+
+  @ApiPropertyOptional({
+    description: 'Nombre comercial',
+    example: 'ACME',
+  })
+  @Column({ nullable: true })
+  tradeName?: string;
+
+  /* ------------------------------------------------------------------
+   * CLASIFICACIÓN FACTURAE
+   * ------------------------------------------------------------------ */
+
+  @ApiProperty({
     enum: PersonType,
     example: PersonType.LEGAL_ENTITY,
   })
   @Column({
-    name: 'person_type',
     type: 'enum',
     enum: PersonType,
   })
   personType: PersonType;
 
   @ApiProperty({
-    description: 'Tipo de identificación fiscal',
     enum: TaxIdType,
     example: TaxIdType.CIF,
   })
   @Column({
-    name: 'tax_id_type',
     type: 'enum',
     enum: TaxIdType,
   })
   taxIdType: TaxIdType;
 
   @ApiProperty({
-    description: 'Identificador fiscal (NIF, CIF, NIE)',
+    description: 'Identificador fiscal (NIF, CIF, NIE, VAT, etc.)',
     example: 'B12345678',
   })
-  @Column({
-    name: 'tax_id',
-  })
+  @Column()
   taxId: string;
 
-  @ApiProperty({
-    description: 'Nombre legal o razón social',
-    example: 'Industria Soluciones SL',
-  })
-  @Column({
-    name: 'legal_name',
-  })
-  legalName: string;
+  /* ------------------------------------------------------------------
+   * RESIDENCIA Y RÉGIMEN
+   * ------------------------------------------------------------------ */
 
-  // ─────────────────────────────────────────────
-  // OPCIONAL FACTURAE ① – Nombre comercial
-  // ─────────────────────────────────────────────
   @ApiProperty({
-    description: 'Nombre comercial (opcional según Facturae)',
-    example: 'InduSol',
-    required: false,
+    enum: ResidenceType,
+    example: ResidenceType.RESIDENT,
   })
   @Column({
-    name: 'trade_name',
-    nullable: true,
-  })
-  tradeName?: string;
-
-  // ─────────────────────────────────────────────
-  // OPCIONAL FACTURAE ② – Régimen fiscal
-  // ─────────────────────────────────────────────
-  @ApiProperty({
-    description: 'Régimen fiscal (opcional según Facturae)',
-    enum: TaxRegime,
-    example: TaxRegime.GENERAL,
-    required: false,
-  })
-  @Column({
-    name: 'tax_regime',
     type: 'enum',
-    enum: TaxRegime,
-    nullable: true,
+    enum: ResidenceType,
+    default: ResidenceType.RESIDENT,
   })
-  taxRegime?: TaxRegime;
+  residenceType: ResidenceType;
 
-  // ─────────────────────────────────────────────
-  // OPCIONAL FACTURAE ③ – Sujeto / exento
-  // ─────────────────────────────────────────────
-  @ApiProperty({
-    description: 'Sujeto o exento de impuestos (opcional según Facturae)',
+  @ApiPropertyOptional({
     enum: SubjectType,
     example: SubjectType.SUBJECT,
-    required: false,
   })
   @Column({
-    name: 'subject_type',
     type: 'enum',
     enum: SubjectType,
     nullable: true,
   })
   subjectType?: SubjectType;
+
+  @ApiPropertyOptional({
+    enum: TaxRegimeType,
+    example: TaxRegimeType.GENERAL,
+  })
+  @Column({
+    type: 'enum',
+    enum: TaxRegimeType,
+    nullable: true,
+  })
+  taxRegime?: TaxRegimeType;
+
+  /* ------------------------------------------------------------------
+   * PAÍS
+   * ------------------------------------------------------------------ */
+
+  @ApiProperty({
+    description: 'Código de país ISO 3166-1 alpha-2',
+    example: 'ES',
+  })
+  @Column({
+    length: 2,
+    default: 'ES',
+  })
+  countryCode: string;
 }

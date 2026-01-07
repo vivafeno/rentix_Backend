@@ -1,6 +1,6 @@
 // src/config/seeder.service.ts
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Res } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -15,15 +15,14 @@ import { UserGlobalRole } from '../auth/enums/user-global-role.enum';
  * COMPANY / ROLES
  * ───────────────────────────────────── */
 import { Company } from '../company/entities/company.entity';
-import { UserCompanyRole } from '../user-company-role/entities/user-company-role.entity';
-import { CompanyRole } from '../user-company-role/enums/company-role.enum';
+import { UserCompanyRole } from '../user-company-role/entities/userCompanyRole.entity';
+import { CompanyRole } from '../user-company-role/enums/userCompanyRole.enum';
 
 /* ─────────────────────────────────────
  * FACTURAE (IDENTIDAD LEGAL)
  * ───────────────────────────────────── */
 import { FacturaeParty } from '../facturae/entities/facturaeParty.entity';
-import { PersonType } from '../facturae/enums/personType.enum';
-import { TaxIdType } from '../facturae/enums/taxIdTtype.enum';
+import { PersonType, TaxIdType, ResidenceType, TaxRegimeType, SubjectType} from '../facturae/enums/';
 
 /* ─────────────────────────────────────
  * ADDRESS
@@ -141,6 +140,10 @@ export class SeederService {
         taxIdType: TaxIdType.CIF,
         taxId: 'B00000000',
         legalName: 'Empresa Demo SL',
+        residenceType: ResidenceType.RESIDENT,
+        countryCode: 'ES',
+        taxRegime: TaxRegimeType.GENERAL,
+        subjectType: SubjectType.SUBJECT,
       });
 
       await this.facturaePartyRepo.save(party);

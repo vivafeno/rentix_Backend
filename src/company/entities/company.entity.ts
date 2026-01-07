@@ -10,7 +10,7 @@ import {
 import { BaseEntity } from 'src/common/base/base.entity';
 import { FacturaeParty } from 'src/facturae/entities/facturaeParty.entity';
 import { Address } from 'src/address/entities/address.entity';
-import { UserCompanyRole } from 'src/user-company-role/entities/user-company-role.entity';
+import { UserCompanyRole } from 'src/user-company-role/entities/userCompanyRole.entity';
 import { User } from 'src/user/entities/user.entity';
 
 @Entity('companies')
