@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { UserDto } from './dto/user.dto';
+
 import * as bcrypt from 'bcrypt';
+
+import { User } from './entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
 import { MeDto } from './dto/me.dto';
 
 @Injectable()
@@ -13,19 +15,45 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) { }
+  ) {}
 
-  /** 🔹 Mapper para ocultar password y refreshTokenHash */
+  /* ------------------------------------------------------------------
+   * MAPPERS
+   * ------------------------------------------------------------------ */
+
+  /**
+   * Mapper de entidad → DTO público
+   * Oculta password y refreshTokenHash
+   */
   private toDto(user: User): UserDto {
-    const { id, email, userGlobalRole, isActive, createdAt, updatedAt } = user;
-    return { id, email, userGlobalRole, isActive, createdAt, updatedAt };
+    const {
+      id,
+      email,
+      userGlobalRole,
+      isActive,
+      createdAt,
+      updatedAt,
+    } = user;
+
+    return {
+      id,
+      email,
+      userGlobalRole,
+      isActive,
+      createdAt,
+      updatedAt,
+    };
   }
 
-  async create(createUserDto: CreateUserDto): Promise<UserDto> {
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+  /* ------------------------------------------------------------------
+   * CRUD
+   * ------------------------------------------------------------------ */
+
+  async create(dto: CreateUserDto): Promise<UserDto> {
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const user = this.userRepository.create({
-      ...createUserDto,
+      ...dto,
       password: hashedPassword,
     });
 
@@ -36,8 +64,9 @@ export class UserService {
   async findAll(): Promise<UserDto[]> {
     const users = await this.userRepository.find({
       where: { isActive: true },
-      relations: ['companyRoles',],
+      relations: ['companyRoles'],
     });
+
     return users.map((u) => this.toDto(u));
   }
 
@@ -46,25 +75,40 @@ export class UserService {
       where: { id, isActive: true },
       relations: ['companyRoles', 'clientProfiles'],
     });
-    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+
+    if (!user) {
+      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    }
+
     return this.toDto(user);
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDto> {
+  async update(
+    id: string,
+    dto: UpdateUserDto,
+  ): Promise<UserDto> {
     const user = await this.userRepository.findOne({
       where: { id, isActive: true },
     });
-    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
 
-    if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+    if (!user) {
+      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
     }
 
-    Object.assign(user, updateUserDto);
+    if (dto.password) {
+      dto.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    Object.assign(user, dto);
     const updated = await this.userRepository.save(user);
+
     return this.toDto(updated);
   }
 
+  /**
+   * Soft delete
+   * → Devuelve void para encajar con HTTP 204
+   */
   async remove(id: string): Promise<void> {
     const user = await this.userRepository.findOne({
       where: { id },
@@ -78,7 +122,10 @@ export class UserService {
     await this.userRepository.save(user);
   }
 
-  /** 🔹 Métodos auxiliares usados en Auth */
+  /* ------------------------------------------------------------------
+   * MÉTODOS AUXILIARES (AUTH)
+   * ------------------------------------------------------------------ */
+
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
   }
@@ -87,11 +134,18 @@ export class UserService {
     return this.userRepository.findOne({ where: { id } });
   }
 
-  async updateRefreshToken(id: string, refreshTokenHash: string | null) {
+  async updateRefreshToken(
+    id: string,
+    refreshTokenHash: string | null,
+  ): Promise<void> {
     await this.userRepository.update(id, {
       refreshTokenHash: refreshTokenHash ?? undefined,
     });
   }
+
+  /* ------------------------------------------------------------------
+   * /user/me
+   * ------------------------------------------------------------------ */
 
   async findMe(userId: string): Promise<MeDto> {
     const user = await this.userRepository.findOne({
@@ -100,11 +154,13 @@ export class UserService {
         'companyRoles',
         'companyRoles.company',
         'companyRoles.company.facturaeParty',
-        'clientProfiles'
+        'clientProfiles',
       ],
     });
 
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
     return {
       id: user.id,
@@ -115,7 +171,9 @@ export class UserService {
       updated_at: user.updatedAt,
       companyRoles: user.companyRoles?.map((cr) => ({
         companyId: cr.company.id,
-        companyName: cr.company.facturaeParty?.legalName ?? 'Empresa sin nombre',
+        companyName:
+          cr.company.facturaeParty?.legalName ??
+          'Empresa sin nombre',
         role: cr.role,
       })),
       clientProfiles: user.clientProfiles ?? [],

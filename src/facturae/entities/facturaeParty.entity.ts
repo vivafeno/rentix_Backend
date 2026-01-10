@@ -43,6 +43,7 @@ export class FacturaeParty extends BaseEntity {
   @Column({
     type: 'enum',
     enum: PersonType,
+    enumName: 'facturae_person_type_enum',
   })
   personType: PersonType;
 
@@ -53,6 +54,7 @@ export class FacturaeParty extends BaseEntity {
   @Column({
     type: 'enum',
     enum: TaxIdType,
+    enumName: 'facturae_tax_id_type_enum',
   })
   taxIdType: TaxIdType;
 
@@ -60,7 +62,7 @@ export class FacturaeParty extends BaseEntity {
     description: 'Identificador fiscal (NIF, CIF, NIE, VAT, etc.)',
     example: 'B12345678',
   })
-  @Column()
+  @Column({ unique: true })
   taxId: string;
 
   /* ------------------------------------------------------------------
@@ -74,6 +76,7 @@ export class FacturaeParty extends BaseEntity {
   @Column({
     type: 'enum',
     enum: ResidenceType,
+    enumName: 'facturae_residence_type_enum',
     default: ResidenceType.RESIDENT,
   })
   residenceType: ResidenceType;
@@ -85,6 +88,7 @@ export class FacturaeParty extends BaseEntity {
   @Column({
     type: 'enum',
     enum: SubjectType,
+    enumName: 'facturae_subject_type_enum',
     nullable: true,
   })
   subjectType?: SubjectType;
@@ -96,6 +100,7 @@ export class FacturaeParty extends BaseEntity {
   @Column({
     type: 'enum',
     enum: TaxRegimeType,
+    enumName: 'facturae_tax_regime_type_enum',
     nullable: true,
   })
   taxRegime?: TaxRegimeType;

@@ -11,6 +11,11 @@ import { FacturaeParty } from './entities/facturaeParty.entity';
  * Responsabilidad:
  * - Gestión de identidades fiscales (FacturaeParty)
  * - Base para facturación electrónica (Facturae)
+ *
+ * Nota de arquitectura:
+ * - Exporta TypeOrmModule para permitir
+ *   uso del repositorio FacturaeParty
+ *   desde otros módulos (Company, seeds, etc.)
  */
 @Module({
   imports: [
@@ -18,5 +23,9 @@ import { FacturaeParty } from './entities/facturaeParty.entity';
   ],
   controllers: [FacturaeController],
   providers: [FacturaeService],
+  exports: [
+    TypeOrmModule,
+    FacturaeService,
+  ],
 })
 export class FacturaeModule {}

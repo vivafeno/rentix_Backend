@@ -20,7 +20,8 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 import { LoginDto, TokensDto } from './dto';
-import { User } from './decorators/user.decorator';
+import { User } from 'src/user/entities/user.entity';
+import { User as UserDecorator } from './decorators/user.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -40,8 +41,8 @@ export class AuthController {
     @Body() _loginDto: LoginDto,
     @Req() req: Request,
   ): Promise<TokensDto> {
-    // LocalAuthGuard valida el usuario y lo inyecta en req.user
-    return this.authService.login(req.user);
+    // LocalAuthGuard garantiza req.user
+    return this.authService.login(req.user as User);
   }
 
   // ♻️ REFRESH TOKEN
@@ -50,6 +51,7 @@ export class AuthController {
     summary: 'Generar un nuevo access token usando refresh token',
   })
   @ApiBody({
+    type: Object,
     schema: {
       type: 'object',
       properties: {
@@ -91,7 +93,7 @@ export class AuthController {
     },
   })
   async logout(
-    @User() user: { id: string },
+    @UserDecorator() user: { id: string },
   ): Promise<{ message: string }> {
     await this.authService.logout(user.id);
     return { message: 'Logout correcto' };

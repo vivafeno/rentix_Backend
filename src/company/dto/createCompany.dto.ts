@@ -1,7 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { IsUUID, IsNotEmpty } from 'class-validator';
 
 /**
+ * CreateCompanyDto
+ *
  * DTO para la creación de una empresa.
  *
  * ⚠️ IMPORTANTE:
@@ -25,8 +27,10 @@ en un paso anterior del flujo.
 `,
     format: 'uuid',
     example: 'a7c9b2e1-1234-4cde-9a88-ffeeddccbbaa',
+    required: true,
   })
   @IsUUID()
+  @IsNotEmpty()
   facturaePartyId: string;
 
   @ApiProperty({
@@ -39,7 +43,9 @@ y pasará a estado ACTIVE.
 `,
     format: 'uuid',
     example: 'b8d1c9a2-5678-4fbc-8123-aabbccddeeff',
+    required: true,
   })
   @IsUUID()
+  @IsNotEmpty()
   fiscalAddressId: string;
 }

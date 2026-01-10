@@ -25,19 +25,14 @@ export class AddressDraftService {
   constructor(
     @InjectRepository(Address)
     private readonly addressRepo: Repository<Address>,
-  ) {}
+  ) { }
 
   // ─────────────────────────────────────
   // Crear dirección en borrador
   // ─────────────────────────────────────
   async createDraft(dto: CreateAddressDto): Promise<Address> {
-    const address = this.addressRepo.create({
-      ...dto,
-      companyId: null,
-      status: AddressStatus.DRAFT,
-      isActive: true,
-    });
-
+    
+    const address = this.addressRepo.create(dto);
     return this.addressRepo.save(address);
   }
 

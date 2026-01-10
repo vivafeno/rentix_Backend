@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsEnum,
@@ -80,7 +80,7 @@ export class CreateAddressDto {
   @IsString()
   city: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Provincia (opcional fuera de España)',
     example: 'Valencia',
     required: false,

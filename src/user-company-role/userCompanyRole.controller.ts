@@ -7,18 +7,22 @@ import {
   Param,
   Delete,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiBody,
   ApiBearerAuth,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
 } from '@nestjs/swagger';
 
 import { UserCompanyRoleService } from './userCompanyRole.service';
-import { CreateUserCompanyRoleDto, UpdateUserCompanyRoleDto } from './dto';
+import { CreateUserCompanyRoleDto } from './dto/createUuserCompanyRole.dto';
+import { UpdateUserCompanyRoleDto } from './dto/updateUserCompanyRole.dto';
 import { UserCompanyRole } from './entities/userCompanyRole.entity';
 
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -36,14 +40,10 @@ export class UserCompanyRoleController {
     private readonly userCompanyRoleService: UserCompanyRoleService,
   ) {}
 
-  /**
-   * Crear vínculo usuario-empresa con rol
-   */
   @Post()
   @ApiOperation({ summary: 'Crear vínculo de usuario-empresa con rol' })
   @ApiBody({ type: CreateUserCompanyRoleDto })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     description: 'Vínculo creado',
     type: UserCompanyRole,
   })
@@ -53,13 +53,9 @@ export class UserCompanyRoleController {
     return this.userCompanyRoleService.create(dto);
   }
 
-  /**
-   * Listar todos los vínculos usuario-empresa
-   */
   @Get()
   @ApiOperation({ summary: 'Listar todos los vínculos usuario-empresa' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Lista de vínculos',
     type: UserCompanyRole,
     isArray: true,
@@ -68,31 +64,20 @@ export class UserCompanyRoleController {
     return this.userCompanyRoleService.findAll();
   }
 
-  /**
-   * Obtener vínculo usuario-empresa por ID
-   */
   @Get(':id')
   @ApiOperation({ summary: 'Obtener vínculo usuario-empresa por ID' })
   @ApiParam({
     name: 'id',
     description: 'UUID del vínculo',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Vínculo encontrado',
     type: UserCompanyRole,
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'No encontrado',
   })
   findOne(@Param('id') id: string): Promise<UserCompanyRole> {
     return this.userCompanyRoleService.findOne(id);
   }
 
-  /**
-   * Actualizar vínculo usuario-empresa
-   */
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar vínculo usuario-empresa por ID' })
   @ApiParam({
@@ -100,8 +85,7 @@ export class UserCompanyRoleController {
     description: 'UUID del vínculo',
   })
   @ApiBody({ type: UpdateUserCompanyRoleDto })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Vínculo actualizado',
     type: UserCompanyRole,
   })
@@ -112,33 +96,17 @@ export class UserCompanyRoleController {
     return this.userCompanyRoleService.update(id, dto);
   }
 
-  /**
-   * Eliminar vínculo usuario-empresa
-   *
-   * ⚠️ Respuesta explícita para OpenAPI / Frontend
-   */
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Eliminar vínculo usuario-empresa por ID' })
   @ApiParam({
     name: 'id',
     description: 'UUID del vínculo',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiNoContentResponse({
     description: 'Vínculo eliminado correctamente',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: 'Vínculo eliminado correctamente',
-        },
-      },
-    },
   })
-  remove(
-    @Param('id') id: string,
-  ): Promise<{ message: string }> {
-    return this.userCompanyRoleService.remove(id);
+  async remove(@Param('id') id: string): Promise<void> {
+    await this.userCompanyRoleService.remove(id);
   }
 }

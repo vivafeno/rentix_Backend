@@ -37,7 +37,7 @@ export class FacturaeService {
    * - Paso intermedio del wizard de creación de empresa
    *
    * Garantías que aplica:
-   * - taxId único (si existe → conflicto)
+   * - taxId único (solo entre registros activos)
    * - Campos NOT NULL siempre informados
    * - Defaults coherentes con Facturae España
    */
@@ -46,10 +46,13 @@ export class FacturaeService {
   ): Promise<FacturaeParty> {
 
     /**
-     * 1️⃣ Unicidad básica por taxId
+     * 1️⃣ Unicidad básica por taxId (solo activos)
      */
     const existing = await this.facturaePartyRepository.findOne({
-      where: { taxId: dto.taxId },
+      where: {
+        taxId: dto.taxId,
+        isActive: true,
+      },
     });
 
     if (existing) {
@@ -61,15 +64,13 @@ export class FacturaeService {
     /**
      * 2️⃣ Construcción controlada de la entidad
      *
-     * ⚠️ NO confiamos ciegamente en el DTO
+     * ⚠️ No confiamos ciegamente en el DTO
      * porque el modelo tiene campos obligatorios
      */
     const entity = this.facturaePartyRepository.create({
       ...dto,
 
-      /**
-       * Defaults obligatorios según modelo y Facturae
-       */
+      // Defaults obligatorios según modelo y Facturae
       residenceType: dto.residenceType ?? ResidenceType.RESIDENT,
       countryCode: dto.countryCode ?? 'ES',
     });

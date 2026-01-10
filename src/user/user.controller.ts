@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,7 +18,10 @@ import {
   ApiCreatedResponse,
   ApiBody,
   ApiParam,
-  ApiNoContentResponse
+  ApiNoContentResponse,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
 } from '@nestjs/swagger';
 
 import { UserService } from './user.service';
@@ -31,19 +36,16 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 
-import { HttpCode } from '@nestjs/common';
-
-
 @ApiTags('user')
 @ApiBearerAuth()
 @Controller('user')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService) {}
 
   /**
-   * 🔹 Crear un nuevo usuario
+   * Crear un nuevo usuario
    * Solo accesible para ADMIN / SUPERADMIN
    */
   @Post()
@@ -53,12 +55,14 @@ export class UserController {
     description: 'Usuario creado correctamente',
     type: UserDto,
   })
+  @ApiUnauthorizedResponse({ description: 'No autenticado' })
+  @ApiForbiddenResponse({ description: 'Sin permisos suficientes' })
   create(@Body() dto: CreateUserDto): Promise<UserDto> {
     return this.userService.create(dto);
   }
 
   /**
-   * 🔹 Listar todos los usuarios activos
+   * Listar todos los usuarios activos
    */
   @Get()
   @ApiOperation({ summary: 'Listar todos los usuarios activos' })
@@ -72,7 +76,7 @@ export class UserController {
   }
 
   /**
-   * 🔹 Datos del usuario autenticado
+   * Usuario autenticado (me)
    * Endpoint crítico para el front
    */
   @Get('me')
@@ -91,7 +95,7 @@ export class UserController {
   }
 
   /**
-   * 🔹 Obtener usuario por ID
+   * Obtener usuario por ID
    */
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un usuario por ID' })
@@ -101,15 +105,16 @@ export class UserController {
     example: 'c3f6c9c1-9e9a-4a4b-8f88-3b8b9e7b6c21',
   })
   @ApiOkResponse({
-    description: 'Usuario',
+    description: 'Usuario encontrado',
     type: UserDto,
   })
+  @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
   findOne(@Param('id') id: string): Promise<UserDto> {
     return this.userService.findOne(id);
   }
 
   /**
-   * 🔹 Actualizar un usuario
+   * Actualizar un usuario
    */
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar un usuario' })
@@ -122,6 +127,7 @@ export class UserController {
     description: 'Usuario actualizado',
     type: UserDto,
   })
+  @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
   update(
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
@@ -130,10 +136,10 @@ export class UserController {
   }
 
   /**
-   * 🔹 Desactivar un usuario (soft delete)
+   * Desactivar un usuario (soft delete)
    */
   @Delete(':id')
-  @HttpCode(204)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Desactivar un usuario (soft delete)' })
   @ApiParam({
     name: 'id',
@@ -142,6 +148,7 @@ export class UserController {
   @ApiNoContentResponse({
     description: 'Usuario desactivado correctamente',
   })
+  @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
   remove(@Param('id') id: string): Promise<void> {
     return this.userService.remove(id);
   }

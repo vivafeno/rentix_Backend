@@ -7,7 +7,7 @@ import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Company } from './entities/company.entity';
-import { CreateCompanyDto } from './dto';
+import { CreateCompanyDto, CompanyMeDto } from './dto';
 
 import { FacturaeParty } from 'src/facturae/entities/facturaeParty.entity';
 import { Address } from 'src/address/entities/address.entity';
@@ -22,12 +22,6 @@ export class CompanyService {
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
 
-    @InjectRepository(FacturaeParty)
-    private readonly facturaePartyRepo: Repository<FacturaeParty>,
-
-    @InjectRepository(Address)
-    private readonly addressRepo: Repository<Address>,
-
     @InjectRepository(UserCompanyRole)
     private readonly userCompanyRoleRepo: Repository<UserCompanyRole>,
 
@@ -41,7 +35,7 @@ export class CompanyService {
    * PRECONDICIONES:
    * - facturaePartyId existe
    * - fiscalAddressId existe
-   * - fiscalAddress está en DRAFT o ACTIVE
+   * - fiscalAddress NO está ligada a otra empresa
    * - el usuario autenticado será OWNER
    * ─────────────────────────────────────────────
    */
@@ -50,7 +44,7 @@ export class CompanyService {
     ownerUserId: string,
   ): Promise<Company> {
     return this.dataSource.transaction(async (manager) => {
-      // 1️⃣ Validar identidad fiscal
+      // 1️⃣ Identidad fiscal
       const facturaeParty = await manager.findOne(FacturaeParty, {
         where: {
           id: dto.facturaePartyId,
@@ -59,12 +53,10 @@ export class CompanyService {
       });
 
       if (!facturaeParty) {
-        throw new NotFoundException(
-          'Identidad fiscal no encontrada',
-        );
+        throw new NotFoundException('Identidad fiscal no encontrada');
       }
 
-      // 2️⃣ Validar dirección fiscal
+      // 2️⃣ Dirección fiscal
       const fiscalAddress = await manager.findOne(Address, {
         where: {
           id: dto.fiscalAddressId,
@@ -73,12 +65,10 @@ export class CompanyService {
       });
 
       if (!fiscalAddress) {
-        throw new NotFoundException(
-          'Dirección fiscal no encontrada',
-        );
+        throw new NotFoundException('Dirección fiscal no encontrada');
       }
 
-      // 3️⃣ Defensa: la dirección NO puede estar ya ligada a otra empresa
+      // 3️⃣ Defensa: dirección ya ligada
       if (fiscalAddress.companyId) {
         throw new ConflictException(
           'La dirección fiscal ya está asociada a una empresa',
@@ -93,10 +83,9 @@ export class CompanyService {
 
       await manager.save(company);
 
-      // 5️⃣ Activar dirección y asociarla
+      // 5️⃣ Activar dirección
       fiscalAddress.companyId = company.id;
       fiscalAddress.status = AddressStatus.ACTIVE;
-
       await manager.save(fiscalAddress);
 
       // 6️⃣ Asignar OWNER
@@ -117,7 +106,9 @@ export class CompanyService {
    * Empresas del usuario autenticado
    * ─────────────────────────────────────────────
    */
-  async getCompaniesForUser(userId: string) {
+  async getCompaniesForUser(
+    userId: string,
+  ): Promise<CompanyMeDto[]> {
     const relations = await this.userCompanyRoleRepo.find({
       where: {
         user: { id: userId },
@@ -139,7 +130,7 @@ export class CompanyService {
    * Empresa concreta
    * ─────────────────────────────────────────────
    */
-  findOne(id: string) {
+  async findOne(id: string): Promise<Company | null> {
     return this.companyRepo.findOne({
       where: { id, isActive: true },
       relations: ['facturaeParty', 'fiscalAddress'],
@@ -151,7 +142,7 @@ export class CompanyService {
    * Listado global
    * ─────────────────────────────────────────────
    */
-  findAll() {
+  async findAll(): Promise<Company[]> {
     return this.companyRepo.find({
       where: { isActive: true },
       relations: ['facturaeParty', 'fiscalAddress'],

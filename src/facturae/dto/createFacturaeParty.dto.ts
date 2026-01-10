@@ -63,7 +63,7 @@ export class CreateFacturaePartyDto {
   taxIdType: TaxIdType;
 
   @ApiProperty({
-    description: 'Identificador fiscal (NIF, CIF, NIE, VAT, etc.)',
+    description: 'Identificador fiscal único (NIF, CIF, NIE, VAT, etc.)',
     example: 'B12345678',
   })
   @IsString()
@@ -77,7 +77,8 @@ export class CreateFacturaePartyDto {
   @ApiPropertyOptional({
     enum: ResidenceType,
     example: ResidenceType.RESIDENT,
-    description: 'Residencia fiscal según Facturae (por defecto RESIDENT)',
+    default: ResidenceType.RESIDENT,
+    description: 'Residencia fiscal según Facturae',
   })
   @IsOptional()
   @IsEnum(ResidenceType)
@@ -104,8 +105,9 @@ export class CreateFacturaePartyDto {
    * ------------------------------------------------------------------ */
 
   @ApiPropertyOptional({
-    description: 'Código de país ISO 3166-1 alpha-2 (por defecto ES)',
+    description: 'Código de país ISO 3166-1 alpha-2',
     example: 'ES',
+    default: 'ES',
   })
   @IsOptional()
   @IsString()

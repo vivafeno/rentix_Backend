@@ -26,7 +26,7 @@ import { FacturaeParty } from './entities/facturaeParty.entity';
  * Ruta base:
  *   /facturae-parties
  */
-@ApiTags('Facturae')
+@ApiTags('facturae')
 @Controller('facturae-parties')
 export class FacturaeController {
   constructor(
@@ -38,20 +38,6 @@ export class FacturaeController {
    *
    * Endpoint:
    *   POST /facturae-parties
-   *
-   * Uso principal:
-   * - Paso intermedio del wizard de creación de empresa
-   * - Se ejecuta ANTES de crear la empresa
-   *
-   * Responsabilidad:
-   * - Validar los datos fiscales básicos
-   * - Crear la entidad FacturaeParty
-   * - Devolver la entidad persistida
-   *
-   * Notas de diseño:
-   * - No asigna empresa
-   * - No asigna usuarios
-   * - No gestiona direcciones
    */
   @Post()
   @ApiOperation({
@@ -59,7 +45,7 @@ export class FacturaeController {
     description: `
 Crea una nueva identidad fiscal compatible con el estándar Facturae.
 
-Este recurso representa a una persona física o jurídica
+Representa a una persona física o jurídica
 que puede emitir o recibir facturas conforme a la normativa española.
 
 Se utiliza típicamente como paso previo
@@ -79,6 +65,15 @@ a la creación de una empresa o cliente.
   })
   @ApiConflictResponse({
     description: 'Ya existe una identidad fiscal con el mismo taxId',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Ya existe una identidad fiscal con ese identificador',
+        },
+      },
+    },
   })
   create(
     @Body() dto: CreateFacturaePartyDto,

@@ -9,8 +9,9 @@ import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule, 
     TypeOrmModule.forFeature([UserCompanyRole, User]),
-    AuthModule,
+    
   ],
   controllers: [CompanyContextController],
   providers: [CompanyContextService],

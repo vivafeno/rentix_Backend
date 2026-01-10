@@ -22,6 +22,9 @@ export class UserCompanyRoleService {
 
   /**
    * Crear vínculo usuario ↔ empresa con rol
+   *
+   * Devuelve la entidad completa con relaciones
+   * para coherencia con Swagger / OpenAPI
    */
   async create(
     dto: CreateUserCompanyRoleDto,
@@ -84,6 +87,8 @@ export class UserCompanyRoleService {
 
   /**
    * Actualizar vínculo usuario-empresa
+   *
+   * Solo permite modificar el rol
    */
   async update(
     id: string,
@@ -100,11 +105,11 @@ export class UserCompanyRoleService {
 
   /**
    * Eliminar vínculo usuario-empresa
-   * 
-   * ⚠️ Devuelve mensaje explícito para:
+   *
+   * ⚠️ Devuelve objeto explícito para:
    * - Swagger
    * - OpenAPI
-   * - Generadores de tipos frontend
+   * - api-types.ts en frontend
    */
   async remove(id: string): Promise<{ message: string }> {
     const entity = await this.findOne(id);

@@ -3,7 +3,7 @@ import {
   Column,
   OneToMany,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { BaseEntity } from 'src/common/base/base.entity';
 import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
@@ -15,11 +15,13 @@ import { ClientProfile } from 'src/client-profile/entities/client-profile.entity
  *
  * Representa a un usuario del sistema Rentix.
  * Puede actuar como:
- * - Usuario interno (ADMIN / USER)
- * - Usuario asociado a empresas con distintos roles
+ * - Usuario interno (SUPERADMIN / ADMIN / USER)
+ * - Usuario vinculado a una o varias empresas con roles específicos
  *
- * Aunque no se exponga directamente como DTO,
- * se documenta completamente para Swagger y mantenimiento.
+ * ⚠️ Aunque no se expone directamente como DTO,
+ * se documenta correctamente para:
+ * - Swagger / OpenAPI
+ * - generación de api-types en frontend
  */
 @Entity('users')
 export class User extends BaseEntity {
@@ -37,17 +39,19 @@ export class User extends BaseEntity {
 
   @ApiProperty({
     description: 'Hash de la contraseña del usuario',
-    example: '$2b$10$...',
+    example: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
   })
   @Column()
   password: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Hash del refresh token activo',
-    nullable: true,
-    required: false,
+    example: '$2b$10$yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',
   })
-  @Column({ type: 'text', nullable: true })
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
   refreshTokenHash: string | null;
 
   /* ------------------------------------------------------------------
@@ -59,7 +63,6 @@ export class User extends BaseEntity {
     description: 'Rol global del usuario dentro del sistema',
     enum: UserGlobalRole,
     example: UserGlobalRole.USER,
-    default: UserGlobalRole.USER,
   })
   @Column({
     type: 'enum',
@@ -78,23 +81,25 @@ export class User extends BaseEntity {
     type: () => UserCompanyRole,
     isArray: true,
   })
-  @OneToMany(() => UserCompanyRole, (ucr) => ucr.user)
+  @OneToMany(
+    () => UserCompanyRole,
+    (ucr) => ucr.user,
+  )
   companyRoles: UserCompanyRole[];
 
   /* ------------------------------------------------------------------
    * RELACIÓN CON CLIENTES
-   * Opcional: usuarios que actúan como gestores de clientes
+   * Usuarios que actúan como gestores de clientes
    * ------------------------------------------------------------------ */
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Perfiles de cliente asociados al usuario',
     type: () => ClientProfile,
     isArray: true,
-    required: false,
-    nullable: true,
   })
-  @OneToMany(() => ClientProfile, (client) => client.user, {
-    nullable: true,
-  })
+  @OneToMany(
+    () => ClientProfile,
+    (client) => client.user,
+  )
   clientProfiles?: ClientProfile[];
 }

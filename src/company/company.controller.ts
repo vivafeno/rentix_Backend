@@ -11,25 +11,27 @@ import {
   ApiOperation,
   ApiOkResponse,
   ApiCreatedResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 
 import { CompanyService } from './company.service';
-import { CreateCompanyDto, CompanyMeDto} from './dto';
+import { CreateCompanyDto, CompanyMeDto } from './dto';
 import { Company } from './entities/company.entity';
 
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
-import { User } from 'src/user/entities/user.entity';
 import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 
 @ApiTags('companies')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('companies')
 export class CompanyController {
-  constructor(private readonly companyService: CompanyService) {}
+  constructor(
+    private readonly companyService: CompanyService,
+  ) {}
 
   /**
    * ─────────────────────────────────────────────
@@ -37,19 +39,23 @@ export class CompanyController {
    *
    * PRECONDICIONES:
    * - facturaePartyId existe
-   * - fiscalAddressId existe (DRAFT o ACTIVE)
+   * - fiscalAddressId existe
    * - el usuario autenticado será OWNER
    *
    * El wizard del front controla el orden
    * ─────────────────────────────────────────────
    */
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
   @ApiOperation({
     summary: 'Crear empresa',
     description:
       'Crea una empresa vinculando una identidad fiscal y una dirección fiscal ya existentes',
+  })
+  @ApiBody({
+    type: CreateCompanyDto,
+    description: 'Datos necesarios para crear la empresa',
   })
   @ApiCreatedResponse({
     description: 'Empresa creada correctamente',
@@ -57,7 +63,7 @@ export class CompanyController {
   })
   createCompany(
     @Body() dto: CreateCompanyDto,
-    @GetUser() user: User,
+    @GetUser() user: { id: string },
   ): Promise<Company> {
     return this.companyService.createCompany(dto, user.id);
   }
@@ -79,7 +85,7 @@ export class CompanyController {
     isArray: true,
   })
   getMyCompanies(
-    @GetUser() user: User,
+    @GetUser() user: { id: string },
   ): Promise<CompanyMeDto[]> {
     return this.companyService.getCompaniesForUser(user.id);
   }
@@ -90,7 +96,7 @@ export class CompanyController {
    * ─────────────────────────────────────────────
    */
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
   @ApiOperation({
     summary: 'Listado global de empresas',

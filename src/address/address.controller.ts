@@ -48,7 +48,8 @@ export class AddressController {
     name: 'companyId',
     description: 'UUID de la empresa',
   })
-  @ApiQuery({
+  @ApiQuery({ 
+    schema: { type: 'boolean' },
     name: 'includeInactive',
     required: false,
     type: Boolean,
