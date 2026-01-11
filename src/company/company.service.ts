@@ -26,7 +26,7 @@ export class CompanyService {
     private readonly userCompanyRoleRepo: Repository<UserCompanyRole>,
 
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   /**
    * ─────────────────────────────────────────────
@@ -102,28 +102,52 @@ export class CompanyService {
   }
 
   /**
-   * ─────────────────────────────────────────────
-   * Empresas del usuario autenticado
-   * ─────────────────────────────────────────────
-   */
-  async getCompaniesForUser(
-    userId: string,
-  ): Promise<CompanyMeDto[]> {
-    const relations = await this.userCompanyRoleRepo.find({
-      where: {
-        user: { id: userId },
-        isActive: true,
-      },
-      relations: ['company', 'company.facturaeParty'],
-    });
+  * ─────────────────────────────────────────────
+  * Empresas del usuario autenticado
+  *
+  * GET /companies/me
+  *
+  * Devuelve:
+  * - Datos legales (FacturaeParty)
+  * - CIF / NIF
+  * - Email del OWNER
+  * - Rol del usuario autenticado
+  * ─────────────────────────────────────────────
+  */
+ async getCompaniesForUser(
+  userId: string,
+): Promise<CompanyMeDto[]> {
+  const relations = await this.userCompanyRoleRepo.find({
+    where: {
+      user: { id: userId },
+      isActive: true,
+    },
+    relations: [
+      'company',
+      'company.companyRoles',
+      'company.companyRoles.user',
+      // facturaeParty es eager
+    ],
+  });
 
-    return relations.map((r) => ({
+  return relations.map((r) => {
+    const owner = r.company.companyRoles.find(
+      cr => cr.role === CompanyRole.OWNER,
+    );
+
+    return {
       companyId: r.company.id,
       legalName: r.company.facturaeParty.legalName,
       tradeName: r.company.facturaeParty.tradeName,
+      taxId: r.company.facturaeParty.taxId,
+      ownerEmail: owner?.user?.email ?? '',
       role: r.role,
-    }));
-  }
+    };
+  });
+}
+
+
+
 
   /**
    * ─────────────────────────────────────────────

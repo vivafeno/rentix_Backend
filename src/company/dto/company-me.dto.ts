@@ -1,20 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CompanyRole } from 'src/user-company-role/enums/userCompanyRole.enum';
 
-/**
- * CompanyMeDto
- *
- * Empresa asociada al usuario autenticado junto con su rol.
- *
- * Usado en:
- * - GET /companies/me
- */
 export class CompanyMeDto {
-
   @ApiProperty({
     format: 'uuid',
     description: 'ID de la empresa',
-    example: '8e2c4cae-5a4f-4264-befe-2a406fa4adcb',
   })
   companyId: string;
 
@@ -25,17 +15,27 @@ export class CompanyMeDto {
   legalName: string;
 
   @ApiProperty({
-    description: 'Nombre comercial de la empresa',
-    example: 'Demo',
+    description: 'Nombre comercial',
     required: false,
     nullable: true,
   })
   tradeName?: string;
 
   @ApiProperty({
-    description: 'Rol del usuario dentro de la empresa',
+    description: 'Identificación fiscal',
+    example: 'B12345678',
+  })
+  taxId: string;
+
+  @ApiProperty({
+    description: 'Email del usuario OWNER',
+    example: 'owner@empresa.com',
+  })
+  ownerEmail: string;
+
+  @ApiProperty({
+    description: 'Rol del usuario autenticado en la empresa',
     enum: CompanyRole,
-    example: CompanyRole.OWNER,
   })
   role: CompanyRole;
 }
