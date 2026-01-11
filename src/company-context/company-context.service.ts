@@ -3,7 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserCompanyRole } from '../user-company-role/entities/userCompanyRole.entity';
+import { CompanyRoleEntity } from '../user-company-role/entities/userCompanyRole.entity';
 import { User } from '../user/entities/user.entity';
 import { SelectCompanyDto } from './dto/select-company.dto';
 
@@ -11,11 +11,11 @@ import { SelectCompanyDto } from './dto/select-company.dto';
 export class CompanyContextService {
   constructor(
     private readonly jwtService: JwtService,
-    @InjectRepository(UserCompanyRole)
-    private readonly userCompanyRoleRepo: Repository<UserCompanyRole>,
+    @InjectRepository(CompanyRoleEntity)
+    private readonly userCompanyRoleRepo: Repository<CompanyRoleEntity>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
-  ) {}
+  ) { }
 
   async selectCompany(userId: string, dto: SelectCompanyDto) {
     const { companyId } = dto;
@@ -40,7 +40,7 @@ export class CompanyContextService {
     // 3. Crear un nuevo accessToken contextualizado
     const payload = {
       sub: user.id,
-      userGlobalRole: user.userGlobalRole,
+      userGlobalRole: user.appRole,
       companyId: relation.company.id,
       companyRole: relation.role,
     };
@@ -53,7 +53,8 @@ export class CompanyContextService {
       accessToken,
       company: {
         id: relation.company.id,
-        name: relation.company.facturaeParty.legalName,
+        name: relation.company.facturaeParty.corporateName ||
+          `${relation.company.facturaeParty.firstName} ${relation.company.facturaeParty.lastName}`.trim(),
         role: relation.role,
       },
     };

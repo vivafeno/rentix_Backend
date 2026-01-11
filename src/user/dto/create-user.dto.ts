@@ -7,7 +7,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
 /**
  * DTO para la creación de usuarios.
@@ -33,11 +33,11 @@ export class CreateUserDto {
 
   @ApiPropertyOptional({
     description: 'Rol global del usuario dentro del sistema',
-    enum: UserGlobalRole,
-    example: UserGlobalRole.USER,
-    default: UserGlobalRole.USER,
+    enum: AppRole,
+    example: AppRole.USER,
+    default: AppRole.USER,
   })
   @IsOptional()
-  @IsEnum(UserGlobalRole)
-  userGlobalRole?: UserGlobalRole;
+  @IsEnum(AppRole)
+  userGlobalRole?: AppRole;
 }

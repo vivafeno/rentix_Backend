@@ -5,7 +5,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { BaseEntity } from 'src/common/base/base.entity';
 import { AddressType } from '../enums/addressType.enum';
@@ -25,6 +25,7 @@ import { AddressStatus } from '../enums/addressStatus.enum';
 @Index(['status'])
 @Index(['companyId', 'isActive'])
 @Index(['companyId', 'type'])
+@Index(['createdByUserId']) // 👈 NUEVO: Para buscar rápido los drafts de un usuario
 export class Address extends BaseEntity {
 
   /* ------------------------------------------------------------------
@@ -32,11 +33,9 @@ export class Address extends BaseEntity {
    * Una dirección puede existir SIN empresa (status = DRAFT)
    * ------------------------------------------------------------------ */
 
-  @ApiProperty({
-    description: 'ID de la empresa propietaria de la dirección',
+  @ApiPropertyOptional({
+    description: 'ID de la empresa propietaria de la dirección. Null si es un borrador (Draft).',
     format: 'uuid',
-    required: false,
-    nullable: true,
   })
   @Column({ name: 'company_id', type: 'uuid', nullable: true })
   companyId?: string;
@@ -44,6 +43,17 @@ export class Address extends BaseEntity {
   @ManyToOne(() => Company, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'company_id' })
   company?: Company;
+
+  /* ------------------------------------------------------------------
+   * AUDITORÍA / PROPIEDAD DEL BORRADOR (NUEVO)
+   * ------------------------------------------------------------------ */
+
+  @ApiPropertyOptional({
+    description: 'ID del usuario que creó el registro. Vital para asegurar los DRAFTS huérfanos.',
+    format: 'uuid',
+  })
+  @Column({ name: 'created_by_user_id', type: 'uuid', nullable: true })
+  createdByUserId?: string;
 
   /* ------------------------------------------------------------------
    * ESTADO DE LA DIRECCIÓN
@@ -66,11 +76,9 @@ export class Address extends BaseEntity {
    * RELACIÓN CON CLIENTE
    * ------------------------------------------------------------------ */
 
-  @ApiProperty({
-    description: 'ID del cliente asociado a la dirección',
+  @ApiPropertyOptional({
+    description: 'ID del cliente asociado a la dirección (si aplica)',
     format: 'uuid',
-    required: false,
-    nullable: true,
   })
   @Column({ name: 'client_profile_id', type: 'uuid', nullable: true })
   clientProfileId?: string;
@@ -102,40 +110,36 @@ export class Address extends BaseEntity {
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
-    description: 'Dirección principal',
+    description: 'Dirección principal (Calle, número, etc.)',
     example: 'Calle Mayor 12',
   })
   @Column({ name: 'address_line1' })
   addressLine1: string;
 
-  @ApiProperty({
-    description: 'Información adicional de la dirección',
+  @ApiPropertyOptional({
+    description: 'Información adicional de la dirección (Piso, puerta, escalera)',
     example: '3º izquierda',
-    required: false,
-    nullable: true,
   })
   @Column({ name: 'address_line2', nullable: true })
   addressLine2?: string;
 
   @ApiProperty({
     description: 'Código postal',
-    example: '28001',
+    example: '46250',
   })
   @Column({ name: 'postal_code' })
   postalCode: string;
 
   @ApiProperty({
     description: 'Ciudad / municipio',
-    example: 'Madrid',
+    example: 'Valencia',
   })
   @Column()
   city: string;
 
-  @ApiProperty({
-    description: 'Provincia',
-    example: 'Madrid',
-    required: false,
-    nullable: true,
+  @ApiPropertyOptional({
+    description: 'Provincia o Estado',
+    example: 'Valencia',
   })
   @Column({ nullable: true })
   province?: string;
@@ -153,8 +157,8 @@ export class Address extends BaseEntity {
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
-    description: 'Indica si es la dirección principal para su tipo',
-    example: true,
+    description: 'Indica si es la dirección principal para su tipo dentro de la empresa',
+    example: false,
     default: false,
   })
   @Column({ name: 'is_default', default: false })

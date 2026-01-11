@@ -1,112 +1,105 @@
 import {
   Controller,
   Get,
+  Post,
+  Patch,
   Delete,
   Param,
+  Body,
   Query,
   NotFoundException,
-  UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
-  ApiParam,
-  ApiQuery,
   ApiBearerAuth,
   ApiOkResponse,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
 
 import { AddressService } from './address.service';
 import { Address } from './entities/address.entity';
+import { CreateAddressDto } from './dto/create-address.dto';
+import { UpdateAddressDto } from './dto/update-address.dto';
 
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
-@ApiTags('addresses')
+@ApiTags('Addresses')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(
-  UserGlobalRole.SUPERADMIN,
-  UserGlobalRole.ADMIN,
-  UserGlobalRole.USER,
-)
 @Controller('addresses')
 export class AddressController {
   constructor(private readonly addressService: AddressService) {}
 
-  /* ============================================================
-   * COMPANY SCOPE
-   * ============================================================ */
+  // =================================================================
+  //  FLUJO WIZARD (DRAFTS)
+  // =================================================================
+
+  @Post('draft')
+  @Auth() // Cualquier usuario logueado empieza un wizard
+  @ApiOperation({ 
+    summary: 'Crear dirección temporal (Paso del Wizard)', 
+    description: 'Crea una dirección en estado DRAFT vinculada al usuario creador.'
+  })
+  @ApiCreatedResponse({ type: Address })
+  async createDraft(
+    @Body() dto: CreateAddressDto,
+    @GetUser('id') userId: string
+  ) {
+    return this.addressService.createDraft(dto, userId);
+  }
+
+  @Get('draft/:id')
+  @Auth()
+  @ApiOperation({ summary: 'Recuperar un borrador por ID' })
+  async findDraft(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser('id') userId: string // 👈 Seguridad: Solo el dueño la ve
+  ) {
+    return this.addressService.findDraft(id, userId);
+  }
+
+  @Patch('draft/:id')
+  @Auth()
+  @ApiOperation({ summary: 'Actualizar borrador durante el wizard' })
+  async updateDraft(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateAddressDto,
+    @GetUser('id') userId: string
+  ) {
+    return this.addressService.updateDraft(id, dto, userId);
+  }
+
+  // =================================================================
+  //  FLUJO GESTIÓN (EMPRESA YA CREADA)
+  // =================================================================
 
   @Get('/company/:companyId')
-  @ApiOperation({
-    summary: 'Listar direcciones de una empresa',
-  })
-  @ApiParam({
-    name: 'companyId',
-    description: 'UUID de la empresa',
-  })
-  @ApiQuery({ 
-    schema: { type: 'boolean' },
-    name: 'includeInactive',
-    required: false,
-    type: Boolean,
-  })
-  @ApiOkResponse({
-    description: 'Listado de direcciones de empresa',
-    type: Address,
-    isArray: true,
-  })
-  findAllForCompany(
-    @Param('companyId') companyId: string,
-    @Query('includeInactive') includeInactive?: 'true' | 'false',
-  ): Promise<Address[]> {
-    return this.addressService.findAllForCompany(companyId, {
+  @Auth()
+  @ApiOperation({ summary: 'Listar direcciones activas de una empresa' })
+  async findAllForCompany(
+    @Param('companyId', ParseUUIDPipe) companyId: string,
+    @GetUser('id') userId: string,
+    @GetUser('appRole') appRole: AppRole,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    return this.addressService.findAllForCompany(companyId, userId, appRole, {
       includeInactive: includeInactive === 'true',
     });
   }
 
   @Delete('/company/:companyId/:addressId')
-  @ApiOperation({
-    summary: 'Desactivar dirección de una empresa (soft delete)',
-  })
-  @ApiParam({
-    name: 'companyId',
-    description: 'UUID de la empresa',
-  })
-  @ApiParam({
-    name: 'addressId',
-    description: 'UUID de la dirección',
-  })
-  @ApiOkResponse({
-    description: 'Dirección desactivada correctamente',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: 'Dirección desactivada correctamente',
-        },
-      },
-    },
-  })
+  @Auth()
+  @ApiOperation({ summary: 'Desactivar dirección de empresa' })
   async remove(
-    @Param('companyId') companyId: string,
-    @Param('addressId') addressId: string,
-  ): Promise<{ message: string }> {
-    const ok = await this.addressService.softDeleteForCompany(
-      companyId,
-      addressId,
-    );
-
-    if (!ok) {
-      throw new NotFoundException(
-        'Dirección no encontrada o ya desactivada',
-      );
-    }
-
+    @Param('companyId', ParseUUIDPipe) companyId: string,
+    @Param('addressId', ParseUUIDPipe) addressId: string,
+    @GetUser('id') userId: string,
+    @GetUser('appRole') appRole: AppRole,
+  ) {
+    await this.addressService.softDeleteForCompany(companyId, addressId, userId, appRole);
     return { message: 'Dirección desactivada correctamente' };
   }
 }

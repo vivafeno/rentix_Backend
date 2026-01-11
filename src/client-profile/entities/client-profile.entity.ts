@@ -2,92 +2,114 @@ import {
   Entity,
   Column,
   ManyToOne,
+  OneToOne,
   OneToMany,
+  JoinColumn,
+  Index,
 } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { BaseEntity } from 'src/common/base/base.entity';
-import { User } from 'src/user/entities/user.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { Address } from 'src/address/entities/address.entity';
+import { FiscalIdentity } from 'src/facturae/entities/fiscalIdentity.entity';
+import { User } from 'src/user/entities/user.entity';
 
 /**
  * 👤 ClientProfile
  *
- * Representa un cliente de una empresa:
- * - Puede ser una persona física o jurídica
- * - Pertenece SIEMPRE a una empresa
- * - Puede estar vinculado opcionalmente a un usuario (portal cliente futuro)
- * - Puede tener múltiples direcciones (fiscal, envío, postal, etc.)
+ * Representa la ficha operativa de un cliente dentro de una empresa (Tenant).
+ *
+ * ARQUITECTURA:
+ * - Datos Fiscales: Delegados en FiscalIdentity (Core Facturae).
+ * - Datos CRM: Propios de esta entidad (Email, condiciones de pago, notas).
+ * - Multi-tenant: Protegido por index único [companyId + internalCode].
  */
 @Entity('client_profiles')
+@Index(['companyId', 'internalCode'], { unique: true })
 export class ClientProfile extends BaseEntity {
 
-  /**
-   * Nombre comercial o razón social del cliente
-   */
-  @Column()
-  name: string;
+  /* ------------------------------------------------------------------
+   * 🏢 TENANT (EMPRESA PROPIETARIA)
+   * ------------------------------------------------------------------ */
+  
+  @ApiProperty({ type: () => Company })
+  @ManyToOne(() => Company, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'company_id' })
+  company: Company;
 
-  /**
-   * NIF / CIF del cliente
-   * ⚠️ NO es único globalmente, solo dentro de una empresa
-   */
-  @Column()
-  nif: string;
+  @Column({ name: 'company_id' })
+  companyId: string;
 
-  /**
-   * Email de contacto del cliente (opcional)
-   */
-  @Column({ nullable: true })
-  email?: string;
+  /* ------------------------------------------------------------------
+   * ⚖️ IDENTIDAD FISCAL (CORE FACTURAE)
+   * ------------------------------------------------------------------ */
 
-  /**
-   * Teléfono de contacto (opcional)
-   */
+  @ApiProperty({ description: 'Datos fiscales validados (NIF, Razón Social)' })
+  @OneToOne(() => FiscalIdentity, { 
+    cascade: true, 
+    eager: true, // Carga automática para mostrar nombre en listados
+    onDelete: 'CASCADE' 
+  })
+  @JoinColumn({ name: 'fiscal_identity_id' })
+  fiscalIdentity: FiscalIdentity;
+
+  /* ------------------------------------------------------------------
+   * ⚙️ DATOS DE GESTIÓN (CRM)
+   * ------------------------------------------------------------------ */
+
+  @ApiProperty({ 
+    description: 'Código interno único por empresa (ej: CLI-2024-001)',
+    example: 'CLI-001'
+  })
+  @Column({ name: 'internal_code', length: 50 })
+  internalCode: string;
+
+  @ApiPropertyOptional({ description: 'Email principal para facturación electrónica' })
+  @Column({ name: 'billing_email', nullable: true })
+  billingEmail?: string;
+
+  @ApiPropertyOptional({ description: 'Teléfono de contacto administrativo' })
   @Column({ nullable: true })
   phone?: string;
 
-  /**
-   * 🏢 Empresa propietaria del cliente
-   * - Un cliente SIEMPRE pertenece a una empresa
-   * - Si se borra la empresa → se borran sus clientes
-   */
-  @ManyToOne(() => Company, {
-    nullable: false,
-    onDelete: 'CASCADE',
-  })
-  company: Company;
+  /* ------------------------------------------------------------------
+   * 💰 CONDICIONES DE PAGO (CRÍTICO FACTURAE)
+   * ------------------------------------------------------------------ */
 
-  /**
-   * 👤 Usuario vinculado (opcional)
-   * - Útil para portales de cliente / acceso externo
-   * - Si se borra el usuario → se elimina el vínculo
-   */
-  @ManyToOne(() => User, (user) => user.clientProfiles, {
-    nullable: true,
-    onDelete: 'SET NULL',
+  @ApiPropertyOptional({ 
+    description: 'Método de pago habitual (ej: TRANSFERENCIA, RECIBO, EFECTIVO)',
+    example: 'TRANSFERENCIA'
   })
+  @Column({ name: 'payment_method', nullable: true, default: 'TRANSFERENCIA' })
+  paymentMethod?: string;
+
+  @ApiProperty({ 
+    description: 'Días de vencimiento para cálculo automático (0 = Contado)', 
+    default: 0 
+  })
+  @Column({ name: 'payment_days', default: 0 })
+  paymentDays: number;
+
+  @ApiPropertyOptional({ description: 'Notas internas sobre el cliente (CRM)' })
+  @Column({ type: 'text', nullable: true })
+  notes?: string;
+
+  /* ------------------------------------------------------------------
+   * 🔐 ACCESO / PORTAL
+   * ------------------------------------------------------------------ */
+
+  @ApiPropertyOptional({ description: 'Usuario vinculado para acceso al portal de clientes' })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'user_id' })
   user?: User;
 
-  /**
-   * 📍 Direcciones del cliente
-   * - Fiscal
-   * - Envío
-   * - Postal
-   * - Etc.
-   *
-   * cascade:
-   * - insert → se crean junto al cliente
-   * - update → se actualizan automáticamente
-   *
-   * ❌ NO cascade delete: el borrado se controla vía isActive
-   */
-  @OneToMany(
-    () => Address,
-    (address) => address.clientProfile,
-    {
-      cascade: ['insert', 'update'],
-    },
-  )
+  /* ------------------------------------------------------------------
+   * 📍 DIRECCIONES
+   * ------------------------------------------------------------------ */
+
+  @OneToMany(() => Address, (address) => address.clientProfile, {
+    cascade: ['insert', 'update'],
+  })
   addresses: Address[];
 }

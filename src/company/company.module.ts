@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { CompanyController } from './company.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { FacturaeParty } from 'src/facturae/entities/facturaeParty.entity';
-import { UserCompanyRole } from 'src/user-company-role/entities/userCompanyRole.entity';
+import { FiscalIdentity } from 'src/facturae/entities/fiscalIdentity.entity';
+import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
 import { Company } from './entities/company.entity';
 import { Address } from 'src/address/entities/address.entity';
 
@@ -11,9 +11,9 @@ import { Address } from 'src/address/entities/address.entity';
   imports: [
     TypeOrmModule.forFeature([
       Company,
-      FacturaeParty,
+      FiscalIdentity,
       Address,  
-      UserCompanyRole,
+      CompanyRoleEntity,
     ]),
   ],
   controllers: [CompanyController],

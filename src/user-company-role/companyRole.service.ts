@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { UserCompanyRole } from './entities/userCompanyRole.entity';
+import { CompanyRoleEntity } from './entities/userCompanyRole.entity';
 import { CreateUserCompanyRoleDto, UpdateUserCompanyRoleDto } from './dto';
 import { User } from 'src/user/entities/user.entity';
 import { Company } from 'src/company/entities/company.entity';
@@ -10,8 +10,8 @@ import { Company } from 'src/company/entities/company.entity';
 @Injectable()
 export class UserCompanyRoleService {
   constructor(
-    @InjectRepository(UserCompanyRole)
-    private readonly repo: Repository<UserCompanyRole>,
+    @InjectRepository(CompanyRoleEntity)
+    private readonly repo: Repository<CompanyRoleEntity>,
 
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
@@ -28,7 +28,7 @@ export class UserCompanyRoleService {
    */
   async create(
     dto: CreateUserCompanyRoleDto,
-  ): Promise<UserCompanyRole> {
+  ): Promise<CompanyRoleEntity> {
     const user = await this.userRepo.findOne({
       where: { id: dto.userId },
     });
@@ -61,7 +61,7 @@ export class UserCompanyRoleService {
   /**
    * Listar todos los vínculos usuario-empresa
    */
-  async findAll(): Promise<UserCompanyRole[]> {
+  async findAll(): Promise<CompanyRoleEntity[]> {
     return this.repo.find({
       relations: ['user', 'company'],
     });
@@ -70,7 +70,7 @@ export class UserCompanyRoleService {
   /**
    * Obtener vínculo usuario-empresa por ID
    */
-  async findOne(id: string): Promise<UserCompanyRole> {
+  async findOne(id: string): Promise<CompanyRoleEntity> {
     const entity = await this.repo.findOne({
       where: { id },
       relations: ['user', 'company'],
@@ -93,7 +93,7 @@ export class UserCompanyRoleService {
   async update(
     id: string,
     dto: UpdateUserCompanyRoleDto,
-  ): Promise<UserCompanyRole> {
+  ): Promise<CompanyRoleEntity> {
     const entity = await this.findOne(id);
 
     if (dto.role) {

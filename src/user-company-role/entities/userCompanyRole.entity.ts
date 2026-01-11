@@ -10,7 +10,7 @@ import {
 import { BaseEntity } from 'src/common/base/base.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Company } from 'src/company/entities/company.entity';
-import { CompanyRole } from '../enums/userCompanyRole.enum';
+import { CompanyRole } from '../enums/companyRole.enum';
 
 /**
  * Entidad UserCompanyRole
@@ -25,8 +25,8 @@ import { CompanyRole } from '../enums/userCompanyRole.enum';
  * - navegación del frontend
  * - facturación multiempresa
  */
-@Entity('user_company_roles')
-export class UserCompanyRole extends BaseEntity {
+@Entity('company_roles')
+export class CompanyRoleEntity extends BaseEntity {
 
   /* ------------------------------------------------------------------
    * ROL

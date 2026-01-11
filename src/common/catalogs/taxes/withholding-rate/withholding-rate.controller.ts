@@ -26,12 +26,12 @@ import { WithholdingRate } from './withholding-rate.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
 @ApiTags('Withholding Rates')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
+@Roles(AppRole.SUPERADMIN, AppRole.ADMIN)
 @Controller('withholding-rates')
 export class WithholdingRateController {
   constructor(

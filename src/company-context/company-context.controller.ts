@@ -6,12 +6,12 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import { CompanyContextService } from './company-context.service';
 import { SelectCompanyDto } from './dto/select-company.dto';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @ApiTags('context')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
+@Roles(AppRole.SUPERADMIN, AppRole.ADMIN)
 @Controller('context')
 export class CompanyContextController {
   constructor(private readonly companyContextService: CompanyContextService) {}

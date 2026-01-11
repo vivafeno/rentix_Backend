@@ -6,9 +6,9 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,8 +16,6 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiCreatedResponse,
-  ApiBody,
-  ApiParam,
   ApiNoContentResponse,
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
@@ -31,125 +29,68 @@ import { UserDto } from './dto/user.dto';
 import { MeDto } from './dto/me.dto';
 
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
-@ApiTags('user')
+@ApiTags('Users') // Estándar plural
 @ApiBearerAuth()
-@Controller('user')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
+@ApiUnauthorizedResponse({ description: 'No autenticado' })
+@ApiForbiddenResponse({ description: 'Sin permisos suficientes' })
+@Controller('users') // Estándar plural
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  /**
-   * Crear un nuevo usuario
-   * Solo accesible para ADMIN / SUPERADMIN
-   */
   @Post()
-  @ApiOperation({ summary: 'Crear un nuevo usuario' })
-  @ApiBody({ type: CreateUserDto })
-  @ApiCreatedResponse({
-    description: 'Usuario creado correctamente',
-    type: UserDto,
-  })
-  @ApiUnauthorizedResponse({ description: 'No autenticado' })
-  @ApiForbiddenResponse({ description: 'Sin permisos suficientes' })
+  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN)
+  @ApiOperation({ summary: 'Crear un nuevo usuario (Solo Admin/SuperAdmin)' })
+  @ApiCreatedResponse({ description: 'Usuario creado correctamente', type: UserDto })
   create(@Body() dto: CreateUserDto): Promise<UserDto> {
     return this.userService.create(dto);
   }
 
-  /**
-   * Listar todos los usuarios activos
-   */
   @Get()
-  @ApiOperation({ summary: 'Listar todos los usuarios activos' })
-  @ApiOkResponse({
-    description: 'Listado de usuarios',
-    type: UserDto,
-    isArray: true,
-  })
+  @Auth(AppRole.SUPERADMIN) // Solo el dueño del sistema lista a todos
+  @ApiOperation({ summary: 'Listar todos los usuarios activos (Solo SuperAdmin)' })
+  @ApiOkResponse({ description: 'Listado de usuarios', type: [UserDto] })
   findAll(): Promise<UserDto[]> {
     return this.userService.findAll();
   }
 
-  /**
-   * Usuario autenticado (me)
-   * Endpoint crítico para el front
-   */
   @Get('me')
-  @Roles(
-    UserGlobalRole.SUPERADMIN,
-    UserGlobalRole.ADMIN,
-    UserGlobalRole.USER,
-  )
-  @ApiOperation({ summary: 'Usuario autenticado (me)' })
-  @ApiOkResponse({
-    description: 'Datos del usuario autenticado',
-    type: MeDto,
-  })
-  getMe(@GetUser() user: { id: string }): Promise<MeDto> {
-    return this.userService.findMe(user.id);
+  @Auth() // Cualquier usuario autenticado puede ver sus datos
+  @ApiOperation({ summary: 'Obtener datos del usuario logueado' })
+  @ApiOkResponse({ description: 'Datos del usuario autenticado', type: MeDto })
+  getMe(@GetUser('id') userId: string): Promise<MeDto> {
+    // Usamos el ID del token para buscar en DB y devolver el DTO completo
+    return this.userService.findMe(userId);
   }
 
-  /**
-   * Obtener usuario por ID
-   */
   @Get(':id')
+  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN)
   @ApiOperation({ summary: 'Obtener un usuario por ID' })
-  @ApiParam({
-    name: 'id',
-    description: 'UUID del usuario',
-    example: 'c3f6c9c1-9e9a-4a4b-8f88-3b8b9e7b6c21',
-  })
-  @ApiOkResponse({
-    description: 'Usuario encontrado',
-    type: UserDto,
-  })
+  @ApiOkResponse({ description: 'Usuario encontrado', type: UserDto })
   @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
-  findOne(@Param('id') id: string): Promise<UserDto> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<UserDto> {
     return this.userService.findOne(id);
   }
 
-  /**
-   * Actualizar un usuario
-   */
   @Patch(':id')
+  @Auth(AppRole.SUPERADMIN)
   @ApiOperation({ summary: 'Actualizar un usuario' })
-  @ApiParam({
-    name: 'id',
-    description: 'UUID del usuario',
-  })
-  @ApiBody({ type: UpdateUserDto })
-  @ApiOkResponse({
-    description: 'Usuario actualizado',
-    type: UserDto,
-  })
-  @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
+  @ApiOkResponse({ description: 'Usuario actualizado', type: UserDto })
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
   ): Promise<UserDto> {
     return this.userService.update(id, dto);
   }
 
-  /**
-   * Desactivar un usuario (soft delete)
-   */
   @Delete(':id')
+  @Auth(AppRole.SUPERADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Desactivar un usuario (soft delete)' })
-  @ApiParam({
-    name: 'id',
-    description: 'UUID del usuario',
-  })
-  @ApiNoContentResponse({
-    description: 'Usuario desactivado correctamente',
-  })
-  @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
-  remove(@Param('id') id: string): Promise<void> {
+  @ApiNoContentResponse({ description: 'Usuario desactivado correctamente' })
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.userService.remove(id);
   }
 }

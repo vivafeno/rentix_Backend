@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { AppRole } from '../enums/user-global-role.enum';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
@@ -13,6 +13,6 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
   }
 
   async validate(payload: any) {
-    return { userId: payload.sub, email: payload.email, UserGlobalRole: payload.UserGlobalRole as UserGlobalRole };
+    return { userId: payload.sub, email: payload.email, UserGlobalRole: payload.UserGlobalRole as AppRole };
   }
 }

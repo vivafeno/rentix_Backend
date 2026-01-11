@@ -9,21 +9,20 @@ import * as bcrypt from 'bcrypt';
  * AUTH / USERS
  * ───────────────────────────────────── */
 import { User } from '../user/entities/user.entity';
-import { UserGlobalRole } from '../auth/enums/user-global-role.enum';
+import { AppRole } from '../auth/enums/user-global-role.enum';
 
 /* ─────────────────────────────────────
  * COMPANY / ROLES
  * ───────────────────────────────────── */
 import { Company } from '../company/entities/company.entity';
-import { UserCompanyRole } from '../user-company-role/entities/userCompanyRole.entity';
-import { CompanyRole } from '../user-company-role/enums/userCompanyRole.enum';
+import { CompanyRoleEntity } from '../user-company-role/entities/userCompanyRole.entity';
+import { CompanyRole } from '../user-company-role/enums/companyRole.enum';
 
 /* ─────────────────────────────────────
  * FACTURAE (IDENTIDAD LEGAL)
  * ───────────────────────────────────── */
-import { FacturaeParty } from '../facturae/entities/facturaeParty.entity';
-import { PersonType, TaxIdType, ResidenceType, TaxRegimeType, SubjectType} from '../facturae/enums/';
-
+import { FiscalIdentity } from '../facturae/entities/fiscalIdentity.entity';
+import { PersonType, TaxIdType, ResidenceType, TaxRegimeType } from '../facturae/enums/';
 /* ─────────────────────────────────────
  * ADDRESS
  * ───────────────────────────────────── */
@@ -47,11 +46,11 @@ export class SeederService {
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
 
-    @InjectRepository(FacturaeParty)
-    private readonly facturaePartyRepo: Repository<FacturaeParty>,
+    @InjectRepository(FiscalIdentity)
+    private readonly facturaePartyRepo: Repository<FiscalIdentity>,
 
-    @InjectRepository(UserCompanyRole)
-    private readonly userCompanyRoleRepo: Repository<UserCompanyRole>,
+    @InjectRepository(CompanyRoleEntity)
+    private readonly userCompanyRoleRepo: Repository<CompanyRoleEntity>,
 
     @InjectRepository(Address)
     private readonly addressRepo: Repository<Address>,
@@ -61,7 +60,7 @@ export class SeederService {
 
     @InjectRepository(WithholdingRate)
     private readonly withholdingRepo: Repository<WithholdingRate>,
-  ) {}
+  ) { }
 
   /* ─────────────────────────────────────
    * SEED PRINCIPAL
@@ -99,10 +98,6 @@ export class SeederService {
 
   /* ─────────────────────────────────────
    * USUARIO SUPERADMIN
-   *
-   * - Rol global SUPERADMIN
-   * - Puede crear empresas
-   * - NO es owner por defecto (eso es otra cosa)
    * ───────────────────────────────────── */
   private async seedSuperAdmin(): Promise<User> {
     let user = await this.userRepo.findOne({
@@ -113,11 +108,15 @@ export class SeederService {
       user = this.userRepo.create({
         email: 'admin@rentix.com',
         password: await bcrypt.hash('Admin123!', 10),
-        userGlobalRole: UserGlobalRole.SUPERADMIN,
+        // 👇 Cambio crítico: de userGlobalRole a appRole
+        appRole: AppRole.SUPERADMIN,
+        firstName: 'System',
+        lastName: 'Admin',
+        isEmailVerified: true,
       });
 
       await this.userRepo.save(user);
-      this.logger.log('✔ Usuario superadmin creado');
+      this.logger.log('✔ Usuario superadmin creado (appRole: SUPERADMIN)');
     }
 
     return user;
@@ -129,21 +128,24 @@ export class SeederService {
    * Representa la identidad legal/fiscal.
    * NO contiene permisos ni auditoría de la app.
    * ───────────────────────────────────── */
-  private async seedFacturaeParty(): Promise<FacturaeParty> {
+  private async seedFacturaeParty(): Promise<FiscalIdentity> {
     let party = await this.facturaePartyRepo.findOne({
       where: { taxId: 'B00000000' },
     });
 
     if (!party) {
       party = this.facturaePartyRepo.create({
+        // 1. Definimos que es EMPRESA
         personType: PersonType.LEGAL_ENTITY,
-        taxIdType: TaxIdType.CIF,
-        taxId: 'B00000000',
-        legalName: 'Empresa Demo SL',
-        residenceType: ResidenceType.RESIDENT,
-        countryCode: 'ES',
-        taxRegime: TaxRegimeType.GENERAL,
-        subjectType: SubjectType.SUBJECT,
+
+        // 2. Usamos corporateName en vez de legalName
+        corporateName: 'Empresa Test S.L.',
+
+        // 3. Ajustamos los enums a los nuevos valores AEAT
+        taxId: 'B12345678',
+        taxIdType: TaxIdType.NIF, // O el valor '01' si no usas el enum aquí
+        residenceType: ResidenceType.RESIDENT, // 'R'
+        countryCode: 'ESP',
       });
 
       await this.facturaePartyRepo.save(party);
@@ -162,7 +164,7 @@ export class SeederService {
    * - La dirección fiscal NUNCA se crea sin empresa
    * ───────────────────────────────────── */
   private async seedCompanyWithFiscalAddress(
-    facturaeParty: FacturaeParty,
+    facturaeParty: FiscalIdentity,
     createdBy: User,
   ): Promise<Company> {
     let company = await this.companyRepo.findOne({

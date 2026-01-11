@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { FacturaeController } from './facturae.controller';
-import { FacturaeService } from './facturae.service';
-import { FacturaeParty } from './entities/facturaeParty.entity';
+import { FiscalIdentityController } from './fiscalIdentity.controller';
+import { FiscalIdentityService } from './fiscalIdentity.service';
+import { FiscalIdentity } from './entities/fiscalIdentity.entity';
 
 /**
  * FacturaeModule
@@ -19,13 +19,13 @@ import { FacturaeParty } from './entities/facturaeParty.entity';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FacturaeParty]),
+    TypeOrmModule.forFeature([FiscalIdentity]),
   ],
-  controllers: [FacturaeController],
-  providers: [FacturaeService],
+  controllers: [FiscalIdentityController],
+  providers: [FiscalIdentityService],
   exports: [
     TypeOrmModule,
-    FacturaeService,
+    FiscalIdentityService,
   ],
 })
 export class FacturaeModule {}

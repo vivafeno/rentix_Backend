@@ -39,7 +39,7 @@ export class AuthService {
     const payload = {
       sub: user.id,
       email: user.email,
-      userGlobalRole: user.userGlobalRole,
+      appRole: user.appRole,
     };
 
     // Access token (configurado en JwtModule)

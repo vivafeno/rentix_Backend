@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CompanyRole } from 'src/user-company-role/enums/userCompanyRole.enum';
+import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
 
 export class CompanyMeDto {
   @ApiProperty({

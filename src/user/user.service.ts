@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
@@ -18,30 +17,19 @@ export class UserService {
   ) {}
 
   /* ------------------------------------------------------------------
-   * MAPPERS
+   * MAPPERS (Privados)
    * ------------------------------------------------------------------ */
 
-  /**
-   * Mapper de entidad → DTO público
-   * Oculta password y refreshTokenHash
-   */
   private toDto(user: User): UserDto {
-    const {
-      id,
-      email,
-      userGlobalRole,
-      isActive,
-      createdAt,
-      updatedAt,
-    } = user;
-
     return {
-      id,
-      email,
-      userGlobalRole,
-      isActive,
-      createdAt,
-      updatedAt,
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName, // Incluimos campos de perfil
+      lastName: user.lastName,
+      appRole: user.appRole,     // Nombre unificado
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 
@@ -51,12 +39,10 @@ export class UserService {
 
   async create(dto: CreateUserDto): Promise<UserDto> {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-
     const user = this.userRepository.create({
       ...dto,
       password: hashedPassword,
     });
-
     const saved = await this.userRepository.save(user);
     return this.toDto(saved);
   }
@@ -64,36 +50,23 @@ export class UserService {
   async findAll(): Promise<UserDto[]> {
     const users = await this.userRepository.find({
       where: { isActive: true },
-      relations: ['companyRoles'],
     });
-
     return users.map((u) => this.toDto(u));
   }
 
   async findOne(id: string): Promise<UserDto> {
     const user = await this.userRepository.findOne({
       where: { id, isActive: true },
-      relations: ['companyRoles', 'clientProfiles'],
+      relations: ['companyRoles', 'companyRoles.company'],
     });
 
-    if (!user) {
-      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
-    }
-
+    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
     return this.toDto(user);
   }
 
-  async update(
-    id: string,
-    dto: UpdateUserDto,
-  ): Promise<UserDto> {
-    const user = await this.userRepository.findOne({
-      where: { id, isActive: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
-    }
+  async update(id: string, dto: UpdateUserDto): Promise<UserDto> {
+    const user = await this.userRepository.findOne({ where: { id, isActive: true } });
+    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
 
     if (dto.password) {
       dto.password = await bcrypt.hash(dto.password, 10);
@@ -101,50 +74,41 @@ export class UserService {
 
     Object.assign(user, dto);
     const updated = await this.userRepository.save(user);
-
     return this.toDto(updated);
   }
 
-  /**
-   * Soft delete
-   * → Devuelve void para encajar con HTTP 204
-   */
   async remove(id: string): Promise<void> {
-    const user = await this.userRepository.findOne({
-      where: { id },
-    });
-
-    if (!user) {
-      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
-    }
-
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    
     user.isActive = false;
     await this.userRepository.save(user);
   }
 
   /* ------------------------------------------------------------------
-   * MÉTODOS AUXILIARES (AUTH)
+   * AUTH HELPERS (Uso de QueryBuilder para campos ocultos)
    * ------------------------------------------------------------------ */
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email } });
+    return this.userRepository.createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .getOne();
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id } });
+    return this.userRepository.createQueryBuilder('user')
+      .addSelect('user.refreshTokenHash') // 👈 Vital para el refresh token
+      .where('user.id = :id', { id })
+      .getOne();
   }
 
-  async updateRefreshToken(
-    id: string,
-    refreshTokenHash: string | null,
-  ): Promise<void> {
-    await this.userRepository.update(id, {
-      refreshTokenHash: refreshTokenHash ?? undefined,
-    });
+  async updateRefreshToken(id: string, hash: string | null): Promise<void> {
+    await this.userRepository.update(id, { refreshTokenHash: hash });
   }
 
   /* ------------------------------------------------------------------
-   * /user/me
+   * GET ME (Perfil completo para el Front)
    * ------------------------------------------------------------------ */
 
   async findMe(userId: string): Promise<MeDto> {
@@ -154,29 +118,26 @@ export class UserService {
         'companyRoles',
         'companyRoles.company',
         'companyRoles.company.facturaeParty',
-        'clientProfiles',
       ],
     });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    if (!user) throw new NotFoundException('Usuario no encontrado');
 
     return {
       id: user.id,
       email: user.email,
-      userGlobalRole: user.userGlobalRole,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      appRole: user.appRole, // Usamos appRole consistentemente
       isActive: user.isActive,
-      created_at: user.createdAt,
-      updated_at: user.updatedAt,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
       companyRoles: user.companyRoles?.map((cr) => ({
         companyId: cr.company.id,
-        companyName:
-          cr.company.facturaeParty?.legalName ??
-          'Empresa sin nombre',
+        companyName: cr.company.facturaeParty?.corporateName || 
+             (cr.company.facturaeParty?.firstName ? `${cr.company.facturaeParty.firstName} ${cr.company.facturaeParty.lastName}` : 'Empresa sin nombre'),
         role: cr.role,
-      })),
-      clientProfiles: user.clientProfiles ?? [],
+      })) || [],
     };
   }
 }

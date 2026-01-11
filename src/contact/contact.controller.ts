@@ -7,11 +7,11 @@ import { Contact } from './entities/contact.entity';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
 @ApiTags('Contact')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN, UserGlobalRole.USER)
+@Roles(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
 @Controller('contact')
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}

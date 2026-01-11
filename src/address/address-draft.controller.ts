@@ -25,7 +25,7 @@ import { Address } from './entities/address.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
 /**
  * Controller para direcciones en borrador (DRAFT)
@@ -37,9 +37,9 @@ import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(
-  UserGlobalRole.SUPERADMIN,
-  UserGlobalRole.ADMIN,
-  UserGlobalRole.USER,
+  AppRole.SUPERADMIN,
+  AppRole.ADMIN,
+  AppRole.USER,
 )
 @Controller('addresses/drafts')
 export class AddressDraftController {

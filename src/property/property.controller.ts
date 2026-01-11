@@ -24,12 +24,12 @@ import { Property } from './entities/property.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
 @ApiTags('Properties')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN, UserGlobalRole.USER)
+@Roles(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
 @Controller('companies/:companyId/properties')
 export class PropertyController {
   constructor(private readonly propertyService: PropertyService) {}

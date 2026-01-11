@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,12 +10,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Company } from './entities/company.entity';
 import { CreateCompanyDto, CompanyMeDto } from './dto';
 
-import { FacturaeParty } from 'src/facturae/entities/facturaeParty.entity';
+import { FiscalIdentity } from 'src/facturae/entities/fiscalIdentity.entity';
 import { Address } from 'src/address/entities/address.entity';
 import { AddressStatus } from 'src/address/enums/addressStatus.enum';
 
-import { CompanyRole } from 'src/user-company-role/enums/userCompanyRole.enum';
-import { UserCompanyRole } from 'src/user-company-role/entities/userCompanyRole.entity';
+import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
+import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
 
 @Injectable()
 export class CompanyService {
@@ -22,79 +24,51 @@ export class CompanyService {
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
 
-    @InjectRepository(UserCompanyRole)
-    private readonly userCompanyRoleRepo: Repository<UserCompanyRole>,
+    @InjectRepository(CompanyRoleEntity)
+    private readonly userCompanyRoleRepo: Repository<CompanyRoleEntity>,
 
     private readonly dataSource: DataSource,
   ) { }
 
   /**
-   * ─────────────────────────────────────────────
-   * Crear empresa (flujo desacoplado)
-   *
-   * PRECONDICIONES:
-   * - facturaePartyId existe
-   * - fiscalAddressId existe
-   * - fiscalAddress NO está ligada a otra empresa
-   * - el usuario autenticado será OWNER
-   * ─────────────────────────────────────────────
+   * Crea una empresa en una transacción:
+   * 1. Vincula la identidad legal (FacturaeParty)
+   * 2. Vincula la dirección fiscal y la activa
+   * 3. Crea la empresa con auditoría
+   * 4. Asigna al creador el rol de OWNER
    */
-  async createCompany(
-    dto: CreateCompanyDto,
-    ownerUserId: string,
-  ): Promise<Company> {
+  async createCompany(dto: CreateCompanyDto, ownerUserId: string): Promise<Company> {
     return this.dataSource.transaction(async (manager) => {
-      // 1️⃣ Identidad fiscal
-      const facturaeParty = await manager.findOne(FacturaeParty, {
-        where: {
-          id: dto.facturaePartyId,
-          isActive: true,
-        },
+      const facturaeParty = await manager.findOne(FiscalIdentity, {
+        where: { id: dto.facturaePartyId, isActive: true },
       });
+      if (!facturaeParty) throw new NotFoundException('Identidad fiscal no encontrada');
 
-      if (!facturaeParty) {
-        throw new NotFoundException('Identidad fiscal no encontrada');
-      }
-
-      // 2️⃣ Dirección fiscal
       const fiscalAddress = await manager.findOne(Address, {
-        where: {
-          id: dto.fiscalAddressId,
-          isActive: true,
-        },
+        where: { id: dto.fiscalAddressId, isActive: true },
       });
+      if (!fiscalAddress) throw new NotFoundException('Dirección fiscal no encontrada');
 
-      if (!fiscalAddress) {
-        throw new NotFoundException('Dirección fiscal no encontrada');
-      }
-
-      // 3️⃣ Defensa: dirección ya ligada
       if (fiscalAddress.companyId) {
-        throw new ConflictException(
-          'La dirección fiscal ya está asociada a una empresa',
-        );
+        throw new ConflictException('La dirección fiscal ya está asociada a otra empresa');
       }
 
-      // 4️⃣ Crear empresa
-      const company = manager.create(Company, {
-        facturaeParty,
+      const company = manager.create(Company, { 
+        facturaeParty, 
         fiscalAddress,
+        createdByUserId: ownerUserId 
       });
-
       await manager.save(company);
 
-      // 5️⃣ Activar dirección
       fiscalAddress.companyId = company.id;
       fiscalAddress.status = AddressStatus.ACTIVE;
       await manager.save(fiscalAddress);
 
-      // 6️⃣ Asignar OWNER
-      const ownerRole = manager.create(UserCompanyRole, {
-        user: { id: ownerUserId },
+      const ownerRole = manager.create(CompanyRoleEntity, {
+        user: { id: ownerUserId } as any, 
         company,
         role: CompanyRole.OWNER,
       });
-
       await manager.save(ownerRole);
 
       return company;
@@ -102,69 +76,33 @@ export class CompanyService {
   }
 
   /**
-  * ─────────────────────────────────────────────
-  * Empresas del usuario autenticado
-  *
-  * GET /companies/me
-  *
-  * Devuelve:
-  * - Datos legales (FacturaeParty)
-  * - CIF / NIF
-  * - Email del OWNER
-  * - Rol del usuario autenticado
-  * ─────────────────────────────────────────────
-  */
- async getCompaniesForUser(
-  userId: string,
-): Promise<CompanyMeDto[]> {
-  const relations = await this.userCompanyRoleRepo.find({
-    where: {
-      user: { id: userId },
-      isActive: true,
-    },
-    relations: [
-      'company',
-      'company.companyRoles',
-      'company.companyRoles.user',
-      // facturaeParty es eager
-    ],
-  });
-
-  return relations.map((r) => {
-    const owner = r.company.companyRoles.find(
-      cr => cr.role === CompanyRole.OWNER,
-    );
-
-    return {
-      companyId: r.company.id,
-      legalName: r.company.facturaeParty.legalName,
-      tradeName: r.company.facturaeParty.tradeName,
-      taxId: r.company.facturaeParty.taxId,
-      ownerEmail: owner?.user?.email ?? '',
-      role: r.role,
-    };
-  });
-}
-
-
-
-
-  /**
-   * ─────────────────────────────────────────────
-   * Empresa concreta
-   * ─────────────────────────────────────────────
+   * Retorna las empresas vinculadas al usuario para el dashboard 'Mis Empresas'
    */
-  async findOne(id: string): Promise<Company | null> {
-    return this.companyRepo.findOne({
-      where: { id, isActive: true },
-      relations: ['facturaeParty', 'fiscalAddress'],
+  async getCompaniesForUser(userId: string): Promise<CompanyMeDto[]> {
+    const relations = await this.userCompanyRoleRepo.find({
+      where: { user: { id: userId } as any, isActive: true },
+      relations: ['company', 'company.facturaeParty', 'company.companyRoles', 'company.companyRoles.user'],
+    });
+
+    return relations.map((r) => {
+      const owner = r.company.companyRoles.find(
+        (cr) => cr.role === CompanyRole.OWNER
+      );
+
+      return {
+        companyId: r.company.id,
+        legalName: r.company.facturaeParty?.corporateName || 
+           (r.company.facturaeParty?.firstName ? `${r.company.facturaeParty.firstName} ${r.company.facturaeParty.lastName}` : 'N/A'),
+        tradeName: r.company.facturaeParty?.tradeName || 'N/A',
+        taxId: r.company.facturaeParty?.taxId || 'N/A',
+        ownerEmail: owner?.user?.email ?? '',
+        role: r.role as unknown as CompanyRole,
+      };
     });
   }
 
   /**
-   * ─────────────────────────────────────────────
-   * Listado global
-   * ─────────────────────────────────────────────
+   * Listado global (Solo accesible si el Guard permitió el paso a SUPERADMIN)
    */
   async findAll(): Promise<Company[]> {
     return this.companyRepo.find({
@@ -172,5 +110,81 @@ export class CompanyService {
       relations: ['facturaeParty', 'fiscalAddress'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  /**
+   * Obtiene una empresa validando si el usuario tiene permiso de verla
+   */
+  async findOneWithAccess(id: string, userId: string, appRole: AppRole): Promise<Company> {
+    const company = await this.companyRepo.findOne({
+      where: { id, isActive: true },
+      relations: ['facturaeParty', 'fiscalAddress'],
+    });
+
+    if (!company) throw new NotFoundException('Empresa no encontrada');
+
+    // SUPERADMIN ve todo por defecto
+    if (appRole === AppRole.SUPERADMIN) return company;
+
+    // Verificación de relación en la tabla de roles
+    const hasAccess = await this.userCompanyRoleRepo.findOne({
+      where: {
+        user: { id: userId } as any,
+        company: { id } as any,
+        isActive: true
+      }
+    });
+
+    if (!hasAccess) throw new ForbiddenException('No tienes permiso para ver esta empresa');
+
+    return company;
+  }
+
+  /**
+   * Actualiza datos validando que sea el Propietario o un Admin Global
+   */
+  async updateWithAccess(id: string, updateDto: any, userId: string, appRole: AppRole): Promise<Company> {
+    const company = await this.findOneWithAccess(id, userId, appRole);
+
+    if (appRole !== AppRole.SUPERADMIN) {
+      const ownerRole = await this.userCompanyRoleRepo.findOne({
+        where: { user: { id: userId } as any, company: { id } as any, role: CompanyRole.OWNER }
+      });
+      if (!ownerRole) throw new ForbiddenException('Solo el propietario (OWNER) puede editar esta empresa');
+    }
+
+    const updatedCompany = this.companyRepo.merge(company, updateDto);
+    return this.companyRepo.save(updatedCompany);
+  }
+
+  /**
+   * Borrado lógico de empresa
+   */
+  async softDeleteWithAccess(id: string, userId: string, appRole: AppRole): Promise<void> {
+    // Validamos permisos (si puede editar, puede borrar)
+    await this.updateWithAccess(id, {}, userId, appRole);
+
+    await this.companyRepo.update(id, { 
+      isActive: false, 
+      deletedAt: new Date() 
+    });
+  }
+
+  /**
+   * Miembros de la empresa
+   */
+  async getCompanyMembers(companyId: string): Promise<any[]> {
+    const members = await this.userCompanyRoleRepo.find({
+      where: { company: { id: companyId } as any, isActive: true },
+      relations: ['user'],
+    });
+
+    return members.map(m => ({
+      userId: m.user.id,
+      email: m.user.email,
+      fullName: `${m.user.firstName || ''} ${m.user.lastName || ''}`.trim(),
+      role: m.role,
+      since: m.createdAt
+    }));
   }
 }

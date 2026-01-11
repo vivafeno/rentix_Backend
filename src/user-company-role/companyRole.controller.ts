@@ -20,20 +20,21 @@ import {
   ApiNoContentResponse,
 } from '@nestjs/swagger';
 
-import { UserCompanyRoleService } from './userCompanyRole.service';
+import { UserCompanyRoleService } from './companyRole.service';
 import { CreateUserCompanyRoleDto } from './dto/createUuserCompanyRole.dto';
 import { UpdateUserCompanyRoleDto } from './dto/updateUserCompanyRole.dto';
-import { UserCompanyRole } from './entities/userCompanyRole.entity';
+import { CompanyRoleEntity } from './entities/userCompanyRole.entity';
 
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
-@ApiTags('UserCompanyRole')
+
+@ApiTags('CompanyRole')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
+@Roles(AppRole.SUPERADMIN, AppRole.ADMIN)
 @Controller('user-company-role')
 export class UserCompanyRoleController {
   constructor(
@@ -45,11 +46,11 @@ export class UserCompanyRoleController {
   @ApiBody({ type: CreateUserCompanyRoleDto })
   @ApiCreatedResponse({
     description: 'Vínculo creado',
-    type: UserCompanyRole,
+    type: CompanyRoleEntity,
   })
   create(
     @Body() dto: CreateUserCompanyRoleDto,
-  ): Promise<UserCompanyRole> {
+  ): Promise<CompanyRoleEntity> {
     return this.userCompanyRoleService.create(dto);
   }
 
@@ -57,10 +58,10 @@ export class UserCompanyRoleController {
   @ApiOperation({ summary: 'Listar todos los vínculos usuario-empresa' })
   @ApiOkResponse({
     description: 'Lista de vínculos',
-    type: UserCompanyRole,
+    type: CompanyRoleEntity,
     isArray: true,
   })
-  findAll(): Promise<UserCompanyRole[]> {
+  findAll(): Promise<CompanyRoleEntity[]> {
     return this.userCompanyRoleService.findAll();
   }
 
@@ -72,9 +73,9 @@ export class UserCompanyRoleController {
   })
   @ApiOkResponse({
     description: 'Vínculo encontrado',
-    type: UserCompanyRole,
+    type: CompanyRoleEntity,
   })
-  findOne(@Param('id') id: string): Promise<UserCompanyRole> {
+  findOne(@Param('id') id: string): Promise<CompanyRoleEntity> {
     return this.userCompanyRoleService.findOne(id);
   }
 
@@ -87,12 +88,12 @@ export class UserCompanyRoleController {
   @ApiBody({ type: UpdateUserCompanyRoleDto })
   @ApiOkResponse({
     description: 'Vínculo actualizado',
-    type: UserCompanyRole,
+    type: CompanyRoleEntity,
   })
   update(
     @Param('id') id: string,
     @Body() dto: UpdateUserCompanyRoleDto,
-  ): Promise<UserCompanyRole> {
+  ): Promise<CompanyRoleEntity> {
     return this.userCompanyRoleService.update(id, dto);
   }
 

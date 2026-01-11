@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-import { CreateFacturaePartyDto } from 'src/facturae/dto/createFacturaeParty.dto';
+import { CreateFiscalIdentityDto } from 'src/facturae/dto/create-fiscalIdentity.dto';
 import { CreateAddressDto } from 'src/address/dto/create-address.dto';
 
 export class CreateCompanyLegalDto {
@@ -16,11 +16,11 @@ export class CreateCompanyLegalDto {
 
   @ApiProperty({
     description: 'Identidad fiscal (Facturae)',
-    type: CreateFacturaePartyDto,
+    type: CreateFiscalIdentityDto,
   })
   @ValidateNested()
-  @Type(() => CreateFacturaePartyDto)
-  facturaeParty: CreateFacturaePartyDto;
+  @Type(() => CreateFiscalIdentityDto)
+  facturaeParty: CreateFiscalIdentityDto;
 
   @ApiProperty({
     description: 'Dirección fiscal',

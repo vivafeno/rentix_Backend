@@ -1,105 +1,91 @@
-import {
-  Entity,
-  Column,
-  OneToMany,
-} from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { BaseEntity } from 'src/common/base/base.entity';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
-import { UserCompanyRole } from 'src/user-company-role/entities/userCompanyRole.entity';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
+import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
 import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
 
-/**
- * Entidad User
- *
- * Representa a un usuario del sistema Rentix.
- * Puede actuar como:
- * - Usuario interno (SUPERADMIN / ADMIN / USER)
- * - Usuario vinculado a una o varias empresas con roles específicos
- *
- * ⚠️ Aunque no se expone directamente como DTO,
- * se documenta correctamente para:
- * - Swagger / OpenAPI
- * - generación de api-types en frontend
- */
 @Entity('users')
 export class User extends BaseEntity {
 
-  /* ------------------------------------------------------------------
-   * CREDENCIALES
-   * ------------------------------------------------------------------ */
-
   @ApiProperty({
-    description: 'Correo electrónico del usuario (único)',
-    example: 'usuario@rentix.app',
+    description: 'Correo electrónico único del usuario',
+    example: 'admin@rentix.com',
   })
   @Column({ unique: true })
   email: string;
 
-  @ApiProperty({
-    description: 'Hash de la contraseña del usuario',
-    example: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-  })
-  @Column()
+  @ApiProperty({ description: 'Contraseña (Hashed)', writeOnly: true })
+  @Column({ select: false }) // No se devuelve en los GET por seguridad
   password: string;
 
-  @ApiPropertyOptional({
-    description: 'Hash del refresh token activo',
-    example: '$2b$10$yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',
-  })
-  @Column({
-    type: 'text',
-    nullable: true,
-  })
-  refreshTokenHash: string | null;
+  /* ------------------------------------------------------------------
+   * DATOS PERSONALES (Sincronizados con el Setup Wizard)
+   * ------------------------------------------------------------------ */
+
+  @ApiPropertyOptional({ description: 'Nombre', example: 'Carlos' })
+  @Column({ name: 'first_name', nullable: true })
+  firstName?: string;
+
+  @ApiPropertyOptional({ description: 'Apellidos', example: 'Sanz' })
+  @Column({ name: 'last_name', nullable: true })
+  lastName?: string;
+
+  @ApiPropertyOptional({ description: 'Teléfono', example: '+34600112233' })
+  @Column({ nullable: true })
+  phone?: string;
+
+  @ApiPropertyOptional({ description: 'URL de la foto de perfil' })
+  @Column({ name: 'avatar_url', nullable: true })
+  avatarUrl?: string;
 
   /* ------------------------------------------------------------------
-   * ROL GLOBAL
-   * Controla permisos a nivel aplicación
+   * ROL GLOBAL (Aplicación)
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
-    description: 'Rol global del usuario dentro del sistema',
-    enum: UserGlobalRole,
-    example: UserGlobalRole.USER,
+    description: 'Rol global del usuario (SUPERADMIN, ADMIN, USER)',
+    enum: AppRole,
+    default: AppRole.USER,
   })
   @Column({
+    name: 'app_role',
     type: 'enum',
-    enum: UserGlobalRole,
-    default: UserGlobalRole.USER,
+    enum: AppRole,
+    default: AppRole.USER,
   })
-  userGlobalRole: UserGlobalRole;
+  appRole: AppRole;
+
+  @ApiProperty({ description: 'Estado de verificación del email' })
+  @Column({ name: 'is_email_verified', default: false })
+  isEmailVerified: boolean;
+
+  @Column({
+    name: 'refresh_token_hash',
+    type: 'varchar',
+    nullable: true,
+    select: false, // 👈 Seguridad: evita que el hash viaje en los JSON
+  })
+  refreshTokenHash?: string | null;
 
   /* ------------------------------------------------------------------
-   * RELACIÓN CON EMPRESAS
-   * Un usuario puede tener múltiples roles en distintas empresas
-   * ------------------------------------------------------------------ */
-
-  @ApiProperty({
-    description: 'Roles del usuario en distintas empresas',
-    type: () => UserCompanyRole,
-    isArray: true,
-  })
-  @OneToMany(
-    () => UserCompanyRole,
-    (ucr) => ucr.user,
-  )
-  companyRoles: UserCompanyRole[];
-
-  /* ------------------------------------------------------------------
-   * RELACIÓN CON CLIENTES
-   * Usuarios que actúan como gestores de clientes
+   * RELACIONES (Jerarquía de Empresa)
    * ------------------------------------------------------------------ */
 
   @ApiPropertyOptional({
-    description: 'Perfiles de cliente asociados al usuario',
-    type: () => ClientProfile,
-    isArray: true,
+    description: 'Roles del usuario en diferentes empresas (OWNER, CLIENT, etc.)',
+    // 👇 FIX CRÍTICO: Función flecha + Array para evitar ciclo infinito
+    type: () => [CompanyRoleEntity], 
   })
-  @OneToMany(
-    () => ClientProfile,
-    (client) => client.user,
-  )
-  clientProfiles?: ClientProfile[];
+  @OneToMany(() => CompanyRoleEntity, (ucr) => ucr.user)
+  companyRoles: CompanyRoleEntity[];
+
+  @ApiPropertyOptional({ 
+    description: 'Perfiles de cliente asociados a este usuario',
+    // 👇 FIX CRÍTICO: Función flecha + Array. Faltaba aquí.
+    type: () => [ClientProfile] 
+  })
+  @OneToMany(() => ClientProfile, (cp) => cp.user)
+  clientProfiles: ClientProfile[];
 }

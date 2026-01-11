@@ -9,10 +9,13 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { BaseEntity } from 'src/common/base/base.entity';
-import { FacturaeParty } from 'src/facturae/entities/facturaeParty.entity';
+import { FiscalIdentity } from 'src/facturae/entities/fiscalIdentity.entity';
 import { Address } from 'src/address/entities/address.entity';
-import { UserCompanyRole } from 'src/user-company-role/entities/userCompanyRole.entity';
+// import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum'; // (Parece no usarse aquí directamente)
 import { User } from 'src/user/entities/user.entity';
+import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
+// 👇 1. IMPORTAR CLIENT PROFILE
+import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
 
 @Entity('companies')
 export class Company extends BaseEntity {
@@ -31,11 +34,11 @@ export class Company extends BaseEntity {
 
   @ApiProperty({
     description: 'Entidad fiscal asociada a la empresa',
-    type: () => FacturaeParty,
+    type: () => FiscalIdentity,
   })
-  @OneToOne(() => FacturaeParty, { eager: true })
+  @OneToOne(() => FiscalIdentity, { eager: true })
   @JoinColumn({ name: 'facturae_party_id' })
-  facturaeParty: FacturaeParty;
+  facturaeParty: FiscalIdentity;
 
   /* ------------------------------------------------------------------
    * DIRECCIÓN FISCAL
@@ -91,12 +94,23 @@ export class Company extends BaseEntity {
 
   @ApiProperty({
     description: 'Roles de usuarios dentro de la empresa',
-    type: () => UserCompanyRole,
+    type: () => [CompanyRoleEntity],
     isArray: true,
   })
   @OneToMany(
-    () => UserCompanyRole,
+    () => CompanyRoleEntity,
     (ucr) => ucr.company,
   )
-  companyRoles: UserCompanyRole[];
+  companyRoles: CompanyRoleEntity[];
+
+  /* ------------------------------------------------------------------
+   * CRM: CLIENTES
+   * ------------------------------------------------------------------ */
+  // 👇 2. AÑADIR LA RELACIÓN CON LAZY LOAD PARA SWAGGER
+  @ApiPropertyOptional({
+    description: 'Cartera de clientes de la empresa',
+    type: () => [ClientProfile], // Función flecha evita el error circular
+  })
+  @OneToMany(() => ClientProfile, (client) => client.company)
+  clientProfiles: ClientProfile[];
 }

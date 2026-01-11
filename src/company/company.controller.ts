@@ -3,111 +3,102 @@ import {
   Get,
   Post,
   Body,
-  UseGuards,
+  Param,
+  Patch,
+  Delete,
+  ParseUUIDPipe
 } from '@nestjs/common';
 import {
   ApiTags,
-  ApiBearerAuth,
   ApiOperation,
-  ApiOkResponse,
-  ApiCreatedResponse,
-  ApiBody,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiForbiddenResponse,
+  ApiUnauthorizedResponse
 } from '@nestjs/swagger';
 
 import { CompanyService } from './company.service';
-import { CreateCompanyDto, CompanyMeDto } from './dto';
 import { Company } from './entities/company.entity';
-
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { CreateCompanyDto, CompanyMeDto } from './dto';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
-import { UserGlobalRole } from 'src/auth/enums/user-global-role.enum';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
-@ApiTags('companies')
-@ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard)
+@ApiTags('Companies')
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'No autorizado - Token inválido o ausente' })
+@ApiForbiddenResponse({ description: 'Prohibido - No tienes los permisos necesarios' })
 @Controller('companies')
 export class CompanyController {
-  constructor(
-    private readonly companyService: CompanyService,
-  ) {}
+  constructor(private readonly companyService: CompanyService) { }
 
-  /**
-   * ─────────────────────────────────────────────
-   * Crear empresa (flujo desacoplado)
-   *
-   * PRECONDICIONES:
-   * - facturaePartyId existe
-   * - fiscalAddressId existe
-   * - el usuario autenticado será OWNER
-   *
-   * El wizard del front controla el orden
-   * ─────────────────────────────────────────────
-   */
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
+  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN) // Solo creadores de sistema
   @ApiOperation({
-    summary: 'Crear empresa',
-    description:
-      'Crea una empresa vinculando una identidad fiscal y una dirección fiscal ya existentes',
+    summary: 'Crear empresa (Setup Wizard)',
+    description: 'Crea la empresa vinculada a Facturae y asigna al creador como OWNER.'
   })
-  @ApiBody({
-    type: CreateCompanyDto,
-    description: 'Datos necesarios para crear la empresa',
-  })
-  @ApiCreatedResponse({
-    description: 'Empresa creada correctamente',
-    type: Company,
-  })
-  createCompany(
-    @Body() dto: CreateCompanyDto,
-    @GetUser() user: { id: string },
-  ): Promise<Company> {
-    return this.companyService.createCompany(dto, user.id);
+  @ApiResponse({ status: 201, type: Company, description: 'Empresa creada con éxito' })
+  async create(
+    @Body() createCompanyDto: CreateCompanyDto,
+    @GetUser('id') userId: string,
+  ) {
+    return this.companyService.createCompany(createCompanyDto, userId);
   }
 
-  /**
-   * ─────────────────────────────────────────────
-   * Empresas del usuario autenticado
-   * ─────────────────────────────────────────────
-   */
   @Get('me')
+  @Auth() // Cualquier usuario autenticado
   @ApiOperation({
-    summary: 'Empresas del usuario autenticado',
-    description:
-      'Devuelve las empresas a las que pertenece el usuario junto con su rol',
+    summary: 'Mis empresas vinculadas',
+    description: 'Filtra empresas por el ID del usuario extraído del token.'
   })
-  @ApiOkResponse({
-    description: 'Empresas del usuario',
-    type: CompanyMeDto,
-    isArray: true,
-  })
-  getMyCompanies(
-    @GetUser() user: { id: string },
-  ): Promise<CompanyMeDto[]> {
-    return this.companyService.getCompaniesForUser(user.id);
+  @ApiResponse({ status: 200, type: [CompanyMeDto] })
+  async getMyCompanies(@GetUser('id') userId: string) {
+    return this.companyService.getCompaniesForUser(userId);
   }
 
-  /**
-   * ─────────────────────────────────────────────
-   * Listado global de empresas
-   * ─────────────────────────────────────────────
-   */
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles(UserGlobalRole.SUPERADMIN, UserGlobalRole.ADMIN)
-  @ApiOperation({
-    summary: 'Listado global de empresas',
-    description: 'Devuelve todas las empresas del sistema',
-  })
-  @ApiOkResponse({
-    description: 'Listado completo de empresas',
-    type: Company,
-    isArray: true,
-  })
-  findAll(): Promise<Company[]> {
+  @Auth(AppRole.SUPERADMIN) // Listado total solo para SuperAdmin
+  @ApiOperation({ summary: 'Listado global de empresas (Solo SuperAdmin)' })
+  async findAll() {
     return this.companyService.findAll();
+  }
+
+  @Get(':id')
+  @Auth()
+  @ApiOperation({ summary: 'Obtener detalle de una empresa con validación de acceso' })
+  @ApiParam({ name: 'id', description: 'UUID de la empresa' })
+  @ApiResponse({ status: 200, type: Company })
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser('id') userId: string,
+    @GetUser('appRole') appRole: AppRole, // 👈 Corregido: antes ponía 'role'
+  ) {
+    // Si es SUPERADMIN, el service debería saltarse la validación de propiedad
+    return this.companyService.findOneWithAccess(id, userId, appRole);
+  }
+
+  @Patch(':id')
+  @Auth() // La lógica de si es OWNER se valida en el Service
+  @ApiOperation({ summary: 'Actualizar datos de la empresa (Requiere ser Owner o Admin Global)' })
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateDto: any, 
+    @GetUser('id') userId: string,
+    @GetUser('appRole') appRole: AppRole,
+  ) {
+    return this.companyService.updateWithAccess(id, updateDto, userId, appRole);
+  }
+
+  @Delete(':id')
+  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN)
+  @ApiOperation({ summary: 'Borrado lógico de la empresa' })
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser('id') userId: string,
+    @GetUser('appRole') appRole: AppRole,
+  ) {
+    return this.companyService.softDeleteWithAccess(id, userId, appRole);
   }
 }

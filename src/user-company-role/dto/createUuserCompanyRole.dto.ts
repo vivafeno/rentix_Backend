@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsUUID } from 'class-validator';
 
-import { CompanyRole } from 'src/user-company-role/enums/userCompanyRole.enum';
+import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
 
 /**
  * CreateUserCompanyRoleDto
