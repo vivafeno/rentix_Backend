@@ -99,7 +99,11 @@ export class ClientProfile extends BaseEntity {
    * 🔐 ACCESO / PORTAL
    * ------------------------------------------------------------------ */
 
-  @ApiPropertyOptional({ description: 'Usuario vinculado para acceso al portal de clientes' })
+  // 👇👇 AQUÍ ESTÁ LA CORRECCIÓN 👇👇
+  @ApiPropertyOptional({ 
+    description: 'Usuario vinculado para acceso al portal de clientes',
+    type: () => User // <--- ESTO ROMPE EL CICLO INFINITO EN SWAGGER
+  })
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'user_id' })
   user?: User;

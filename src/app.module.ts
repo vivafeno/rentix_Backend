@@ -19,6 +19,8 @@ import { CompanyModule } from './company/company.module';
 import { ClientModule } from './client/client.module';
 import { PropertyModule } from './property/property.module';
 import { ContractModule } from './contract/contract.module';
+import { TaxModule } from './tax/tax.module';
+import { BillingConceptModule } from './billing-concept/billing-concept.module';
 
 
 @Module({
@@ -85,6 +87,8 @@ import { ContractModule } from './contract/contract.module';
     PropertyModule,
     ContractModule,
     FacturaeModule,
+    TaxModule,
+    BillingConceptModule,
   ],
   controllers: [],
   providers: [],

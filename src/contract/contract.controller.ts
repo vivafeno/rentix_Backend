@@ -1,198 +1,51 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Param,
-  Body,
-  Query,
-  NotFoundException,
-  UseGuards,
+import { 
+  Controller, 
+  Get, 
+  Post, 
+  Body, 
+  Patch, 
+  Param, 
+  Delete, 
+  ParseUUIDPipe, 
+  Query
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
-
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ContractService } from './contract.service';
 import { CreateContractDto } from './dto/create-contract.dto';
-import { UpdateContractDto } from './dto/update-contract.dto';
 import { Contract } from './entities/contract.entity';
 
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { AppRole } from 'src/auth/enums/user-global-role.enum';
-
-@ApiTags('Contracts')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(
-  AppRole.SUPERADMIN,
-  AppRole.ADMIN,
-  AppRole.USER,
-)
-@Controller('companies/:companyId/contracts')
+@ApiTags('Contracts') // Agrupa los endpoints en Swagger bajo "Contracts"
+@Controller('contracts')
 export class ContractController {
   constructor(private readonly contractService: ContractService) {}
 
-  /* ─────────────────────────────────────
-   * Crear contrato
-   * ───────────────────────────────────── */
   @Post()
-  @ApiOperation({
-    summary: 'Crear contrato para una empresa',
-    description:
-      'Crea un contrato asociado a una empresa, un cliente y un inmueble. ' +
-      'El contrato define las condiciones económicas y temporales, pero no genera facturas.',
-  })
-  @ApiParam({
-    name: 'companyId',
-    description: 'UUID de la empresa',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Contrato creado correctamente',
-    type: Contract,
-  })
-  createForCompany(
-    @Param('companyId') companyId: string,
-    @Body() dto: CreateContractDto,
-  ) {
-    return this.contractService.createForCompany(companyId, dto);
+  @ApiOperation({ summary: 'Crear un nuevo contrato de alquiler' })
+  @ApiResponse({ status: 201, description: 'Contrato creado exitosamente.', type: Contract })
+  @ApiResponse({ status: 400, description: 'Datos inválidos o violación de propiedad (triángulo de seguridad).' })
+  create(@Body() createContractDto: CreateContractDto) {
+    return this.contractService.create(createContractDto);
   }
 
-  /* ─────────────────────────────────────
-   * Listar contratos de una empresa
-   * ───────────────────────────────────── */
-  @Get()
-  @ApiOperation({
-    summary: 'Listar contratos de una empresa',
-    description:
-      'Por defecto solo devuelve contratos activos. ' +
-      'Usa showInactive=true para incluir contratos inactivos.',
-  })
-  @ApiParam({
-    name: 'companyId',
-    description: 'UUID de la empresa',
-  })
-  @ApiQuery({
-    name: 'showInactive',
-    required: false,
-    type: Boolean,
-    description: 'Incluye contratos inactivos',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Listado de contratos',
-    type: [Contract],
-  })
-  findAllForCompany(
-    @Param('companyId') companyId: string,
-    @Query('showInactive') showInactive?: string,
-  ) {
-    return this.contractService.findAllForCompany(companyId, {
-      includeInactive: showInactive === 'true',
-    });
-  }
-
-  /* ─────────────────────────────────────
-   * Obtener contrato concreto
-   * ───────────────────────────────────── */
-  @Get(':contractId')
-  @ApiOperation({
-    summary: 'Obtener un contrato concreto',
-  })
+  @Get('by-company/:companyId')
+  @ApiOperation({ summary: 'Listar todos los contratos de una empresa' })
   @ApiParam({ name: 'companyId', description: 'UUID de la empresa' })
-  @ApiParam({ name: 'contractId', description: 'UUID del contrato' })
-  @ApiResponse({
-    status: 200,
-    description: 'Contrato encontrado',
-    type: Contract,
-  })
-  async findOneForCompany(
-    @Param('companyId') companyId: string,
-    @Param('contractId') contractId: string,
-  ) {
-    const contract = await this.contractService.findOneForCompany(
-      companyId,
-      contractId,
-    );
-
-    if (!contract) {
-      throw new NotFoundException('Contrato no encontrado');
-    }
-
-    return contract;
+  findAll(@Param('companyId', ParseUUIDPipe) companyId: string) {
+    return this.contractService.findAll(companyId);
   }
 
-  /* ─────────────────────────────────────
-   * Actualizar contrato
-   * ───────────────────────────────────── */
-  @Patch(':contractId')
-  @ApiOperation({
-    summary: 'Actualizar contrato',
-  })
-  @ApiParam({ name: 'companyId', description: 'UUID de la empresa' })
-  @ApiParam({ name: 'contractId', description: 'UUID del contrato' })
-  @ApiResponse({
-    status: 200,
-    description: 'Contrato actualizado',
-    type: Contract,
-  })
-  async updateForCompany(
-    @Param('companyId') companyId: string,
-    @Param('contractId') contractId: string,
-    @Body() dto: UpdateContractDto,
-  ) {
-    const contract = await this.contractService.updateForCompany(
-      companyId,
-      contractId,
-      dto,
-    );
-
-    if (!contract) {
-      throw new NotFoundException('Contrato no encontrado');
-    }
-
-    return contract;
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener el detalle de un contrato específico' })
+  @ApiResponse({ status: 200, description: 'Detalle del contrato encontrado.', type: Contract })
+  @ApiResponse({ status: 404, description: 'Contrato no encontrado.' })
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.contractService.findOne(id);
   }
 
-  /* ─────────────────────────────────────
-   * Soft delete
-   * ───────────────────────────────────── */
-  @Delete(':contractId')
-  @ApiOperation({
-    summary: 'Desactivar contrato (soft delete)',
-    description:
-      'Marca el contrato como inactivo (isActive=false) y cambia su estado a INACTIVO.',
-  })
-  @ApiParam({ name: 'companyId', description: 'UUID de la empresa' })
-  @ApiParam({ name: 'contractId', description: 'UUID del contrato' })
-  @ApiResponse({
-    status: 200,
-    description: 'Contrato desactivado correctamente',
-  })
-  async removeForCompany(
-    @Param('companyId') companyId: string,
-    @Param('contractId') contractId: string,
-  ) {
-    const ok = await this.contractService.softDeleteForCompany(
-      companyId,
-      contractId,
-    );
-
-    if (!ok) {
-      throw new NotFoundException(
-        'Contrato no encontrado o ya desactivado',
-      );
-    }
-
-    return { message: 'Contrato desactivado correctamente' };
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar (Soft Delete) un contrato' })
+  @ApiResponse({ status: 200, description: 'Contrato marcado como eliminado.' })
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.contractService.remove(id);
   }
 }

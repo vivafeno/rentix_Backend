@@ -1,258 +1,99 @@
-import {
-  Injectable,
-  BadRequestException,
+import { 
+  BadRequestException, 
+  Injectable, 
+  NotFoundException 
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
 import { Contract } from './entities/contract.entity';
-import { CreateContractDto, UpdateContractDto } from './dto';
-
-import { ContractStatus } from './enums/contract-status.enum';
-
-import { Company } from 'src/company/entities/company.entity';
-import { VatRate } from 'src/common/catalogs/taxes/vat-rate/vat-rate.entity';
-import { WithholdingRate } from 'src/common/catalogs/taxes/withholding-rate/withholding-rate.entity';
+import { CreateContractDto } from './dto/create-contract.dto';
+import { Property } from 'src/property/entities/property.entity';
+import { Client } from 'src/client/entities/client.entity';
+import { Tax } from 'src/tax/entities/tax.entity';
 
 @Injectable()
 export class ContractService {
   constructor(
     @InjectRepository(Contract)
-    private readonly contractRepo: Repository<Contract>,
-
-    @InjectRepository(Company)
-    private readonly companyRepo: Repository<Company>,
-
-    @InjectRepository(VatRate)
-    private readonly vatRateRepo: Repository<VatRate>,
-
-    @InjectRepository(WithholdingRate)
-    private readonly withholdingRateRepo: Repository<WithholdingRate>,
+    private readonly contractRepository: Repository<Contract>,
+    @InjectRepository(Property)
+    private readonly propertyRepository: Repository<Property>,
+    @InjectRepository(Client)
+    private readonly clientRepository: Repository<Client>,
+    @InjectRepository(Tax)
+    private readonly taxRepository: Repository<Tax>,
   ) {}
 
-  /* ─────────────────────────────────────
-   * Crear contrato para una empresa
-   * ───────────────────────────────────── */
-  async createForCompany(
-    companyId: string,
-    dto: CreateContractDto,
-  ): Promise<Contract> {
+  async create(createContractDto: CreateContractDto): Promise<Contract> {
+    const { 
+      companyId, 
+      propertyId, 
+      clientId, 
+      taxId, 
+      retentionId 
+    } = createContractDto;
 
-    /* ─────────────────────────────────────
-     * 1. Validar empresa y dirección fiscal
-     * ───────────────────────────────────── */
-    const company = await this.companyRepo.findOne({
-      where: { id: companyId, isActive: true },
-      relations: ['fiscalAddress'],
+    // 1. VALIDAR PROPIEDAD
+    const property = await this.propertyRepository.findOneBy({ id: propertyId });
+    if (!property) throw new NotFoundException('La propiedad no existe');
+    
+    // Seguridad: ¿La casa es de esta empresa?
+    if (property.companyId !== companyId) {
+      throw new BadRequestException('La propiedad no pertenece a la empresa indicada');
+    }
+
+    // 2. VALIDAR CLIENTE
+    const client = await this.clientRepository.findOneBy({ id: clientId });
+    if (!client) throw new NotFoundException('El cliente no existe');
+    
+    // Seguridad: ¿El cliente es de esta empresa?
+    if (client.companyId !== companyId) {
+      throw new BadRequestException('El cliente no pertenece a la empresa indicada');
+    }
+
+    // 3. VALIDAR IMPUESTOS (IVA)
+    const tax = await this.taxRepository.findOneBy({ id: taxId });
+    if (!tax) throw new BadRequestException('El impuesto (IVA) indicado no es válido');
+
+    // 4. CREAR CONTRATO
+    const newContract = this.contractRepository.create({
+      ...createContractDto,
+      property, // Asignamos el objeto completo para evitar conflictos de ORM
+      client,
+      tax,
     });
 
-    if (!company) {
-      throw new BadRequestException('Empresa no válida');
+    // 5. VALIDAR RETENCIÓN (Opcional)
+    if (retentionId) {
+      const retention = await this.taxRepository.findOneBy({ id: retentionId });
+      if (!retention) throw new BadRequestException('La retención indicada no es válida');
+      newContract.retention = retention;
     }
 
-    if (!company.fiscalAddress) {
-      throw new BadRequestException(
-        'La empresa no tiene dirección fiscal definida',
-      );
-    }
-
-    const countryCode = company.fiscalAddress.countryCode;
-
-    /* ─────────────────────────────────────
-     * 2. Validar IVA (catálogo por país)
-     * ───────────────────────────────────── */
-    const vatRate = await this.vatRateRepo.findOne({
-      where: {
-        id: dto.vatRateId,
-        isActive: true,
-        countryCode,
-      },
-    });
-
-    if (!vatRate) {
-      throw new BadRequestException(
-        'Tipo de IVA no válido para la empresa',
-      );
-    }
-
-    /* ─────────────────────────────────────
-     * 3. Validar retención (catálogo por país)
-     * ───────────────────────────────────── */
-    const withholdingRate = await this.withholdingRateRepo.findOne({
-      where: {
-        id: dto.withholdingRateId,
-        isActive: true,
-        countryCode,
-      },
-    });
-
-    if (!withholdingRate) {
-      throw new BadRequestException(
-        'Tipo de retención no válido para la empresa',
-      );
-    }
-
-    /* ─────────────────────────────────────
-     * 4. Validación de coherencia temporal
-     * ───────────────────────────────────── */
-    const fechaInicio = new Date(dto.fechaInicio);
-    const fechaFin = new Date(dto.fechaFin);
-
-    if (fechaFin <= fechaInicio) {
-      throw new BadRequestException(
-        'La fecha de finalización debe ser posterior a la fecha de inicio',
-      );
-    }
-
-    /* ─────────────────────────────────────
-     * 5. Cálculo de revisión IPC (regla: +12 meses)
-     * ───────────────────────────────────── */
-    let fechaRevisionIpc: Date | undefined;
-
-    if (dto.revisionIpcActiva) {
-      if (dto.fechaRevisionIpc) {
-        fechaRevisionIpc = new Date(dto.fechaRevisionIpc);
-      } else {
-        fechaRevisionIpc = new Date(fechaInicio);
-        fechaRevisionIpc.setMonth(fechaRevisionIpc.getMonth() + 12);
-      }
-    }
-
-    /* ─────────────────────────────────────
-     * 6. Crear contrato
-     * ───────────────────────────────────── */
-    const contract = this.contractRepo.create({
-      companyId,
-      ...dto,
-      fechaFirma: new Date(dto.fechaFirma),
-      fechaInicio,
-      fechaFin,
-      fechaRevisionIpc,
-      vatRateId: vatRate.id,
-      withholdingRateId: withholdingRate.id,
-    });
-
-    return this.contractRepo.save(contract);
+    return await this.contractRepository.save(newContract);
   }
 
-  /* ─────────────────────────────────────
-   * Listar contratos de una empresa
-   * ───────────────────────────────────── */
-  async findAllForCompany(
-    companyId: string,
-    options?: { includeInactive?: boolean },
-  ): Promise<Contract[]> {
-    return this.contractRepo.find({
-      where: {
-        companyId,
-        ...(options?.includeInactive ? {} : { isActive: true }),
-      },
-      order: {
-        createdAt: 'DESC',
-      },
+  async findAll(companyId: string): Promise<Contract[]> {
+    return await this.contractRepository.find({
+      where: { companyId }, // Filtramos siempre por empresa
+      relations: ['property', 'client', 'tax'], // Datos para el listado
+      order: { createdAt: 'DESC' },
     });
   }
 
-  /* ─────────────────────────────────────
-   * Obtener contrato concreto
-   * ───────────────────────────────────── */
-  async findOneForCompany(
-    companyId: string,
-    contractId: string,
-  ): Promise<Contract | null> {
-    return this.contractRepo.findOne({
-      where: {
-        id: contractId,
-        companyId,
-        isActive: true,
-      },
+  async findOne(id: string): Promise<Contract> {
+    const contract = await this.contractRepository.findOne({
+      where: { id },
+      relations: ['property', 'client', 'tax', 'retention'],
     });
+
+    if (!contract) throw new NotFoundException(`Contrato ${id} no encontrado`);
+    return contract;
   }
 
-  /* ─────────────────────────────────────
-   * Actualizar contrato
-   * ───────────────────────────────────── */
-  async updateForCompany(
-    companyId: string,
-    contractId: string,
-    dto: UpdateContractDto,
-  ): Promise<Contract | null> {
-    const contract = await this.contractRepo.findOne({
-      where: {
-        id: contractId,
-        companyId,
-      },
-    });
-
-    if (!contract) {
-      return null;
-    }
-
-    /* ─────────────────────────────────────
-     * Validación de fechas si se modifican
-     * ───────────────────────────────────── */
-    const fechaInicio = dto.fechaInicio
-      ? new Date(dto.fechaInicio)
-      : contract.fechaInicio;
-
-    const fechaFin = dto.fechaFin
-      ? new Date(dto.fechaFin)
-      : contract.fechaFin;
-
-    if (fechaFin <= fechaInicio) {
-      throw new BadRequestException(
-        'La fecha de finalización debe ser posterior a la fecha de inicio',
-      );
-    }
-
-    /* ─────────────────────────────────────
-     * Gestión de revisión IPC
-     * ───────────────────────────────────── */
-    if (dto.revisionIpcActiva === false) {
-      contract.fechaRevisionIpc = undefined;
-    }
-
-    if (dto.revisionIpcActiva === true && !contract.fechaRevisionIpc) {
-      const nuevaFecha = new Date(fechaInicio);
-      nuevaFecha.setMonth(nuevaFecha.getMonth() + 12);
-      contract.fechaRevisionIpc = nuevaFecha;
-    }
-
-    Object.assign(contract, {
-      ...dto,
-      fechaInicio,
-      fechaFin,
-      fechaFirma: dto.fechaFirma
-        ? new Date(dto.fechaFirma)
-        : contract.fechaFirma,
-    });
-
-    return this.contractRepo.save(contract);
-  }
-
-  /* ─────────────────────────────────────
-   * Soft delete (desactivar contrato)
-   * ───────────────────────────────────── */
-  async softDeleteForCompany(
-    companyId: string,
-    contractId: string,
-  ): Promise<boolean> {
-    const contract = await this.contractRepo.findOne({
-      where: {
-        id: contractId,
-        companyId,
-        isActive: true,
-      },
-    });
-
-    if (!contract) {
-      return false;
-    }
-
-    contract.isActive = false;
-    contract.estadoContrato = ContractStatus.INACTIVO;
-
-    await this.contractRepo.save(contract);
-    return true;
+  async remove(id: string): Promise<void> {
+    const contract = await this.findOne(id);
+    // Soft Delete gracias a tu BaseEntity
+    await this.contractRepository.softRemove(contract);
   }
 }

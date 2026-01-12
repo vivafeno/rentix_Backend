@@ -1,5 +1,11 @@
 import { SetMetadata } from '@nestjs/common';
-import { AppRole } from 'src/auth/enums/user-global-role.enum';
+// Rutas exactas según tu árbol:
+import { AppRole } from '../enums/user-global-role.enum'; 
+import { CompanyRole } from '../../user-company-role/enums/companyRole.enum';
 
-export const ROLES_KEY = 'userGlobalRoles';
-export const Roles = (...userGlobalRoles: AppRole[]) => SetMetadata(ROLES_KEY, userGlobalRoles);
+export const ROLES_KEY = 'roles';
+
+// Definimos la unión de tipos para aceptar ambos sistemas de roles
+export type AllowedRoles = AppRole | CompanyRole;
+
+export const Roles = (...roles: AllowedRoles[]) => SetMetadata(ROLES_KEY, roles);

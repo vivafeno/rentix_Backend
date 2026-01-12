@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# EJECUTAR COMANDO./reset-db.sh
+# EJECUTAR COMANDO ==> ./reset-db.sh
 
 set -e
 

@@ -107,8 +107,7 @@ export class SeederService {
     if (!user) {
       user = this.userRepo.create({
         email: 'admin@rentix.com',
-        password: await bcrypt.hash('Admin123!', 10),
-        // 👇 Cambio crítico: de userGlobalRole a appRole
+        password: await bcrypt.hash('Admin123!', 10),       
         appRole: AppRole.SUPERADMIN,
         firstName: 'System',
         lastName: 'Admin',

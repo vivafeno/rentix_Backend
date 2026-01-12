@@ -2,79 +2,127 @@ import {
   Injectable,
   ConflictException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-
+import { Repository, DataSource } from 'typeorm';
 import { ClientProfile } from './entities/client-profile.entity';
 import { CreateClientProfileDto } from './dto/create-client-profile.dto';
+import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
+// CORRECCIÓN: Importamos el Enum que faltaba
+import { AddressStatus } from 'src/address/enums/addressStatus.enum';
 
 @Injectable()
 export class ClientProfileService {
   constructor(
+    // CORRECCIÓN: Aseguramos 'private readonly' para que sea accesible en 'this'
     @InjectRepository(ClientProfile)
     private readonly clientProfileRepository: Repository<ClientProfile>,
+    private readonly dataSource: DataSource,
   ) {}
 
+  /* ------------------------------------------------------------------
+   * CREATE
+   * ------------------------------------------------------------------ */
   async create(companyId: string, createDto: CreateClientProfileDto) {
+    const { address, fiscalIdentity, ...clientData } = createDto;
+
+    if (!clientData.internalCode) {
+      // CORRECCIÓN: Ahora el método existe
+      clientData.internalCode = await this.generateInternalCode(companyId);
+    }
+
+    const clientProfile = this.clientProfileRepository.create({
+      ...clientData,
+      companyId, 
+      fiscalIdentity: {
+        ...fiscalIdentity,
+        countryCode: fiscalIdentity.countryCode?.toUpperCase() || 'ESP',
+        companyId: companyId, // Multi-tenant logic
+      },
+      addresses: [
+        {
+          ...address,
+          status: AddressStatus.ACTIVE,
+          isDefault: true,
+          companyId,
+        },
+      ],
+    });
+
     try {
-      // 1. Desestructuramos para separar la dirección (singular) del resto de datos
-      const { address, fiscalIdentity, ...clientData } = createDto;
-
-      // 2. Generación automática del Código Interno si no viene informado
-      if (!clientData.internalCode) {
-        clientData.internalCode = await this.generateInternalCode(companyId);
-      }
-
-      // 3. Creamos la instancia de la entidad
-      // TypeORM manejará la creación de FiscalIdentity y Address gracias al 'cascade: true'
-      const clientProfile = this.clientProfileRepository.create({
-        ...clientData,
-        companyId, // 👈 Inyectamos el ID de la empresa (contexto del usuario)
-        
-        // Mapeo manual: DTO (address) -> Entity (addresses[])
-        addresses: address ? [address] : [], 
-        
-        // Mapeo directo: DTO (fiscalIdentity) -> Entity (fiscalIdentity)
-        fiscalIdentity: fiscalIdentity, 
-      });
-
-      // 4. Guardamos (La transacción guarda Cliente + FiscalIdentity + Address)
       return await this.clientProfileRepository.save(clientProfile);
-
     } catch (error) {
       this.handleDBExceptions(error);
     }
   }
 
-  /**
-   * Genera un código simple incremental o aleatorio si no se provee uno.
-   * Ejemplo simple: CLI-{TIMESTAMP}
-   */
-  private async generateInternalCode(companyId: string): Promise<string> {
-    // OPCIÓN A: Código basado en timestamp (Rápido y colisión casi nula en bajo volumen)
-    return `CLI-${Date.now().toString().slice(-6)}`;
-
-    // OPCIÓN B (Más pro): Buscar el último y sumar +1 (Requiere consulta extra)
-    /*
-    const lastClient = await this.clientProfileRepository.findOne({
-      where: { companyId },
-      order: { createdAt: 'DESC' }
+  /* ------------------------------------------------------------------
+   * FIND ALL
+   * ------------------------------------------------------------------ */
+  // CORRECCIÓN: Implementamos el método faltante
+  async findAll(companyId: string) {
+    return this.clientProfileRepository.find({
+      where: { companyId, isActive: true },
+      relations: ['fiscalIdentity'],
+      order: { createdAt: 'DESC' },
     });
-    // lógica para incrementar número...
-    */
+  }
+
+  /* ------------------------------------------------------------------
+   * FIND ONE
+   * ------------------------------------------------------------------ */
+  // CORRECCIÓN: Implementamos el método faltante
+  async findOne(id: string, companyId: string) {
+    const client = await this.clientProfileRepository.findOne({
+      where: { id, companyId, isActive: true },
+      relations: ['fiscalIdentity', 'addresses'],
+    });
+
+    if (!client) {
+      throw new NotFoundException('Cliente no encontrado o no tienes acceso a él');
+    }
+    return client;
+  }
+
+  /* ------------------------------------------------------------------
+   * UPDATE
+   * ------------------------------------------------------------------ */
+  async update(id: string, companyId: string, updateDto: UpdateClientProfileDto) {
+    const client = await this.findOne(id, companyId);
+    const { address, fiscalIdentity, ...crmData } = updateDto;
+    Object.assign(client, crmData);
+    return this.clientProfileRepository.save(client);
+  }
+
+  /* ------------------------------------------------------------------
+   * REMOVE
+   * ------------------------------------------------------------------ */
+  async remove(id: string, companyId: string) {
+    const client = await this.findOne(id, companyId);
+    client.isActive = false;
+    client.deletedAt = new Date();
+    return this.clientProfileRepository.save(client);
+  }
+
+  /* ------------------------------------------------------------------
+   * HELPERS
+   * ------------------------------------------------------------------ */
+  // CORRECCIÓN: Definimos el método privado
+  private async generateInternalCode(companyId: string): Promise<string> {
+    return `CLI-${Date.now().toString().slice(-6)}`;
   }
 
   private handleDBExceptions(error: any) {
-    // Capturamos el error del índice único (companyId + internalCode)
     if (error.code === '23505') {
-      throw new ConflictException('Ya existe un cliente con ese código interno en esta empresa.');
+      if (error.constraint === 'IDX_FISCAL_IDENTITY_PER_TENANT') {
+        throw new ConflictException('Este NIF/CIF ya está registrado como cliente en tu empresa.');
+      }
+      if (error.detail?.includes('internal_code')) {
+        throw new ConflictException('El código interno de cliente ya existe en esta empresa.');
+      }
     }
-    
-    // Capturamos errores relacionados con NIF duplicado si tuvieras unique constraint en FiscalIdentity
-    // if (error.message.includes('fiscal_identity')) ...
-
     console.error(error);
-    throw new InternalServerErrorException('Error al crear la ficha del cliente');
+    throw new InternalServerErrorException('Error al guardar el cliente');
   }
 }

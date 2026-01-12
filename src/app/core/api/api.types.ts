@@ -536,13 +536,13 @@ export interface components {
              * @description Rol global del usuario (ej. superadmin)
              * @example superadmin, admin, user
              */
-            userGlobalRole?: string;
+            appRole?: string;
         };
         UserDto: {
             /** @example user@example.com */
             email: string;
             /** @example superadmin, admin, user */
-            userGlobalRole: string;
+            appRole: string;
         };
         CompanyRoleDto: {
             companyId: string;
@@ -554,7 +554,7 @@ export interface components {
             id: string;
             email: string;
             /** @enum {string} */
-            userGlobalRole: "SUPERADMIN" | "ADMIN" | "USER";
+            appRole: "SUPERADMIN" | "ADMIN" | "USER";
             companyRoles?: components["schemas"]["CompanyRoleDto"][];
             clientProfiles?: string[];
             isActive: boolean;
@@ -578,7 +578,7 @@ export interface components {
              * @description Rol global del usuario (ej. superadmin)
              * @example superadmin, admin, user
              */
-            userGlobalRole?: string;
+            appRole?: string;
         };
         CreateUserCompanyRoleDto: {
             /**

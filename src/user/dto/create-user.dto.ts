@@ -39,5 +39,5 @@ export class CreateUserDto {
   })
   @IsOptional()
   @IsEnum(AppRole)
-  userGlobalRole?: AppRole;
+  appRole?: AppRole;
 }

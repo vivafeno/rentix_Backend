@@ -40,7 +40,7 @@ export class CompanyContextService {
     // 3. Crear un nuevo accessToken contextualizado
     const payload = {
       sub: user.id,
-      userGlobalRole: user.appRole,
+      appRole: user.appRole,
       companyId: relation.company.id,
       companyRole: relation.role,
     };

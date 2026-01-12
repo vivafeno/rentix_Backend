@@ -16,6 +16,7 @@ import { User } from 'src/user/entities/user.entity';
 import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
 // 👇 1. IMPORTAR CLIENT PROFILE
 import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
+import { Property } from 'src/property/entities/property.entity';
 
 @Entity('companies')
 export class Company extends BaseEntity {
@@ -102,6 +103,23 @@ export class Company extends BaseEntity {
     (ucr) => ucr.company,
   )
   companyRoles: CompanyRoleEntity[];
+
+  /* ─────────────────────────────────────────────────────────────────
+   * 🏠 PROPIEDADES (RELACIÓN 1:N)
+   * Una empresa (Tenant) posee múltiples propiedades (Assets).
+   * ───────────────────────────────────────────────────────────────── */
+  
+  @ApiPropertyOptional({ 
+    description: 'Inventario de propiedades pertenecientes a esta empresa.',
+    type: () => [Property] // 👈 Importante: Array de propiedades (lazy resolve)
+  })
+  @OneToMany(() => Property, (property) => property.company, {
+    // cascade: true, // Descomentar si quieres crear Propiedades al crear la Empresa (poco común en este flujo)
+    eager: false,     // ⚡ PERFORMANCE: False para no cargar las 500 propiedades cada vez que consultes el perfil de la empresa.
+  })
+  properties: Property[];
+
+
 
   /* ------------------------------------------------------------------
    * CRM: CLIENTES

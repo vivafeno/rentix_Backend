@@ -1,86 +1,87 @@
 import {
   Controller,
-  Post,
   Get,
-  Patch,
-  Delete,
-  Param,
+  Post,
   Body,
-  NotFoundException,
-  UseGuards,
+  Patch,
+  Param,
+  Delete,
+  ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-} from '@nestjs/swagger';
-
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { PropertyService } from './property.service';
-import { CreatePropertyDto, UpdatePropertyDto } from './dto';
-import { Property } from './entities/property.entity';
-
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { CreatePropertyDto } from './dto/create-property.dto';
+import { UpdatePropertyDto } from './dto/update-property.dto';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
-@ApiTags('Properties')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-@Controller('companies/:companyId/properties')
+@ApiTags('Properties (Inmuebles)')
+@ApiBearerAuth() // Requiere token Bearer
+@Controller('properties')
 export class PropertyController {
   constructor(private readonly propertyService: PropertyService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear inmueble para una empresa' })
-  @ApiResponse({ status: 201, type: Property })
+  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
+  @ApiOperation({ 
+    summary: 'Crear Propiedad', 
+    description: 'Crea un inmueble y su dirección física asociada al Tenant actual.' 
+  })
+  @ApiResponse({ status: 201, description: 'Propiedad creada correctamente.' })
+  @ApiResponse({ status: 409, description: 'Código interno o Ref. Catastral duplicados.' })
   create(
-    @Param('companyId') companyId: string,
-    @Body() dto: CreatePropertyDto,
+    @Body() createDto: CreatePropertyDto, 
+    @GetUser() user: any
   ) {
-    return this.propertyService.createForCompany(companyId, dto);
+    const companyId = user.companyId;
+    if (!companyId) throw new BadRequestException('Contexto de empresa requerido (Usa /company-context/select)');
+    
+    return this.propertyService.create(companyId, createDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar inmuebles de una empresa' })
-  findAll(@Param('companyId') companyId: string) {
-    return this.propertyService.findAllForCompany(companyId);
+  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
+  @ApiOperation({ summary: 'Listar Propiedades', description: 'Devuelve todo el inventario de la empresa seleccionada.' })
+  findAll(@GetUser() user: any) {
+    const companyId = user.companyId;
+    if (!companyId) throw new BadRequestException('Contexto de empresa requerido');
+    
+    return this.propertyService.findAll(companyId);
   }
 
-  @Get(':propertyId')
-  @ApiOperation({ summary: 'Obtener inmueble concreto' })
-  async findOne(
-    @Param('companyId') companyId: string,
-    @Param('propertyId') propertyId: string,
+  @Get(':id')
+  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
+  @ApiOperation({ summary: 'Obtener detalle de Propiedad' })
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string, 
+    @GetUser() user: any
   ) {
-    const property = await this.propertyService.findOneForCompany(companyId, propertyId);
-    if (!property) throw new NotFoundException('Inmueble no encontrado');
-    return property;
+    return this.propertyService.findOne(id, user.companyId);
   }
 
-  @Patch(':propertyId')
-  @ApiOperation({ summary: 'Actualizar inmueble' })
-  async update(
-    @Param('companyId') companyId: string,
-    @Param('propertyId') propertyId: string,
-    @Body() dto: UpdatePropertyDto,
+  @Patch(':id')
+  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
+  @ApiOperation({ summary: 'Actualizar Propiedad' })
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateDto: UpdatePropertyDto,
+    @GetUser() user: any,
   ) {
-    const property = await this.propertyService.updateForCompany(companyId, propertyId, dto);
-    if (!property) throw new NotFoundException('Inmueble no encontrado');
-    return property;
+    return this.propertyService.update(id, user.companyId, updateDto);
   }
 
-  @Delete(':propertyId')
-  @ApiOperation({ summary: 'Desactivar inmueble (soft delete)' })
-  async remove(
-    @Param('companyId') companyId: string,
-    @Param('propertyId') propertyId: string,
+  @Delete(':id')
+  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN) // ¿Permitimos borrar a USER normal? Quizás solo ADMIN.
+  @ApiOperation({ 
+    summary: 'Eliminar Propiedad', 
+    description: 'Elimina el inmueble y su dirección. CUIDADO: Si hay contratos vinculados podría fallar (depende de FK).' 
+  })
+  remove(
+    @Param('id', ParseUUIDPipe) id: string, 
+    @GetUser() user: any
   ) {
-    const ok = await this.propertyService.softDeleteForCompany(companyId, propertyId);
-    if (!ok) throw new NotFoundException('Inmueble no encontrado o ya inactivo');
-    return { message: 'Inmueble desactivado correctamente' };
+    return this.propertyService.remove(id, user.companyId);
   }
 }

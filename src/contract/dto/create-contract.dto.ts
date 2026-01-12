@@ -1,222 +1,118 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsUUID,
-  IsEnum,
-  IsString,
-  IsDateString,
-  IsNumber,
-  IsOptional,
-  IsBoolean,
-  Min,
+import { 
+  IsBoolean, 
+  IsDateString, 
+  IsEnum, 
+  IsInt, 
+  IsNumber, 
+  IsOptional, 
+  IsString, 
+  IsUUID, 
+  Max, 
+  Min 
 } from 'class-validator';
+import { 
+  ContractStatus, 
+  BillingPeriod, 
+  ContractType, 
+  PaymentMethod 
+} from '../enums';
 
-import { ContractType, ContractStatus, BillingPeriod } from '../enums';
-
-/**
- * DTO para crear un contrato.
- *
- * Define el conjunto mínimo de datos necesarios para que
- * un contrato sea válido desde el momento de su creación.
- */
 export class CreateContractDto {
+  // --- IDENTIFICACIÓN ---
+  @ApiProperty({ description: 'Referencia interna única', example: 'ALQ-2026/001' })
+  @IsString()
+  reference: string;
 
-  /* ─────────────────────────────────────
-   * RELACIONES
-   * ───────────────────────────────────── */
+  @ApiProperty({ enum: ContractType, default: ContractType.ALQUILER })
+  @IsEnum(ContractType)
+  type: ContractType;
 
-  @ApiProperty({
-    description: 'Cliente asociado al contrato',
-    format: 'uuid',
-  })
+  // --- RELACIONES OBLIGATORIAS (Cierre de Seguridad) ---
+  @ApiProperty({ description: 'UUID de la Empresa (Owner)' })
   @IsUUID()
-  clientProfileId: string;
+  companyId: string;
 
-  @ApiProperty({
-    description: 'Inmueble asociado al contrato',
-    format: 'uuid',
-  })
+  @ApiProperty({ description: 'UUID del Cliente (Inquilino)' })
+  @IsUUID()
+  clientId: string;
+
+  @ApiProperty({ description: 'UUID de la Propiedad' })
   @IsUUID()
   propertyId: string;
 
-  /* ─────────────────────────────────────
-   * IDENTIFICACIÓN
-   * ───────────────────────────────────── */
-
-  @ApiProperty({
-    description: 'Número o referencia interna del contrato',
-    example: 'CTR-2024-001',
-  })
-  @IsString()
-  numeroContrato: string;
-
-  /* ─────────────────────────────────────
-   * TIPO Y ESTADO
-   * ───────────────────────────────────── */
-
-  @ApiProperty({
-    enum: ContractType,
-    description: 'Tipo de contrato',
-  })
-  @IsEnum(ContractType)
-  tipoContrato: ContractType;
-
-  @ApiProperty({
-    enum: ContractStatus,
-    description: 'Estado inicial del contrato',
-    example: ContractStatus.ACTIVO,
-  })
-  @IsEnum(ContractStatus)
-  estadoContrato: ContractStatus;
-
-  /* ─────────────────────────────────────
-   * FECHAS
-   * ───────────────────────────────────── */
-
-  @ApiProperty({
-    description: 'Fecha de firma del contrato',
-    example: '2024-01-15',
-  })
-  @IsDateString()
-  fechaFirma: string;
-
-  @ApiProperty({
-    description: 'Fecha de inicio del contrato',
-    example: '2024-02-01',
-  })
-  @IsDateString()
-  fechaInicio: string;
-
-  @ApiProperty({
-    description: 'Duración inicial del contrato en meses',
-    example: 12,
-  })
-  @IsNumber()
-  @Min(1)
-  duracionMeses: number;
-
-  @ApiProperty({
-    description: 'Fecha de finalización prevista del contrato',
-    example: '2025-01-31',
-  })
-  @IsDateString()
-  fechaFin: string;
-
-  /* ─────────────────────────────────────
-   * CONDICIONES ECONÓMICAS
-   * ───────────────────────────────────── */
-
-  @ApiProperty({
-    description: 'Importe base del contrato sin impuestos',
-    example: 750,
-  })
-  @IsNumber()
+  // --- ECONOMÍA & IMPUESTOS (Tax) ---
+  @ApiProperty({ description: 'Renta mensual base', example: 1000.00 })
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  importeBase: number;
+  monthlyRent: number;
 
-  @ApiProperty({
-    enum: BillingPeriod,
-    description: 'Periodicidad de facturación',
-  })
-  @IsEnum(BillingPeriod)
-  periodicidad: BillingPeriod;
+  @ApiProperty({ description: 'Fianza', example: 2000.00 })
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  depositAmount: number;
 
-  /* ─────────────────────────────────────
-   * IMPUESTOS (CATÁLOGOS FISCALES)
-   * ───────────────────────────────────── */
-
-  @ApiProperty({
-    description: 'ID del tipo de IVA aplicable (catálogo VAT)',
-    format: 'uuid',
-  })
+  @ApiProperty({ description: 'UUID del Impuesto IVA (Tax Entity)' })
   @IsUUID()
-  vatRateId: string;
+  taxId: string;
 
-  @ApiProperty({
-    description: 'ID del tipo de retención aplicable (catálogo Withholding)',
-    format: 'uuid',
-  })
+  @ApiProperty({ description: 'UUID de la Retención IRPF (Tax Entity)', required: false })
+  @IsOptional()
   @IsUUID()
-  withholdingRateId: string;
+  retentionId?: string;
 
-  /* ─────────────────────────────────────
-   * CONDICIONES ADICIONALES (OPCIONALES)
-   * ───────────────────────────────────── */
+  // --- OPERATIVA DE PAGO (Ajuste "Bak" a UUID) ---
+  @ApiProperty({ enum: PaymentMethod })
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod;
 
-  @ApiProperty({
-    required: false,
-    description: 'Importe entregado como fianza',
-    example: 1500,
-  })
+  @ApiProperty({ description: 'UUID de la Cuenta del Cliente (Seleccionada de su perfil)', required: false })
   @IsOptional()
-  @IsNumber()
-  fianzaImporte?: number;
+  @IsUUID() // <--- CAMBIO: Forzamos UUID para evitar strings basura
+  tenantBankAccountId?: string;
 
-  @ApiProperty({
-    required: false,
-    description: 'Meses de carencia sin facturación',
-    example: 0,
-  })
+  @ApiProperty({ description: 'UUID de la Cuenta de la Empresa (Seleccionada de su perfil)', required: false })
   @IsOptional()
-  @IsNumber()
-  mesesCarencia?: number;
+  @IsUUID() // <--- CAMBIO: Forzamos UUID
+  companyBankAccountId?: string;
 
-  /* ─────────────────────────────────────
-   * AVISOS Y REVISIÓN
-   * ───────────────────────────────────── */
+  // --- CICLO DE VIDA ---
+  @ApiProperty({ enum: ContractStatus, default: ContractStatus.BORRADOR })
+  @IsEnum(ContractStatus)
+  status: ContractStatus;
 
-  @ApiProperty({
-    required: false,
-    description: 'Avisar antes de la finalización del contrato',
-    example: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  avisarFinContrato?: boolean;
+  @ApiProperty({ description: 'Fecha inicio (YYYY-MM-DD)', example: '2026-01-01' })
+  @IsDateString()
+  startDate: string;
 
-  @ApiProperty({
-    required: false,
-    description: 'Indica si el contrato tiene revisión IPC',
-    example: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  revisionIpcActiva?: boolean;
-
-  @ApiProperty({
-    required: false,
-    description: 'Fecha prevista de revisión IPC',
-    example: '2025-02-01',
-  })
+  @ApiProperty({ description: 'Fecha fin (YYYY-MM-DD)', required: false })
   @IsOptional()
   @IsDateString()
-  fechaRevisionIpc?: string;
+  endDate?: string;
 
-  @ApiProperty({
-    required: false,
-    description: 'Avisar cuando llegue la revisión IPC',
-    example: true,
-  })
+  @ApiProperty({ description: 'Día de cobro programado (1-28)', example: 1 })
+  @IsInt()
+  @Min(1)
+  @Max(28)
+  billingDay: number;
+
+  @ApiProperty({ enum: BillingPeriod })
+  @IsEnum(BillingPeriod)
+  billingPeriod: BillingPeriod;
+
+  // --- AUTOMATIZACIÓN ---
+  @ApiProperty({ description: 'Activar facturación automática', default: false })
   @IsOptional()
   @IsBoolean()
-  avisarRevisionIpc?: boolean;
+  isAutoBillingEnabled?: boolean;
 
-  /* ─────────────────────────────────────
-   * OTROS
-   * ───────────────────────────────────── */
+  @ApiProperty({ description: 'Fecha límite autofacturación', required: false })
+  @IsOptional()
+  @IsDateString()
+  autoBillingUntil?: string;
 
-  @ApiProperty({
-    required: false,
-    description: 'Descripción de gastos adicionales',
-  })
+  @ApiProperty({ description: 'URL del documento firmado', required: false })
   @IsOptional()
   @IsString()
-  gastosDescripcion?: string;
-
-  @ApiProperty({
-    required: false,
-    description: 'Observaciones generales del contrato',
-  })
-  @IsOptional()
-  @IsString()
-  observaciones?: string;
+  documentUrl?: string;
 }

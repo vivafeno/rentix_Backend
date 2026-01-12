@@ -22,7 +22,7 @@ async validate(payload: any) {
   return {
     id: payload.sub,                 // 👈 CLAVE
     email: payload.email,
-    userGlobalRole: payload.userGlobalRole,
+    appRole: payload.appRole,
     companyId: payload.companyId ?? null,
     companyRole: payload.companyRole ?? null,
   };
