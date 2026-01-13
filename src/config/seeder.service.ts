@@ -251,7 +251,7 @@ export class SeederService {
   }
 
   /* ─────────────────────────────────────
-   * CONTRATO (Alquiler) - VERSIÓN DEBUG
+   * CONTRATO (Alquiler)
    * ───────────────────────────────────── */
   private async seedContract(
     company: Company, 
@@ -269,8 +269,6 @@ export class SeederService {
         this.logger.log(`ℹ El contrato ${reference} ya existe. Saltando...`);
         return;
       }
-
-      this.logger.log(`🛠 Intentando crear contrato para: Propiedad ${property.id}, Cliente ${client.id}, Tax ${taxIva.id}...`);
 
       // 2. Crear instancia
       const contract = this.contractRepo.create({
@@ -304,7 +302,6 @@ export class SeederService {
 
       // 3. Guardar
       await this.contractRepo.save(contract);
-      this.logger.log('✔ Contrato creado EXITOSAMENTE');
 
     } catch (error) {
       this.logger.error(`❌ ERROR CREANDO CONTRATO: ${error.message}`, error.stack);
@@ -324,7 +321,6 @@ export class SeederService {
         isEmailVerified: true,
       });
       await this.userRepo.save(user);
-      this.logger.log('✔ Superadmin creado');
     }
     return user;
   }
@@ -347,7 +343,6 @@ export class SeederService {
       await this.addressRepo.save(address);
       company.fiscalAddress = address;
       await this.companyRepo.save(company);
-      this.logger.log('✔ Empresa creada');
     }
     return company;
   }
@@ -356,7 +351,6 @@ export class SeederService {
     const exists = await this.userCompanyRoleRepo.findOne({ where: { user: { id: user.id }, company: { id: company.id } } });
     if (!exists) {
       await this.userCompanyRoleRepo.save(this.userCompanyRoleRepo.create({ user, company, role: CompanyRole.OWNER }));
-      this.logger.log('✔ Rol Owner asignado');
     }
   }
 
