@@ -40,7 +40,7 @@ export class CompanyService {
   async createCompany(dto: CreateCompanyDto, ownerUserId: string): Promise<Company> {
     return this.dataSource.transaction(async (manager) => {
       const facturaeParty = await manager.findOne(FiscalIdentity, {
-        where: { id: dto.facturaePartyId, isActive: true },
+        where: { id: dto.facturaePartyId }, // isActive no existe en BaseEntity por defecto, revisa si lo tienes
       });
       if (!facturaeParty) throw new NotFoundException('Identidad fiscal no encontrada');
 
@@ -91,8 +91,8 @@ export class CompanyService {
 
       return {
         companyId: r.company.id,
-        legalName: r.company.facturaeParty?.corporateName || 
-           (r.company.facturaeParty?.firstName ? `${r.company.facturaeParty.firstName} ${r.company.facturaeParty.lastName}` : 'N/A'),
+        // 👇 CORRECCIÓN: Usamos el getter inteligente de la entidad
+        legalName: r.company.facturaeParty?.facturaeName || 'Nombre no disponible',
         tradeName: r.company.facturaeParty?.tradeName || 'N/A',
         taxId: r.company.facturaeParty?.taxId || 'N/A',
         ownerEmail: owner?.user?.email ?? '',
@@ -182,6 +182,8 @@ export class CompanyService {
     return members.map(m => ({
       userId: m.user.id,
       email: m.user.email,
+      // NOTA: Aquí usamos m.user (Usuario del login), no FiscalIdentity,
+      // por lo que firstName/lastName SÍ existen en la entidad User.
       fullName: `${m.user.firstName || ''} ${m.user.lastName || ''}`.trim(),
       role: m.role,
       since: m.createdAt

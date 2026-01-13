@@ -3,26 +3,27 @@ import {
   Get, 
   Post, 
   Body, 
-  Patch, 
   Param, 
   Delete, 
   ParseUUIDPipe, 
-  Query
+  HttpCode, // Añadido para ser explícitos con los status code
+  HttpStatus
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ContractService } from './contract.service';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { Contract } from './entities/contract.entity';
 
-@ApiTags('Contracts') // Agrupa los endpoints en Swagger bajo "Contracts"
+@ApiTags('Contracts')
 @Controller('contracts')
 export class ContractController {
   constructor(private readonly contractService: ContractService) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED) // 201 Created
   @ApiOperation({ summary: 'Crear un nuevo contrato de alquiler' })
   @ApiResponse({ status: 201, description: 'Contrato creado exitosamente.', type: Contract })
-  @ApiResponse({ status: 400, description: 'Datos inválidos o violación de propiedad (triángulo de seguridad).' })
+  @ApiResponse({ status: 400, description: 'Datos inválidos o violación de propiedad.' })
   create(@Body() createContractDto: CreateContractDto) {
     return this.contractService.create(createContractDto);
   }
@@ -30,6 +31,8 @@ export class ContractController {
   @Get('by-company/:companyId')
   @ApiOperation({ summary: 'Listar todos los contratos de una empresa' })
   @ApiParam({ name: 'companyId', description: 'UUID de la empresa' })
+  // 👇 ESTA LÍNEA ES CLAVE PARA TU FRONTEND:
+  @ApiResponse({ status: 200, description: 'Lista de contratos.', type: [Contract] }) 
   findAll(@Param('companyId', ParseUUIDPipe) companyId: string) {
     return this.contractService.findAll(companyId);
   }

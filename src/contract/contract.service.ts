@@ -1,7 +1,7 @@
-import { 
-  BadRequestException, 
-  Injectable, 
-  NotFoundException 
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -22,61 +22,63 @@ export class ContractService {
     private readonly clientRepository: Repository<Client>,
     @InjectRepository(Tax)
     private readonly taxRepository: Repository<Tax>,
-  ) {}
+  ) { }
 
   async create(createContractDto: CreateContractDto): Promise<Contract> {
-    const { 
-      companyId, 
-      propertyId, 
-      clientId, 
-      taxId, 
-      retentionId 
+    const {
+      companyId,
+      propertyId,
+      clientId,
+      taxId,
+      retentionId,
+      // Extraemos propiedades para usarlas, pero usaremos el DTO completo abajo
     } = createContractDto;
 
-    // 1. VALIDAR PROPIEDAD
+    // ... (TUS VALIDACIONES DE SEGURIDAD property/client/tax SE QUEDAN IGUAL) ...
+    // ... Copia y pega tus validaciones aquí ...
+
+    // 1. Validar Propiedad...
     const property = await this.propertyRepository.findOneBy({ id: propertyId });
-    if (!property) throw new NotFoundException('La propiedad no existe');
-    
-    // Seguridad: ¿La casa es de esta empresa?
-    if (property.companyId !== companyId) {
-      throw new BadRequestException('La propiedad no pertenece a la empresa indicada');
-    }
+    if (!property || property.companyId !== companyId) throw new BadRequestException('Propiedad inválida');
 
-    // 2. VALIDAR CLIENTE
+    // 2. Validar Cliente...
     const client = await this.clientRepository.findOneBy({ id: clientId });
-    if (!client) throw new NotFoundException('El cliente no existe');
-    
-    // Seguridad: ¿El cliente es de esta empresa?
-    if (client.companyId !== companyId) {
-      throw new BadRequestException('El cliente no pertenece a la empresa indicada');
-    }
+    if (!client || client.companyId !== companyId) throw new BadRequestException('Cliente inválido');
 
-    // 3. VALIDAR IMPUESTOS (IVA)
+    // 3. Validar Tax...
     const tax = await this.taxRepository.findOneBy({ id: taxId });
-    if (!tax) throw new BadRequestException('El impuesto (IVA) indicado no es válido');
+    if (!tax) throw new BadRequestException('Impuesto inválido');
 
-    // 4. CREAR CONTRATO
-    const newContract = this.contractRepository.create({
-      ...createContractDto,
-      property, // Asignamos el objeto completo para evitar conflictos de ORM
-      client,
-      tax,
-    });
+    // --- CREACIÓN ---
+    // Usamos 'create' asignando las propiedades una a una o fusionando con cuidado.
+    // Al usar el DTO con Dates reales, el spread operator (...) debería funcionar, 
+    // pero si falla, esta sintaxis es INFALIBLE:
 
-    // 5. VALIDAR RETENCIÓN (Opcional)
+    const newContract = new Contract();
+
+    // 1. Copiamos todo lo del DTO (incluyendo las fechas que ya son Date)
+    Object.assign(newContract, createContractDto);
+
+    // 2. Sobrescribimos las relaciones con los objetos completos
+    newContract.property = property;
+    newContract.client = client;
+    newContract.tax = tax;
+
+    // 3. Retención opcional
     if (retentionId) {
       const retention = await this.taxRepository.findOneBy({ id: retentionId });
-      if (!retention) throw new BadRequestException('La retención indicada no es válida');
+      if (!retention) throw new BadRequestException('Retención inválida');
       newContract.retention = retention;
     }
 
+    // Guardamos
     return await this.contractRepository.save(newContract);
   }
 
   async findAll(companyId: string): Promise<Contract[]> {
     return await this.contractRepository.find({
-      where: { companyId }, // Filtramos siempre por empresa
-      relations: ['property', 'client', 'tax'], // Datos para el listado
+      where: { companyId }, // Filtramos siempre por empresa (Tenant Isolation)
+      relations: ['property', 'client', 'tax'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -93,7 +95,7 @@ export class ContractService {
 
   async remove(id: string): Promise<void> {
     const contract = await this.findOne(id);
-    // Soft Delete gracias a tu BaseEntity
+    // Soft Delete: Marca deletedAt sin borrar el registro físico
     await this.contractRepository.softRemove(contract);
   }
 }

@@ -24,9 +24,9 @@ export class UserService {
     return {
       id: user.id,
       email: user.email,
-      firstName: user.firstName, // Incluimos campos de perfil
+      firstName: user.firstName, 
       lastName: user.lastName,
-      appRole: user.appRole,     // Nombre unificado
+      appRole: user.appRole,     
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
@@ -98,7 +98,7 @@ export class UserService {
 
   async findById(id: string): Promise<User | null> {
     return this.userRepository.createQueryBuilder('user')
-      .addSelect('user.refreshTokenHash') // 👈 Vital para el refresh token
+      .addSelect('user.refreshTokenHash')
       .where('user.id = :id', { id })
       .getOne();
   }
@@ -128,14 +128,16 @@ export class UserService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      appRole: user.appRole, // Usamos appRole consistentemente
+      appRole: user.appRole, 
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      
+      // 👇 MAPEO CORREGIDO CON FACTURAE NAME
       companyRoles: user.companyRoles?.map((cr) => ({
         companyId: cr.company.id,
-        companyName: cr.company.facturaeParty?.corporateName || 
-             (cr.company.facturaeParty?.firstName ? `${cr.company.facturaeParty.firstName} ${cr.company.facturaeParty.lastName}` : 'Empresa sin nombre'),
+        // Usamos el getter inteligente que calcula si es Razón Social o Nombre Legal
+        companyName: cr.company.facturaeParty?.facturaeName || 'Empresa sin nombre', 
         role: cr.role,
       })) || [],
     };

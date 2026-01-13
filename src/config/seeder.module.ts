@@ -9,6 +9,10 @@ import { FiscalIdentity } from '../facturae/entities/fiscalIdentity.entity';
 import { Address } from 'src/address/entities/address.entity';
 import { VatRate } from 'src/common/catalogs/taxes/vat-rate/vat-rate.entity';
 import { WithholdingRate } from 'src/common/catalogs/taxes/withholding-rate/withholding-rate.entity';
+import { Tax } from '../tax/entities/tax.entity';
+import { Property } from '../property/entities/property.entity';
+import { Client } from '../client/entities/client.entity';
+import { Contract } from '../contract/entities/contract.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([
@@ -19,6 +23,10 @@ import { WithholdingRate } from 'src/common/catalogs/taxes/withholding-rate/with
     Address,
     VatRate,
     WithholdingRate,
+    Tax,
+    Property,
+    Client,
+    Contract,
   ])],
   providers: [SeederService],
   exports: [SeederService],

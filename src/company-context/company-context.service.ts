@@ -1,4 +1,3 @@
-// src/company-context/company-context.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -28,7 +27,8 @@ export class CompanyContextService {
     const relation = await this.userCompanyRoleRepo
       .createQueryBuilder('ucr')
       .innerJoinAndSelect('ucr.company', 'company')
-      .innerJoinAndSelect('company.facturaeParty', 'facturaeParty')
+      // Cargamos la identidad fiscal para obtener el nombre real
+      .innerJoinAndSelect('company.facturaeParty', 'facturaeParty') 
       .innerJoin('ucr.user', 'user')
       .where('user.id = :userId', { userId })
       .andWhere('company.id = :companyId', { companyId })
@@ -49,12 +49,14 @@ export class CompanyContextService {
       expiresIn: '15m',
     });
 
+    // 4. Devolver token + info básica de la empresa seleccionada
     return {
       accessToken,
       company: {
         id: relation.company.id,
-        name: relation.company.facturaeParty.corporateName ||
-          `${relation.company.facturaeParty.firstName} ${relation.company.facturaeParty.lastName}`.trim(),
+        // 👇 AQUÍ ESTÁ EL CAMBIO: Usamos el getter de la entidad
+        // Esto devuelve Razón Social (si es empresa) o Nombre+Apellidos (si es autónomo)
+        name: relation.company.facturaeParty.facturaeName, 
         role: relation.role,
       },
     };

@@ -1,25 +1,29 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { 
-  IsBoolean, 
-  IsDateString, 
-  IsEnum, 
-  IsInt, 
-  IsNumber, 
-  IsOptional, 
-  IsString, 
-  IsUUID, 
-  Max, 
-  Min 
+import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsDate,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  Min
 } from 'class-validator';
-import { 
-  ContractStatus, 
-  BillingPeriod, 
-  ContractType, 
-  PaymentMethod 
+import {
+  ContractStatus,
+  BillingPeriod,
+  ContractType,
+  PaymentMethod
 } from '../enums';
 
 export class CreateContractDto {
-  // --- IDENTIFICACIÓN ---
+  // --------------------------------------------------------------------------
+  // IDENTIFICACIÓN
+  // --------------------------------------------------------------------------
   @ApiProperty({ description: 'Referencia interna única', example: 'ALQ-2026/001' })
   @IsString()
   reference: string;
@@ -28,7 +32,9 @@ export class CreateContractDto {
   @IsEnum(ContractType)
   type: ContractType;
 
-  // --- RELACIONES OBLIGATORIAS (Cierre de Seguridad) ---
+  // --------------------------------------------------------------------------
+  // RELACIONES (IDs UUID)
+  // --------------------------------------------------------------------------
   @ApiProperty({ description: 'UUID de la Empresa (Owner)' })
   @IsUUID()
   companyId: string;
@@ -41,7 +47,9 @@ export class CreateContractDto {
   @IsUUID()
   propertyId: string;
 
-  // --- ECONOMÍA & IMPUESTOS (Tax) ---
+  // --------------------------------------------------------------------------
+  // ECONOMÍA
+  // --------------------------------------------------------------------------
   @ApiProperty({ description: 'Renta mensual base', example: 1000.00 })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
@@ -52,6 +60,9 @@ export class CreateContractDto {
   @Min(0)
   depositAmount: number;
 
+  // --------------------------------------------------------------------------
+  // IMPUESTOS (Tax Entity)
+  // --------------------------------------------------------------------------
   @ApiProperty({ description: 'UUID del Impuesto IVA (Tax Entity)' })
   @IsUUID()
   taxId: string;
@@ -61,34 +72,40 @@ export class CreateContractDto {
   @IsUUID()
   retentionId?: string;
 
-  // --- OPERATIVA DE PAGO (Ajuste "Bak" a UUID) ---
+  // --------------------------------------------------------------------------
+  // OPERATIVA DE PAGO (Bancos)
+  // --------------------------------------------------------------------------
   @ApiProperty({ enum: PaymentMethod })
   @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
 
-  @ApiProperty({ description: 'UUID de la Cuenta del Cliente (Seleccionada de su perfil)', required: false })
+  @ApiProperty({ description: 'UUID de la Cuenta del Cliente (Para domiciliar)', required: false })
   @IsOptional()
-  @IsUUID() // <--- CAMBIO: Forzamos UUID para evitar strings basura
+  @IsUUID()
   tenantBankAccountId?: string;
 
-  @ApiProperty({ description: 'UUID de la Cuenta de la Empresa (Seleccionada de su perfil)', required: false })
+  @ApiProperty({ description: 'UUID de la Cuenta de la Empresa (Para recibir transf.)', required: false })
   @IsOptional()
-  @IsUUID() // <--- CAMBIO: Forzamos UUID
+  @IsUUID()
   companyBankAccountId?: string;
 
-  // --- CICLO DE VIDA ---
+  // --------------------------------------------------------------------------
+  // CICLO DE VIDA & FECHAS
+  // --------------------------------------------------------------------------
   @ApiProperty({ enum: ContractStatus, default: ContractStatus.BORRADOR })
   @IsEnum(ContractStatus)
   status: ContractStatus;
 
-  @ApiProperty({ description: 'Fecha inicio (YYYY-MM-DD)', example: '2026-01-01' })
-  @IsDateString()
-  startDate: string;
+  @ApiProperty({ example: '2026-01-01' })
+  @Type(() => Date) // 👈 "Magia": Convierte el string entrante a Date
+  @IsDate()         // Valida que sea un objeto Date real
+  startDate: Date;  // 👈 Ahora sí podemos decir que es Date
 
-  @ApiProperty({ description: 'Fecha fin (YYYY-MM-DD)', required: false })
+  @ApiProperty({ required: false })
   @IsOptional()
-  @IsDateString()
-  endDate?: string;
+  @Type(() => Date)
+  @IsDate()
+  endDate?: Date;
 
   @ApiProperty({ description: 'Día de cobro programado (1-28)', example: 1 })
   @IsInt()
@@ -100,17 +117,23 @@ export class CreateContractDto {
   @IsEnum(BillingPeriod)
   billingPeriod: BillingPeriod;
 
-  // --- AUTOMATIZACIÓN ---
+  // --------------------------------------------------------------------------
+  // AUTOMATIZACIÓN
+  // --------------------------------------------------------------------------
   @ApiProperty({ description: 'Activar facturación automática', default: false })
   @IsOptional()
   @IsBoolean()
   isAutoBillingEnabled?: boolean;
 
-  @ApiProperty({ description: 'Fecha límite autofacturación', required: false })
+  @ApiProperty({ required: false })
   @IsOptional()
-  @IsDateString()
-  autoBillingUntil?: string;
+  @Type(() => Date)
+  @IsDate()
+  autoBillingUntil?: Date;
 
+  // --------------------------------------------------------------------------
+  // DOCUMENTACIÓN
+  // --------------------------------------------------------------------------
   @ApiProperty({ description: 'URL del documento firmado', required: false })
   @IsOptional()
   @IsString()
