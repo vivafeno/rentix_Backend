@@ -250,6 +250,7 @@ export class SeederService {
     return client;
   }
 
+  
   /* ─────────────────────────────────────
    * CONTRATO (Alquiler)
    * ───────────────────────────────────── */
