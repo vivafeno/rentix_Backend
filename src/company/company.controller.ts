@@ -40,14 +40,14 @@ export class CompanyController {
    * El DTO contiene el userId seleccionado en el PASO 1.
    */
   @Post()
-  @Auth(AppRole.SUPERADMIN) 
+  @Auth(AppRole.SUPERADMIN)
   @ApiOperation({
     summary: 'Finalizar creación de empresa (Paso 4 Wizard)',
     description: 'Vincula la identidad fiscal y dirección, y asigna automáticamente el rol OWNER al userId proporcionado en el DTO.'
   })
-  @ApiCreatedResponse({ 
-    type: Company, 
-    description: 'Empresa creada exitosamente y rol de OWNER asignado al usuario indicado.' 
+  @ApiCreatedResponse({
+    type: Company,
+    description: 'Empresa creada exitosamente y rol de OWNER asignado al usuario indicado.'
   })
   async create(
     @Body() createCompanyDto: CreateCompanyDto,
@@ -58,14 +58,17 @@ export class CompanyController {
   }
 
   @Get('me')
-  @Auth() 
+  @Auth()
   @ApiOperation({
     summary: 'Mis empresas vinculadas (Selector de contexto)',
     description: 'Retorna todas las empresas donde el usuario actual tiene un rol (Owner, Gestor, Cliente).'
   })
   @ApiResponse({ status: 200, type: [CompanyMeDto] })
-  async getMyCompanies(@GetUser('id') userId: string) {
-    return this.companyService.getCompaniesForUser(userId);
+  async getMyCompanies(
+    @GetUser('id') userId: string,
+    @GetUser('appRole') appRole: AppRole
+  ) {
+    return this.companyService.getCompaniesForUser(userId, appRole);
   }
 
   @Get()
@@ -90,12 +93,12 @@ export class CompanyController {
   }
 
   @Patch(':id')
-  @Auth() 
+  @Auth()
   @ApiOperation({ summary: 'Actualizar empresa (Requiere ser OWNER o SUPERADMIN)' })
   @ApiResponse({ status: 200, type: Company })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateDto: any, 
+    @Body() updateDto: any,
     @GetUser('id') userId: string,
     @GetUser('appRole') appRole: AppRole,
   ) {

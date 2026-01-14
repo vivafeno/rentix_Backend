@@ -38,7 +38,7 @@ export class CompanyService {
    */
   async createCompany(dto: CreateCompanyDto, creatorUserId: string): Promise<Company> {
     return this.dataSource.transaction(async (manager) => {
-      
+
       // 1. Validar Identidad Fiscal
       const facturaeParty = await manager.findOne(FiscalIdentity, {
         where: { id: dto.facturaePartyId },
@@ -58,10 +58,10 @@ export class CompanyService {
       // 3. Crear la Empresa
       // Usamos el userId del DTO (el owner elegido) para el rol, 
       // y el creatorUserId (SuperAdmin) para la auditoría createdBy.
-      const company = manager.create(Company, { 
-        facturaeParty, 
+      const company = manager.create(Company, {
+        facturaeParty,
         fiscalAddress,
-        createdByUserId: creatorUserId 
+        createdByUserId: creatorUserId
       });
       await manager.save(company);
 
@@ -72,7 +72,7 @@ export class CompanyService {
 
       // 5. VÍNCULO MAESTRO: Asignar rol de OWNER al usuario del Paso 1
       const ownerRole = manager.create(CompanyRoleEntity, {
-        user: { id: dto.userId } as any, 
+        user: { id: dto.userId } as any,
         company,
         role: CompanyRole.OWNER,
         isActive: true
@@ -86,24 +86,38 @@ export class CompanyService {
   /**
    * Retorna las empresas vinculadas al usuario (Login Context)
    */
-  async getCompaniesForUser(userId: string): Promise<CompanyMeDto[]> {
-    const relations = await this.userCompanyRoleRepo.find({
-      where: { user: { id: userId } as any, isActive: true },
-      relations: ['company', 'company.facturaeParty', 'company.companyRoles', 'company.companyRoles.user'],
-    });
+  async getCompaniesForUser(userId: string, appRole: AppRole): Promise<CompanyMeDto[]> {
+    let companies: Company[];
 
-    return relations.map((r) => {
-      const owner = r.company.companyRoles.find(
-        (cr) => cr.role === CompanyRole.OWNER
-      );
+    if (appRole === AppRole.SUPERADMIN) {
+      // Si es SuperAdmin, traemos TODAS las empresas del sistema
+      companies = await this.companyRepo.find({
+        where: { isActive: true },
+        relations: ['facturaeParty', 'companyRoles', 'companyRoles.user'],
+      });
+    } else {
+      // Si es un usuario normal, buscamos solo sus vínculos
+      const relations = await this.userCompanyRoleRepo.find({
+        where: { user: { id: userId } as any, isActive: true },
+        relations: ['company', 'company.facturaeParty', 'company.companyRoles', 'company.companyRoles.user'],
+      });
+      companies = relations.map(r => r.company);
+    }
+
+    return companies.map((company) => {
+      const owner = company.companyRoles.find(cr => cr.role === CompanyRole.OWNER);
+
+      // Buscamos el rol del usuario actual en esta empresa (si no es SuperAdmin)
+      // Para el SuperAdmin, podemos mostrar 'SUPERADMIN' o 'OWNER'
+      const userRole = company.companyRoles.find(cr => cr.user?.id === userId)?.role;
 
       return {
-        companyId: r.company.id,
-        legalName: r.company.facturaeParty?.corporateName || r.company.facturaeParty?.facturaeName || 'Nombre no disponible',
-        tradeName: r.company.facturaeParty?.tradeName || 'N/A',
-        taxId: r.company.facturaeParty?.taxId || 'N/A',
-        ownerEmail: owner?.user?.email ?? '',
-        role: r.role as unknown as CompanyRole,
+        companyId: company.id,
+        legalName: company.facturaeParty?.corporateName || company.facturaeParty?.facturaeName || 'Nombre no disponible',
+        tradeName: company.facturaeParty?.tradeName || 'N/A',
+        taxId: company.facturaeParty?.taxId || 'N/A',
+        ownerEmail: owner?.user?.email ?? 'Sin propietario',
+        role: (appRole === AppRole.SUPERADMIN ? 'SUPERADMIN' : userRole) as unknown as CompanyRole,
       };
     });
   }
@@ -154,9 +168,9 @@ export class CompanyService {
 
   async softDeleteWithAccess(id: string, userId: string, appRole: AppRole): Promise<void> {
     await this.updateWithAccess(id, {}, userId, appRole);
-    await this.companyRepo.update(id, { 
-      isActive: false, 
-      deletedAt: new Date() 
+    await this.companyRepo.update(id, {
+      isActive: false,
+      deletedAt: new Date()
     });
   }
 
