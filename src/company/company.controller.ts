@@ -15,7 +15,8 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiForbiddenResponse,
-  ApiUnauthorizedResponse
+  ApiUnauthorizedResponse,
+  ApiCreatedResponse
 } from '@nestjs/swagger';
 
 import { CompanyService } from './company.service';
@@ -33,25 +34,34 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) { }
 
+  /**
+   * PASO 4 DEL WIZARD: Creación final de la empresa.
+   * Solo el SUPERADMIN puede ejecutar esta acción.
+   * El DTO contiene el userId seleccionado en el PASO 1.
+   */
   @Post()
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN) // Solo creadores de sistema
+  @Auth(AppRole.SUPERADMIN) 
   @ApiOperation({
-    summary: 'Crear empresa (Setup Wizard)',
-    description: 'Crea la empresa vinculada a Facturae y asigna al creador como OWNER.'
+    summary: 'Finalizar creación de empresa (Paso 4 Wizard)',
+    description: 'Vincula la identidad fiscal y dirección, y asigna automáticamente el rol OWNER al userId proporcionado en el DTO.'
   })
-  @ApiResponse({ status: 201, type: Company, description: 'Empresa creada con éxito' })
+  @ApiCreatedResponse({ 
+    type: Company, 
+    description: 'Empresa creada exitosamente y rol de OWNER asignado al usuario indicado.' 
+  })
   async create(
     @Body() createCompanyDto: CreateCompanyDto,
-    @GetUser('id') userId: string,
+    @GetUser('id') creatorId: string, // ID del SuperAdmin que opera
   ) {
-    return this.companyService.createCompany(createCompanyDto, userId);
+    // Pasamos el DTO (que lleva el userId del Paso 1) y el ID del SuperAdmin para auditoría
+    return this.companyService.createCompany(createCompanyDto, creatorId);
   }
 
   @Get('me')
-  @Auth() // Cualquier usuario autenticado
+  @Auth() 
   @ApiOperation({
-    summary: 'Mis empresas vinculadas',
-    description: 'Filtra empresas por el ID del usuario extraído del token.'
+    summary: 'Mis empresas vinculadas (Selector de contexto)',
+    description: 'Retorna todas las empresas donde el usuario actual tiene un rol (Owner, Gestor, Cliente).'
   })
   @ApiResponse({ status: 200, type: [CompanyMeDto] })
   async getMyCompanies(@GetUser('id') userId: string) {
@@ -59,29 +69,30 @@ export class CompanyController {
   }
 
   @Get()
-  @Auth(AppRole.SUPERADMIN) // Listado total solo para SuperAdmin
-  @ApiOperation({ summary: 'Listado global de empresas (Solo SuperAdmin)' })
+  @Auth(AppRole.SUPERADMIN)
+  @ApiOperation({ summary: 'Listado global de todas las empresas (Solo SuperAdmin)' })
+  @ApiResponse({ status: 200, type: [Company] })
   async findAll() {
     return this.companyService.findAll();
   }
 
   @Get(':id')
   @Auth()
-  @ApiOperation({ summary: 'Obtener detalle de una empresa con validación de acceso' })
+  @ApiOperation({ summary: 'Detalle de empresa con validación de acceso' })
   @ApiParam({ name: 'id', description: 'UUID de la empresa' })
   @ApiResponse({ status: 200, type: Company })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('id') userId: string,
-    @GetUser('appRole') appRole: AppRole, // 👈 Corregido: antes ponía 'role'
+    @GetUser('appRole') appRole: AppRole,
   ) {
-    // Si es SUPERADMIN, el service debería saltarse la validación de propiedad
     return this.companyService.findOneWithAccess(id, userId, appRole);
   }
 
   @Patch(':id')
-  @Auth() // La lógica de si es OWNER se valida en el Service
-  @ApiOperation({ summary: 'Actualizar datos de la empresa (Requiere ser Owner o Admin Global)' })
+  @Auth() 
+  @ApiOperation({ summary: 'Actualizar empresa (Requiere ser OWNER o SUPERADMIN)' })
+  @ApiResponse({ status: 200, type: Company })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: any, 
@@ -92,13 +103,22 @@ export class CompanyController {
   }
 
   @Delete(':id')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN)
+  @Auth(AppRole.SUPERADMIN)
   @ApiOperation({ summary: 'Borrado lógico de la empresa' })
+  @ApiResponse({ status: 204, description: 'Empresa desactivada correctamente' })
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('id') userId: string,
     @GetUser('appRole') appRole: AppRole,
   ) {
     return this.companyService.softDeleteWithAccess(id, userId, appRole);
+  }
+
+  @Get(':id/members')
+  @Auth()
+  @ApiOperation({ summary: 'Listar miembros y roles de una empresa específica' })
+  @ApiParam({ name: 'id', description: 'UUID de la empresa' })
+  async getMembers(@Param('id', ParseUUIDPipe) id: string) {
+    return this.companyService.getCompanyMembers(id);
   }
 }

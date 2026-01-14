@@ -76,7 +76,7 @@ export class AuthController {
   // 🚪 LOGOUT
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  @ApiBearerAuth('access-token')
+  @ApiBearerAuth('bearer')
   @ApiOperation({
     summary: 'Cerrar sesión e invalidar refresh token',
   })

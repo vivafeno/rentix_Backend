@@ -20,7 +20,7 @@ async function bootstrap() {
         scheme: 'bearer',
         bearerFormat: 'JWT',
       },
-      'access-token', // 👈 nombre del esquema
+      'bearer', 
     )
     .build();
 

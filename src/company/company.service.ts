@@ -31,19 +31,21 @@ export class CompanyService {
   ) { }
 
   /**
-   * Crea una empresa en una transacción:
-   * 1. Vincula la identidad legal (FacturaeParty)
-   * 2. Vincula la dirección fiscal y la activa
-   * 3. Crea la empresa con auditoría
-   * 4. Asigna al creador el rol de OWNER
+   * Crea una empresa siguiendo el flujo:
+   * 1. Valida Identidad Fiscal (Paso 3)
+   * 2. Valida y activa Dirección (Paso 2)
+   * 3. Crea Empresa vinculada al User (Paso 1) como OWNER
    */
-  async createCompany(dto: CreateCompanyDto, ownerUserId: string): Promise<Company> {
+  async createCompany(dto: CreateCompanyDto, creatorUserId: string): Promise<Company> {
     return this.dataSource.transaction(async (manager) => {
+      
+      // 1. Validar Identidad Fiscal
       const facturaeParty = await manager.findOne(FiscalIdentity, {
-        where: { id: dto.facturaePartyId }, // isActive no existe en BaseEntity por defecto, revisa si lo tienes
+        where: { id: dto.facturaePartyId },
       });
       if (!facturaeParty) throw new NotFoundException('Identidad fiscal no encontrada');
 
+      // 2. Validar Dirección
       const fiscalAddress = await manager.findOne(Address, {
         where: { id: dto.fiscalAddressId, isActive: true },
       });
@@ -53,21 +55,27 @@ export class CompanyService {
         throw new ConflictException('La dirección fiscal ya está asociada a otra empresa');
       }
 
+      // 3. Crear la Empresa
+      // Usamos el userId del DTO (el owner elegido) para el rol, 
+      // y el creatorUserId (SuperAdmin) para la auditoría createdBy.
       const company = manager.create(Company, { 
         facturaeParty, 
         fiscalAddress,
-        createdByUserId: ownerUserId 
+        createdByUserId: creatorUserId 
       });
       await manager.save(company);
 
+      // 4. Vincular dirección a la empresa y activarla
       fiscalAddress.companyId = company.id;
       fiscalAddress.status = AddressStatus.ACTIVE;
       await manager.save(fiscalAddress);
 
+      // 5. VÍNCULO MAESTRO: Asignar rol de OWNER al usuario del Paso 1
       const ownerRole = manager.create(CompanyRoleEntity, {
-        user: { id: ownerUserId } as any, 
+        user: { id: dto.userId } as any, 
         company,
         role: CompanyRole.OWNER,
+        isActive: true
       });
       await manager.save(ownerRole);
 
@@ -76,7 +84,7 @@ export class CompanyService {
   }
 
   /**
-   * Retorna las empresas vinculadas al usuario para el dashboard 'Mis Empresas'
+   * Retorna las empresas vinculadas al usuario (Login Context)
    */
   async getCompaniesForUser(userId: string): Promise<CompanyMeDto[]> {
     const relations = await this.userCompanyRoleRepo.find({
@@ -91,8 +99,7 @@ export class CompanyService {
 
       return {
         companyId: r.company.id,
-        // 👇 CORRECCIÓN: Usamos el getter inteligente de la entidad
-        legalName: r.company.facturaeParty?.facturaeName || 'Nombre no disponible',
+        legalName: r.company.facturaeParty?.corporateName || r.company.facturaeParty?.facturaeName || 'Nombre no disponible',
         tradeName: r.company.facturaeParty?.tradeName || 'N/A',
         taxId: r.company.facturaeParty?.taxId || 'N/A',
         ownerEmail: owner?.user?.email ?? '',
@@ -101,9 +108,6 @@ export class CompanyService {
     });
   }
 
-  /**
-   * Listado global (Solo accesible si el Guard permitió el paso a SUPERADMIN)
-   */
   async findAll(): Promise<Company[]> {
     return this.companyRepo.find({
       where: { isActive: true },
@@ -112,9 +116,6 @@ export class CompanyService {
     });
   }
 
-  /**
-   * Obtiene una empresa validando si el usuario tiene permiso de verla
-   */
   async findOneWithAccess(id: string, userId: string, appRole: AppRole): Promise<Company> {
     const company = await this.companyRepo.findOne({
       where: { id, isActive: true },
@@ -122,11 +123,8 @@ export class CompanyService {
     });
 
     if (!company) throw new NotFoundException('Empresa no encontrada');
-
-    // SUPERADMIN ve todo por defecto
     if (appRole === AppRole.SUPERADMIN) return company;
 
-    // Verificación de relación en la tabla de roles
     const hasAccess = await this.userCompanyRoleRepo.findOne({
       where: {
         user: { id: userId } as any,
@@ -140,9 +138,6 @@ export class CompanyService {
     return company;
   }
 
-  /**
-   * Actualiza datos validando que sea el Propietario o un Admin Global
-   */
   async updateWithAccess(id: string, updateDto: any, userId: string, appRole: AppRole): Promise<Company> {
     const company = await this.findOneWithAccess(id, userId, appRole);
 
@@ -157,22 +152,14 @@ export class CompanyService {
     return this.companyRepo.save(updatedCompany);
   }
 
-  /**
-   * Borrado lógico de empresa
-   */
   async softDeleteWithAccess(id: string, userId: string, appRole: AppRole): Promise<void> {
-    // Validamos permisos (si puede editar, puede borrar)
     await this.updateWithAccess(id, {}, userId, appRole);
-
     await this.companyRepo.update(id, { 
       isActive: false, 
       deletedAt: new Date() 
     });
   }
 
-  /**
-   * Miembros de la empresa
-   */
   async getCompanyMembers(companyId: string): Promise<any[]> {
     const members = await this.userCompanyRoleRepo.find({
       where: { company: { id: companyId } as any, isActive: true },
@@ -182,8 +169,6 @@ export class CompanyService {
     return members.map(m => ({
       userId: m.user.id,
       email: m.user.email,
-      // NOTA: Aquí usamos m.user (Usuario del login), no FiscalIdentity,
-      // por lo que firstName/lastName SÍ existen en la entidad User.
       fullName: `${m.user.firstName || ''} ${m.user.lastName || ''}`.trim(),
       role: m.role,
       since: m.createdAt
