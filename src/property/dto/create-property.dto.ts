@@ -12,48 +12,34 @@ import {
   MaxLength,
 } from 'class-validator';
 import { PropertyType } from '../enums/property-type.enum';
-import { PropertyStatus } from '../enums/property-status.enum'; // Asegúrate de importar el enum correcto
+import { PropertyStatus } from '../enums/property-status.enum';
 import { CreateAddressDto } from '../../address/dto/create-address.dto';
 
 export class CreatePropertyDto {
 
-  /* ─────────────────────────────────────────────────────────────────
-   * 1. IDENTIFICACIÓN Y GESTIÓN
-   * ───────────────────────────────────────────────────────────────── */
-
-  @ApiProperty({ description: 'Referencia interna (ej: P-VAL-001)', example: 'P-VAL-001' })
+  @ApiProperty({ description: 'Referencia interna única', example: 'P-VAL-001' })
   @IsString()
   @IsNotEmpty()
-  internalCode: string; // He renombrado 'reference' a 'internalCode' para consistencia con ClientProfile
+  internalCode: string;
 
-  @ApiProperty({ description: 'Alias amigable (ej: Ático Centro)', example: 'Ático Centro' })
+  @ApiProperty({ description: 'Alias del inmueble', example: 'Ático Centro' })
   @IsString()
   @IsNotEmpty()
-  name: string; // Campo nuevo vital para listados en el front
+  name: string;
 
-  @ApiProperty({ enum: PropertyType, example: PropertyType.RESIDENTIAL })
+  @ApiProperty({ enum: PropertyType, enumName: 'PropertyType', example: PropertyType.RESIDENTIAL })
   @IsEnum(PropertyType)
   type: PropertyType;
 
-  @ApiPropertyOptional({ enum: PropertyStatus, default: PropertyStatus.AVAILABLE })
+  @ApiPropertyOptional({ enum: PropertyStatus, enumName: 'PropertyStatus', default: PropertyStatus.AVAILABLE })
   @IsOptional()
   @IsEnum(PropertyStatus)
-  status?: PropertyStatus; // Opcional, por defecto será AVAILABLE en la entidad
+  status?: PropertyStatus;
 
-  /* ─────────────────────────────────────────────────────────────────
-   * 2. DIRECCIÓN (CAMBIO CLAVE: OBJETO, NO ID)
-   * ───────────────────────────────────────────────────────────────── */
-  
-  @ApiProperty({ type: CreateAddressDto, description: 'Datos de la dirección física' })
+  @ApiProperty({ type: CreateAddressDto, description: 'Dirección física' })
   @ValidateNested()
   @Type(() => CreateAddressDto)
-  address: CreateAddressDto; 
-  // 👆 ESTO SOLUCIONA TU ERROR.
-  // En lugar de pedir un ID, pedimos los datos para crearla al vuelo.
-
-  /* ─────────────────────────────────────────────────────────────────
-   * 3. DATOS LEGALES / ECONÓMICOS
-   * ───────────────────────────────────────────────────────────────── */
+  address: CreateAddressDto;
 
   @ApiPropertyOptional({ example: '1234567AB1234C0001DE', maxLength: 20 })
   @IsOptional()
@@ -67,10 +53,6 @@ export class CreatePropertyDto {
   @Min(0)
   rentPrice?: number;
 
-  /* ─────────────────────────────────────────────────────────────────
-   * 4. DATOS FÍSICOS (TUS CAMPOS ORIGINALES)
-   * ───────────────────────────────────────────────────────────────── */
-
   @ApiPropertyOptional({ example: 85 })
   @IsOptional()
   @IsNumber()
@@ -78,7 +60,7 @@ export class CreatePropertyDto {
 
   @ApiPropertyOptional({ example: 3 })
   @IsOptional()
-  @IsInt() // Mejor IsInt que IsNumber para cosas que no pueden ser decimales
+  @IsInt()
   @Min(0)
   rooms?: number;
 
@@ -97,10 +79,6 @@ export class CreatePropertyDto {
   @IsOptional()
   @IsString()
   description?: string;
-
-  /* ─────────────────────────────────────────────────────────────────
-   * 5. GEO
-   * ───────────────────────────────────────────────────────────────── */
 
   @ApiPropertyOptional({ example: 39.4699 })
   @IsOptional()

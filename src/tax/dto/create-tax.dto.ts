@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNumber, IsBoolean, IsEnum, IsOptional, Min, Max, Length } from 'class-validator';
+import { TaxType } from '../enums/tax-type.enum';
 
 export class CreateTaxDto {
   @ApiProperty({ example: 'IVA 21%', minLength: 3, maxLength: 50 })
@@ -13,16 +14,21 @@ export class CreateTaxDto {
   @Max(100)
   rate: number;
 
-  @ApiProperty({ example: '01', enum: ['01', '02', '03', '04', '05'] })
-  @IsEnum(['01', '02', '03', '04', '05'])
-  taxType: string;
+  @ApiProperty({ 
+    example: TaxType.VAT, 
+    enum: TaxType, 
+    enumName: 'TaxType',
+    description: 'Tipo lógico para Facturae' 
+  })
+  @IsEnum(TaxType)
+  type: TaxType;
 
   @ApiPropertyOptional({ example: false, default: false })
   @IsBoolean()
   @IsOptional()
   isRetention?: boolean;
 
-  @ApiPropertyOptional({ example: 'Art. 20.1.23' })
+  @ApiPropertyOptional({ example: '01', description: 'Código oficial Facturae' })
   @IsString()
   @IsOptional()
   facturaeCode?: string;

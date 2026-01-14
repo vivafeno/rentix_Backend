@@ -1,33 +1,41 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Delete, ParseUUIDPipe, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TaxService } from './tax.service';
 import { CreateTaxDto } from './dto/create-tax.dto';
-import { UpdateTaxDto } from './dto/update-tax.dto';
 import { Tax } from './entities/tax.entity';
+import { Auth } from './../auth/decorators/auth.decorator';
+import { GetUser } from './../auth/decorators/get-user.decorator';
+import { AppRole } from './../auth/enums/user-global-role.enum';
 
-@ApiTags('Taxes') // Agrupa en Swagger
+@ApiTags('Taxes')
+@ApiBearerAuth()
 @Controller('tax')
 export class TaxController {
   constructor(private readonly taxService: TaxService) {}
 
   @Post()
+  @Auth(AppRole.ADMIN, AppRole.USER)
   @ApiOperation({ summary: 'Crear un nuevo impuesto' })
   @ApiResponse({ status: 201, type: Tax })
-  create(@Body() createTaxDto: CreateTaxDto) {
-    return this.taxService.create(createTaxDto);
+  create(@Body() createTaxDto: CreateTaxDto, @GetUser() user: any) {
+    if (!user.companyId) throw new BadRequestException('Contexto de empresa requerido');
+    return this.taxService.create(user.companyId, createTaxDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar todos los impuestos activos' })
+  @Auth(AppRole.ADMIN, AppRole.USER)
+  @ApiOperation({ summary: 'Listar impuestos de la empresa' })
   @ApiResponse({ status: 200, type: [Tax] })
-  findAll() {
-    return this.taxService.findAll();
+  findAll(@GetUser() user: any) {
+    if (!user.companyId) throw new BadRequestException('Contexto de empresa requerido');
+    return this.taxService.findAll(user.companyId);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Obtener un impuesto por ID' })
+  @Delete(':id')
+  @Auth(AppRole.ADMIN)
+  @ApiOperation({ summary: 'Borrado lógico de impuesto' })
   @ApiResponse({ status: 200, type: Tax })
-  findOne(@Param('id') id: string) {
-    return this.taxService.findOne(id);
+  remove(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: any) {
+    return this.taxService.remove(id, user.companyId);
   }
 }

@@ -3,7 +3,6 @@ import {
   ConflictException,
   InternalServerErrorException,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -20,73 +19,52 @@ export class PropertyService {
     private readonly propertyRepo: Repository<Property>,
   ) {}
 
-  /**
-   * Crear Propiedad vinculada a la Empresa (Tenant)
-   */
-  async create(companyId: string, createDto: CreatePropertyDto) {
+  async create(companyId: string, createDto: CreatePropertyDto): Promise<Property> {
     const { address, ...propertyData } = createDto;
 
-    // 1. Preparar la entidad con sus relaciones
     const property = this.propertyRepo.create({
       ...propertyData,
-      companyId, // Vincular obligatoriamente al Tenant
+      companyId,
       address: {
         ...address,
-        companyId, // La dirección también pertenece al Tenant
+        companyId,
         status: AddressStatus.ACTIVE,
         isDefault: true, 
-        type: AddressType.PROPERTY, // Forzamos el tipo correcto
+        type: AddressType.PROPERTY,
       },
     });
 
     try {
-      // 2. Guardar (Cascade guardará la dirección también)
       return await this.propertyRepo.save(property);
     } catch (error) {
       this.handleDBExceptions(error);
     }
   }
 
-  /**
-   * Listar todas las propiedades de UNA empresa
-   */
-  async findAll(companyId: string) {
+  async findAll(companyId: string): Promise<Property[]> {
     return this.propertyRepo.find({
       where: { companyId },
       order: { createdAt: 'DESC' },
-      // 'address' se carga sola por eager: true en la entidad
     });
   }
 
-  /**
-   * Buscar una propiedad específica (Validando que pertenezca a la empresa)
-   */
-  async findOne(id: string, companyId: string) {
+  async findOne(id: string, companyId: string): Promise<Property> {
     const property = await this.propertyRepo.findOne({
       where: { id, companyId },
     });
 
     if (!property) {
-      throw new NotFoundException(`Propiedad con ID ${id} no encontrada o no tienes acceso.`);
+      throw new NotFoundException(`Propiedad con ID ${id} no encontrada.`);
     }
     return property;
   }
 
-  /**
-   * Actualizar Propiedad
-   */
-  async update(id: string, companyId: string, updateDto: UpdatePropertyDto) {
-    // 1. Verificar existencia y propiedad
+  async update(id: string, companyId: string, updateDto: UpdatePropertyDto): Promise<Property> {
     const property = await this.findOne(id, companyId);
-    
     const { address, ...data } = updateDto;
 
-    // 2. Actualizar datos planos de la propiedad
     Object.assign(property, data);
-
-    // 3. Actualizar dirección si viene en el DTO
-    // Al ser OneToOne con cascade, TypeORM intentará actualizarla si modificamos el objeto anidado
-    if (address) {
+    if (address && property.address) {
       Object.assign(property.address, address);
     }
 
@@ -97,28 +75,21 @@ export class PropertyService {
     }
   }
 
-  /**
-   * Eliminar Propiedad (Cascade borrará la dirección)
-   */
-  async remove(id: string, companyId: string) {
+  async remove(id: string, companyId: string): Promise<Property> {
     const property = await this.findOne(id, companyId);
-    return this.propertyRepo.remove(property);
+    // Soft Delete: Marca deletedAt en lugar de borrar físicamente
+    return this.propertyRepo.softRemove(property);
   }
 
-  // --- HELPERS ---
-
-  private handleDBExceptions(error: any) {
-    if (error.code === '23505') { // Postgres Unique Violation
-      // Detectamos si es por código interno o referencia catastral
+  private handleDBExceptions(error: any): never {
+    if (error.code === '23505') {
       if (error.detail?.includes('internal_code')) {
-        throw new ConflictException('Ya existe una propiedad con ese Código Interno en tu empresa.');
+        throw new ConflictException('Código interno duplicado.');
       }
       if (error.detail?.includes('cadastral_reference')) {
-        throw new ConflictException('Esa Referencia Catastral ya está registrada en tu empresa.');
+        throw new ConflictException('Referencia catastral duplicada.');
       }
     }
-    // Log para el desarrollador
-    console.error(error); 
-    throw new InternalServerErrorException('Error inesperado al gestionar la propiedad.');
+    throw new InternalServerErrorException('Error en la gestión del inmueble.');
   }
 }

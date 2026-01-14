@@ -3,9 +3,9 @@ import {
   Column,
   ManyToOne,
   OneToOne,
-  OneToMany, // 👈 Nuevo import
   JoinColumn,
   Index,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntity } from 'src/common/base/base.entity';
@@ -14,25 +14,15 @@ import { Address } from 'src/address/entities/address.entity';
 import { PropertyType } from '../enums/property-type.enum';
 import { PropertyStatus } from '../enums/property-status.enum';
 
-// 👇 DESCOMENTAR MAÑANA CUANDO TENGAMOS EL CONTRATO
-// import { Contract } from 'src/contract/entities/contract.entity';
-
-/**
- * 🏠 PROPERTY (Inmueble / Activo)
- * Representa la unidad física alquilable.
- * - Pertenece a una Empresa (Tenant).
- * - Tiene una Dirección única.
- * - Puede tener N Contratos históricos, pero solo 1 ACTIVO simultáneamente.
- */
 @Entity('properties')
 @Index(['companyId', 'internalCode'], { unique: true })
 @Index(['companyId', 'cadastralReference'])
 export class Property extends BaseEntity {
 
   /* ─────────────────────────────────────────────────────────────────
-   * 🏢 MULTI-TENANT (Owner)
+   * 🏢 MULTI-TENANT
    * ───────────────────────────────────────────────────────────────── */
-  @ApiProperty({ type: () => Company })
+  @ApiProperty({ type: () => Company, description: 'Empresa propietaria' })
   @ManyToOne(() => Company, (company) => company.properties, { 
     nullable: false, 
     onDelete: 'CASCADE' 
@@ -40,14 +30,14 @@ export class Property extends BaseEntity {
   @JoinColumn({ name: 'company_id' })
   company: Company;
 
-  @ApiProperty({ format: 'uuid' })
+  @ApiProperty({ format: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' })
   @Column({ name: 'company_id' })
   companyId: string;
 
   /* ─────────────────────────────────────────────────────────────────
    * 📍 DIRECCIÓN
    * ───────────────────────────────────────────────────────────────── */
-  @ApiProperty({ type: () => Address })
+  @ApiProperty({ type: () => Address, description: 'Dirección física' })
   @OneToOne(() => Address, { 
     cascade: true, 
     eager: true,   
@@ -57,50 +47,47 @@ export class Property extends BaseEntity {
   address: Address;
 
   /* ─────────────────────────────────────────────────────────────────
-   * 📜 CONTRATOS (Relación con el futuro módulo)
+   * 🆔 IDENTIFICACIÓN Y ESTADO
    * ───────────────────────────────────────────────────────────────── */
-  
-  // 👇 DESCOMENTAR MAÑANA: Relación OneToMany para historial.
-  // La validación "Solo 1 activo" se hará en el Service de Contract.
-  /*
-  @OneToMany(() => Contract, (contract) => contract.property)
-  contracts: Contract[];
-  */
-
-  /* ─────────────────────────────────────────────────────────────────
-   * 🆔 IDENTIFICACIÓN
-   * ───────────────────────────────────────────────────────────────── */
-  @ApiProperty({ description: 'Código interno único', example: 'P-001' })
+  @ApiProperty({ description: 'Código interno de gestión', example: 'P-001' })
   @Column({ name: 'internal_code', length: 50 })
   internalCode: string;
 
-  @ApiProperty({ description: 'Alias amigable', example: 'Ático Centro' })
+  @ApiProperty({ description: 'Nombre comercial o alias', example: 'Ático Centro' })
   @Column({ length: 100 })
   name: string;
 
-  @ApiProperty({ enum: PropertyType, example: PropertyType.RESIDENTIAL })
+  @ApiProperty({ 
+    enum: PropertyType, 
+    enumName: 'PropertyType', 
+    example: PropertyType.RESIDENTIAL 
+  })
   @Column({ type: 'enum', enum: PropertyType, default: PropertyType.RESIDENTIAL })
   type: PropertyType;
 
-  @ApiProperty({ enum: PropertyStatus, example: PropertyStatus.AVAILABLE })
+  @ApiProperty({ 
+    enum: PropertyStatus, 
+    enumName: 'PropertyStatus', 
+    example: PropertyStatus.AVAILABLE 
+  })
   @Column({ type: 'enum', enum: PropertyStatus, default: PropertyStatus.AVAILABLE })
   status: PropertyStatus;
 
   /* ─────────────────────────────────────────────────────────────────
-   * ⚖️ DATOS FACTURAE
+   * ⚖️ DATOS FISCALES / ECONÓMICOS
    * ───────────────────────────────────────────────────────────────── */
   @ApiPropertyOptional({ description: 'Referencia Catastral', maxLength: 20 })
   @Column({ name: 'cadastral_reference', length: 20, nullable: true })
   cadastralReference?: string;
 
-  @ApiPropertyOptional({ description: 'Precio alquiler sugerido', type: 'number' })
+  @ApiPropertyOptional({ description: 'Precio base sugerido', type: 'number' })
   @Column({ name: 'rent_price', type: 'decimal', precision: 10, scale: 2, nullable: true })
   rentPrice?: number;
 
   /* ─────────────────────────────────────────────────────────────────
    * 🏠 CARACTERÍSTICAS FÍSICAS
    * ───────────────────────────────────────────────────────────────── */
-  @ApiPropertyOptional({ description: 'Superficie m2', type: 'number' })
+  @ApiPropertyOptional({ description: 'Metros cuadrados', type: 'number' })
   @Column({ name: 'surface_m2', type: 'decimal', precision: 8, scale: 2, nullable: true })
   surfaceM2?: number;
 
@@ -116,12 +103,12 @@ export class Property extends BaseEntity {
   @Column({ length: 20, nullable: true })
   floor?: string;
 
-  @ApiPropertyOptional({ description: 'Descripción detallada' })
+  @ApiPropertyOptional({ description: 'Notas detalladas' })
   @Column({ type: 'text', nullable: true })
   description?: string;
 
   /* ─────────────────────────────────────────────────────────────────
-   * 🗺️ GEO
+   * 🗺️ GEOLOCALIZACIÓN Y AUDITORÍA DE BORRADO
    * ───────────────────────────────────────────────────────────────── */
   @ApiPropertyOptional({ type: 'number' })
   @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
@@ -130,4 +117,5 @@ export class Property extends BaseEntity {
   @ApiPropertyOptional({ type: 'number' })
   @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
   longitude?: number;
+
 }
