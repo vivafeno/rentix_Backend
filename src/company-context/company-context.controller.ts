@@ -19,11 +19,12 @@ export class CompanyContextController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOkResponse({ description: 'Nuevo accessToken con empresa seleccionada' })
-  @Post('select-company')
-  async selectCompany(
-    @GetUser('sub') userId: string,
-    @Body() dto: SelectCompanyDto,
-  ) {
-    return this.companyContextService.selectCompany(userId, dto);
-  }
+ @Post('select-company')
+@UseGuards(JwtAuthGuard)
+async selectCompany(
+  @GetUser('id') userId: string, // 👈 Cambiado de 'sub' a 'id'
+  @Body() dto: SelectCompanyDto,
+) {
+  return this.companyContextService.selectCompany(userId, dto);
+}
 }

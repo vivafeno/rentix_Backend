@@ -16,50 +16,46 @@ export class CompanyContextService {
     private readonly userRepo: Repository<User>,
   ) { }
 
-   async selectCompany(userId: string, dto: SelectCompanyDto) {
-    const { companyId } = dto;
+// src/company-context/company-context.service.ts
 
-    // 1. Comprobar que el usuario existe
-    const user = await this.userRepo.findOne({ where: { id: userId, isActive: true } });
-    if (!user) throw new UnauthorizedException('Usuario no encontrado o inactivo');
+async selectCompany(userId: string, dto: SelectCompanyDto) {
+  const { companyId } = dto;
 
-    // 2. Comprobar que el usuario pertenece a esa empresa
-    // 💡 CAMBIO: Usamos leftJoinAndSelect para permitir empresas que aún no tienen facturaeParty
-    const relation = await this.userCompanyRoleRepo
-      .createQueryBuilder('ucr')
-      .leftJoinAndSelect('ucr.company', 'company')
-      .leftJoinAndSelect('company.facturaeParty', 'facturaeParty') 
-      .innerJoin('ucr.user', 'user')
-      .where('user.id = :userId', { userId })
-      .andWhere('company.id = :companyId', { companyId })
-      .andWhere('ucr.isActive = true')
-      .getOne();
+  // 1. Buscamos la relación de forma directa y sencilla
+  // Usamos el repositorio para asegurar que traemos la entidad Company vinculada
+  const relation = await this.userCompanyRoleRepo.findOne({
+    where: { 
+      user: { id: userId }, 
+      company: { id: companyId },
+      isActive: true 
+    },
+    relations: ['company', 'user']
+  });
 
-    if (!relation) throw new UnauthorizedException('No tienes acceso a esa empresa');
+  if (!relation) {
+    throw new UnauthorizedException('No tienes acceso a esa empresa');
+  }
 
-    // 3. Crear un nuevo accessToken contextualizado
-    const payload = {
-      sub: user.id,
-      appRole: user.appRole,
-      companyId: relation.company.id,
-      companyRole: relation.role,
-    };
+  // 2. PAYLOAD CRÍTICO: Aquí es donde se inyecta la empresa
+  // Aseguramos que los nombres coincidan con lo que tus Guards esperan
+  const payload = {
+    sub: userId,              // ID del usuario
+    appRole: relation.user.appRole, // Rol global (SUPERADMIN, USER...)
+    companyId: companyId,     // 👈 ESTO ES LO QUE TE FALTA
+    companyRole: relation.role // OWNER, GESTOR, etc.
+  };
 
-    const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '1h', // He subido el tiempo un poco para desarrollo
-    });
+  // 3. Generamos el token
+  const accessToken = await this.jwtService.signAsync(payload);
 
-    // 4. Devolver token + info básica
-    return {
-      accessToken,
-      company: {
-        id: relation.company.id,
-        // 💡 CAMBIO: Protección con el encadenamiento opcional (?.) por si facturaeParty es null
-        name: relation.company.facturaeParty?.facturaeName || 'Empresa en configuración', 
-        role: relation.role,
-      },
-    };
-  } 
+  return {
+    accessToken,
+    company: {
+      id: relation.company.id,
+      role: relation.role
+    }
+  };
+}
  
 }
 

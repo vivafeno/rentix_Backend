@@ -1,36 +1,38 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AcceptLanguageResolver, HeaderResolver, I18nModule as NestI18nModule, QueryResolver } from 'nestjs-i18n';
+import { I18nModule as NestI18nModule, QueryResolver, HeaderResolver, AcceptLanguageResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+
+// --- INFRAESTRUCTURA ---
 import { HealthModule } from './health/health.module';
+import { SeederModule } from './config/seeder.module';
+
+// --- SEGURIDAD Y CONTEXTO ---
+import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { UserCompanyRoleModule } from './user-company-role/companyRole.module';
-import { ClientProfileModule } from './client-profile/client-profile.module';
-import { AuthModule } from './auth/auth.module';
 import { CompanyContextModule } from './company-context/company-context.module';
-import { SeederModule } from './config/seeder.module';
+
+// --- DOMINIO / NEGOCIO ---
+import { CompanyModule } from './company/company.module';
 import { AddressModule } from './address/address.module';
 import { ContactModule } from './contact/contact.module';
-import { FacturaeModule } from './facturae/fiscalIdentity.module';
-import { CompanyModule } from './company/company.module';
-import { ClientModule } from './client/client.module';
 import { PropertyModule } from './property/property.module';
+import { ClientModule } from './client/client.module';
+import { ClientProfileModule } from './client-profile/client-profile.module';
 import { ContractModule } from './contract/contract.module';
 import { TaxModule } from './tax/tax.module';
 import { BillingConceptModule } from './billing-concept/billing-concept.module';
-
+import { FacturaeModule } from './facturae/fiscalIdentity.module';
 
 @Module({
   imports: [
-    // 1) Config primero (lee .env)
-    ConfigModule.forRoot({
-      isGlobal: true, // 👈 importante para que process.env funcione en todo
-    }),
+    // 1. VARIABLES DE ENTORNO
+    ConfigModule.forRoot({ isGlobal: true }),
 
-    // TypeORM (PostgreSQL)
+    // 2. PERSISTENCIA (Optimización Rentix 2026)
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
@@ -44,15 +46,17 @@ import { BillingConceptModule } from './billing-concept/billing-concept.module';
           database: config.get<string>('DB_NAME'),
           schema: 'public',
           autoLoadEntities: true,
-          synchronize: !isProd,
-          logging: !isProd,
+          // 🚨 CONFIGURACIÓN DE DESARROLLO SEGURO
+          synchronize: !isProd, // Crea columnas nuevas sin borrar datos
+          dropSchema: false,   // 🛡️ PROTECCIÓN: Evita el borrado de datos al reiniciar
+          logging: !isProd ? ['query', 'error'] : false,
           namingStrategy: new SnakeNamingStrategy(),
           ssl: isProd ? { rejectUnauthorized: false } : false,
         };
       }
     }),
 
-    // i18n (ES por defecto)
+    // 3. INTERNACIONALIZACIÓN
     NestI18nModule.forRoot({
       fallbackLanguage: 'es',
       loaderOptions: {
@@ -60,7 +64,6 @@ import { BillingConceptModule } from './billing-concept/billing-concept.module';
         watch: true,
       },
       resolvers: [
-        // orden de resolución del idioma
         new QueryResolver(['lang']),
         new HeaderResolver(['x-lang', 'x-locale']),
         new AcceptLanguageResolver(),
@@ -68,29 +71,23 @@ import { BillingConceptModule } from './billing-concept/billing-concept.module';
       typesOutputPath: path.join(process.cwd(), 'src/i18n/generated-i18n-types.d.ts'),
     }),
 
-    // Seeder
+    // 4. MÓDULOS DE SISTEMA Y NEGOCIO
     SeederModule,
-
-    // Módulos de dominio
     HealthModule,
-    HealthModule,
+    AuthModule,
     UserModule,
     UserCompanyRoleModule,
-    CompanyModule,
-    ClientProfileModule,
-    AuthModule,
     CompanyContextModule,
+    CompanyModule,
     AddressModule,
     ContactModule,
-    FacturaeModule,
-    ClientModule,
     PropertyModule,
+    ClientModule,
+    ClientProfileModule,
     ContractModule,
-    FacturaeModule,
     TaxModule,
     BillingConceptModule,
+    FacturaeModule,
   ],
-  controllers: [],
-  providers: [],
 })
-export class AppModule { }
+export class AppModule {}
