@@ -21,7 +21,7 @@ import {
 
 import { CompanyService } from './company.service';
 import { Company } from './entities/company.entity';
-import { CreateCompanyDto, CompanyMeDto } from './dto';
+import { CreateCompanyDto, CompanyMeDto, UpdateCompanyDto } from './dto';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { Auth } from 'src/auth/decorators/auth.decorator';
@@ -98,7 +98,7 @@ export class CompanyController {
   @ApiResponse({ status: 200, type: Company })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateDto: any,
+    @Body() updateDto: UpdateCompanyDto,
     @GetUser('id') userId: string,
     @GetUser('appRole') appRole: AppRole,
   ) {

@@ -11,9 +11,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
 import { UserModule } from 'src/user/user.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '../user/entities/user.entity';
 
 @Module({
+  
   imports: [
+    TypeOrmModule.forFeature([User]),
     UserModule,
     PassportModule, // sin defaultStrategy
     ConfigModule,

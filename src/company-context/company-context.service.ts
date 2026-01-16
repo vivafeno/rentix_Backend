@@ -16,7 +16,7 @@ export class CompanyContextService {
     private readonly userRepo: Repository<User>,
   ) { }
 
-  async selectCompany(userId: string, dto: SelectCompanyDto) {
+   async selectCompany(userId: string, dto: SelectCompanyDto) {
     const { companyId } = dto;
 
     // 1. Comprobar que el usuario existe
@@ -24,11 +24,11 @@ export class CompanyContextService {
     if (!user) throw new UnauthorizedException('Usuario no encontrado o inactivo');
 
     // 2. Comprobar que el usuario pertenece a esa empresa
+    // 💡 CAMBIO: Usamos leftJoinAndSelect para permitir empresas que aún no tienen facturaeParty
     const relation = await this.userCompanyRoleRepo
       .createQueryBuilder('ucr')
-      .innerJoinAndSelect('ucr.company', 'company')
-      // Cargamos la identidad fiscal para obtener el nombre real
-      .innerJoinAndSelect('company.facturaeParty', 'facturaeParty') 
+      .leftJoinAndSelect('ucr.company', 'company')
+      .leftJoinAndSelect('company.facturaeParty', 'facturaeParty') 
       .innerJoin('ucr.user', 'user')
       .where('user.id = :userId', { userId })
       .andWhere('company.id = :companyId', { companyId })
@@ -46,19 +46,22 @@ export class CompanyContextService {
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '15m',
+      expiresIn: '1h', // He subido el tiempo un poco para desarrollo
     });
 
-    // 4. Devolver token + info básica de la empresa seleccionada
+    // 4. Devolver token + info básica
     return {
       accessToken,
       company: {
         id: relation.company.id,
-        // 👇 AQUÍ ESTÁ EL CAMBIO: Usamos el getter de la entidad
-        // Esto devuelve Razón Social (si es empresa) o Nombre+Apellidos (si es autónomo)
-        name: relation.company.facturaeParty.facturaeName, 
+        // 💡 CAMBIO: Protección con el encadenamiento opcional (?.) por si facturaeParty es null
+        name: relation.company.facturaeParty?.facturaeName || 'Empresa en configuración', 
         role: relation.role,
       },
     };
-  }
+  } 
+ 
 }
+
+
+  

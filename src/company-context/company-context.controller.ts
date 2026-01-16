@@ -11,7 +11,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @ApiTags('context')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(AppRole.SUPERADMIN, AppRole.ADMIN)
+@Roles(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
 @Controller('context')
 export class CompanyContextController {
   constructor(private readonly companyContextService: CompanyContextService) {}

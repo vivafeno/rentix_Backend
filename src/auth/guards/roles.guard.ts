@@ -31,7 +31,7 @@ export class RolesGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-
+    
     // Validación: El usuario debe estar autenticado (inyectado por JwtStrategy)
     if (!user) {
       throw new ForbiddenException('Usuario no autenticado');

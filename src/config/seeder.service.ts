@@ -27,23 +27,26 @@ export class SeederService {
   private async seedSuperAdmin(): Promise<User> {
     const email = 'admin@rentix.com';
 
-    // 1. Buscamos explícitamente el array
+    // 1. Usamos find (devuelve Array)
     const existingUsers = await this.userRepo.find({ where: { email } });
 
-    // 2. Comprobamos si tiene elementos y devolvemos el primero (índice 0)
+    // 2. Comprobación explícita de longitud y retorno del índice 0
     if (existingUsers.length > 0) {
-      this.logger.log(`Superadmin (${email}) ya existe. Omitiendo creación.`);
-      return existingUsers[0]; // Retorna explícitamente 'User', no 'User[]'
+      this.logger.log(`Superadmin ya existe: ${email}`);
+      return existingUsers[0]; // Retorna explícitamente User
     }
 
-    // 3. Si no existe, creamos uno nuevo
-    const newAdmin = this.userRepo.create({
+    // 3. Creación limpia sin 'as any' si es posible, o mínima
+    const newAdminPayload = {
       email,
       password: await bcrypt.hash('Admin123!', 10),
-      roles: [AppRole.SUPERADMIN],
+      appRole: AppRole.SUPERADMIN,
       fullName: 'System Admin',
-    } as any);
+    };
 
+    // create() devuelve un objeto único cuando se le pasa un objeto único
+    const newAdmin = this.userRepo.create(newAdminPayload as unknown as User); 
+    
     return await this.userRepo.save(newAdmin);
   }
 }

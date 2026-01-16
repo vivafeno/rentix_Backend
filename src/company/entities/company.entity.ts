@@ -11,10 +11,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntity } from 'src/common/base/base.entity';
 import { FiscalIdentity } from 'src/facturae/entities/fiscalIdentity.entity';
 import { Address } from 'src/address/entities/address.entity';
-// import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum'; // (Parece no usarse aquí directamente)
 import { User } from 'src/user/entities/user.entity';
 import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
-// 👇 1. IMPORTAR CLIENT PROFILE
 import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
 import { Property } from 'src/property/entities/property.entity';
 
@@ -22,11 +20,11 @@ import { Property } from 'src/property/entities/property.entity';
 export class Company extends BaseEntity {
 
   /* ------------------------------------------------------------------
-   * IDENTIDAD FISCAL
+   * IDENTIDAD FISCAL (CIF, Razón Social)
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
-    description: 'UUID de la identidad fiscal (FacturaeParty)',
+    description: 'UUID de la identidad fiscal (Referencia a FacturaeParty)',
     format: 'uuid',
     example: '9f8b4d1e-1a2b-4d9e-b9a2-123456789abc',
   })
@@ -34,10 +32,14 @@ export class Company extends BaseEntity {
   facturaePartyId: string;
 
   @ApiProperty({
-    description: 'Entidad fiscal asociada a la empresa',
+    description: 'Objeto completo de la identidad fiscal (Razón social, CIF...)',
     type: () => FiscalIdentity,
   })
-  @OneToOne(() => FiscalIdentity, { eager: true })
+  @OneToOne(() => FiscalIdentity, { 
+    eager: true,                 // ⚡ Se carga siempre automáticamente
+    cascade: ['insert', 'update'], // 🚨 CRÍTICO: Permite crear/editar la identidad desde el endpoint de Company
+    onDelete: 'RESTRICT'         // No borrar la identidad si se borra la empresa (o CASCADE según tu lógica de negocio)
+  })
   @JoinColumn({ name: 'facturae_party_id' })
   facturaeParty: FiscalIdentity;
 
@@ -58,21 +60,24 @@ export class Company extends BaseEntity {
   fiscalAddressId?: string;
 
   @ApiPropertyOptional({
-    description: 'Dirección fiscal de la empresa',
+    description: 'Objeto completo de la dirección fiscal',
     type: () => Address,
   })
-  @OneToOne(() => Address, { nullable: true })
+  @OneToOne(() => Address, { 
+    nullable: true,
+    eager: true,                 // ⚡ Recomendado: Al cargar empresa, solemos querer la dirección
+    cascade: ['insert', 'update']  // 🚨 CRÍTICO: Permite editar la dirección desde el endpoint de Company
+  })
   @JoinColumn({ name: 'fiscal_address_id' })
   fiscalAddress?: Address;
 
   /* ------------------------------------------------------------------
-   * AUDITORÍA
+   * AUDITORÍA (Creador)
    * ------------------------------------------------------------------ */
 
   @ApiPropertyOptional({
-    description: 'Usuario que creó la empresa (auditoría interna)',
+    description: 'ID del usuario que creó el registro (Auditoría)',
     format: 'uuid',
-    example: '7b5c9f0a-1111-2222-3333-abcdefabcdef',
   })
   @Column({
     name: 'created_by_user_id',
@@ -82,7 +87,7 @@ export class Company extends BaseEntity {
   createdByUserId?: string;
 
   @ApiPropertyOptional({
-    description: 'Usuario creador de la empresa (solo auditoría)',
+    description: 'Entidad del usuario creador (No se carga por defecto)',
     type: () => User,
   })
   @ManyToOne(() => User, { nullable: true })
@@ -90,45 +95,32 @@ export class Company extends BaseEntity {
   createdBy?: User;
 
   /* ------------------------------------------------------------------
-   * ROLES POR EMPRESA
+   * RELACIONES 1:N (Roles, Propiedades, Clientes)
+   * Nota: Estas relaciones suelen ser Lazy (eager: false) por rendimiento
    * ------------------------------------------------------------------ */
 
-  @ApiProperty({
-    description: 'Roles de usuarios dentro de la empresa',
+  @ApiPropertyOptional({
+    description: 'Lista de usuarios y sus roles en esta empresa',
     type: () => [CompanyRoleEntity],
-    isArray: true,
   })
-  @OneToMany(
-    () => CompanyRoleEntity,
-    (ucr) => ucr.company,
-  )
+  @OneToMany(() => CompanyRoleEntity, (ucr) => ucr.company)
   companyRoles: CompanyRoleEntity[];
 
-  /* ─────────────────────────────────────────────────────────────────
-   * 🏠 PROPIEDADES (RELACIÓN 1:N)
-   * Una empresa (Tenant) posee múltiples propiedades (Assets).
-   * ───────────────────────────────────────────────────────────────── */
-  
   @ApiPropertyOptional({ 
-    description: 'Inventario de propiedades pertenecientes a esta empresa.',
-    type: () => [Property] // 👈 Importante: Array de propiedades (lazy resolve)
+    description: 'Inventario de propiedades (inmuebles) de la empresa',
+    type: () => [Property]
   })
   @OneToMany(() => Property, (property) => property.company, {
-    // cascade: true, // Descomentar si quieres crear Propiedades al crear la Empresa (poco común en este flujo)
-    eager: false,     // ⚡ PERFORMANCE: False para no cargar las 500 propiedades cada vez que consultes el perfil de la empresa.
+    eager: false, // ⚡ Performance: No cargar cientos de propiedades en el login
   })
   properties: Property[];
 
-
-
-  /* ------------------------------------------------------------------
-   * CRM: CLIENTES
-   * ------------------------------------------------------------------ */
-  // 👇 2. AÑADIR LA RELACIÓN CON LAZY LOAD PARA SWAGGER
   @ApiPropertyOptional({
-    description: 'Cartera de clientes de la empresa',
-    type: () => [ClientProfile], // Función flecha evita el error circular
+    description: 'Cartera de clientes (CRM) asociados a la empresa',
+    type: () => [ClientProfile],
   })
-  @OneToMany(() => ClientProfile, (client) => client.company)
+  @OneToMany(() => ClientProfile, (client) => client.company, {
+    eager: false, // ⚡ Performance
+  })
   clientProfiles: ClientProfile[];
 }
