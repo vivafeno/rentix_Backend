@@ -6,59 +6,66 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { User } from '../../user/entities/user.entity';
-
+import { ActiveUserData } from '../interfaces/jwt-payload.interface';
 /**
+ * @class JwtStrategy
  * @description Estrategia de Validación JWT (Blueprint 2026).
- * Se encarga de decodificar el token, verificar su firma y transformar el payload 
- * en una entidad de usuario hidratada con datos frescos de la base de datos.
- * * * @author Rentix
- * @version 2026.1.18
+ * Hidrata la request con datos del usuario y contexto de empresa.
+ * @version 2026.1.19
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
     const secret = configService.get<string>('JWT_ACCESS_SECRET');
-    
+
     if (!secret) {
-      throw new Error('CONFIG_ERROR: JWT_ACCESS_SECRET no definido en el entorno.');
+      throw new Error(
+        'CONFIG_ERROR: JWT_ACCESS_SECRET no definido en el entorno.',
+      );
     }
 
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false, // Blueprint 2026: Nunca ignorar expiración en producción
+      ignoreExpiration: false,
       secretOrKey: secret,
     });
   }
 
-/**
- * @description Estrategia de Validación JWT (Refactorizada Rentix 2026).
- * Garantiza que el objeto 'request.user' tenga las propiedades normalizadas.
- */
-async validate(payload: any): Promise<any> {
-  const { sub: id, companyId, companyRole } = payload;
-
-  const user = await this.userRepository.findOne({
-    where: { id },
-  });
-
-  if (!user || !user.isActive) {
-    throw new UnauthorizedException('SEGURIDAD: Identidad no válida o inactiva.');
-  }
-
   /**
-   * Normalización del objeto User (Mapping DB -> App)
-   * Extraemos app_role de la DB y lo exponemos como appRole para los decoradores.
+   * @method validate
+   * @description Valida el payload y retorna los datos del usuario activo.
+   * Resuelve errores 44, 47, 64 y 65 al eliminar el uso de 'any'.
+   * @param {ActiveUserData} payload Datos decodificados del token
+   * @returns {Promise<ActiveUserData>} Datos para inyectar en request.user
    */
-  return {
-    ...user,
-    id: user.id, // Aseguramos que 'id' esté disponible si se usa 'sub' en el token
-    appRole: user.appRole, // 🚩 CLAVE: Mapeo explícito para @GetUser('appRole')
-    companyId,
-    companyRole,
-  };
-}
+  async validate(payload: ActiveUserData): Promise<ActiveUserData> {
+    const { sub: id, companyId, companyRole } = payload;
+
+    const user = await this.userRepository.findOne({
+      where: { id },
+    });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException(
+        'SEGURIDAD: Identidad no válida o inactiva.',
+      );
+    }
+
+    /**
+     * @description Normalización del objeto ActiveUserData.
+     * Mapeamos explícitamente los campos para garantizar la compatibilidad
+     * con los decoradores de seguridad y la lógica multi-tenant.
+     */
+    return {
+      sub: user.id,
+      email: user.email,
+      appRole: user.appRole,
+      companyId: companyId || '',
+      companyRole: companyRole || '',
+    };
+  }
 }

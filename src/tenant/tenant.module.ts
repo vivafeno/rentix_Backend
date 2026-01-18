@@ -15,21 +15,21 @@ import { Tenant } from './entities/tenant.entity';
     /** * Registro de la entidad Tenant para habilitar la inyección del repositorio.
      * Requisito indispensable para que TenantService pueda interactuar con la DB.
      */
-    TypeOrmModule.forFeature([Tenant])
+    TypeOrmModule.forFeature([Tenant]),
   ],
   controllers: [
     /** Puntos de entrada de la API para la gestión de arrendatarios */
-    TenantController
+    TenantController,
   ],
   providers: [
     /** Lógica de negocio y orquestación de datos */
-    TenantService
+    TenantService,
   ],
   exports: [
     /** * Exportamos el servicio para permitir que otros módulos (como Contratos)
      * puedan validar o consultar datos de arrendatarios.
      */
-    TenantService
-  ]
+    TenantService,
+  ],
 })
 export class TenantModule {}

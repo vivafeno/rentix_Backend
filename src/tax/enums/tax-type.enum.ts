@@ -28,5 +28,5 @@ export enum TaxType {
   /**
    * @description Otros tributos o tasas no categorizados.
    */
-  OTRO = 'OTRO'
+  OTRO = 'OTRO',
 }

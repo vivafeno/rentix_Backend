@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsBoolean, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateBillingConceptDto {
   @ApiProperty({ example: 'RENTA' })
@@ -10,7 +17,7 @@ export class CreateBillingConceptDto {
   @IsString()
   label: string;
 
-  @ApiPropertyOptional({ example: 1200.00 })
+  @ApiPropertyOptional({ example: 1200.0 })
   @IsNumber()
   @IsOptional()
   defaultPrice?: number;

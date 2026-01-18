@@ -1,8 +1,20 @@
-import { 
-  Controller, Get, Post, Body, Patch, Param, Delete, 
-  ParseUUIDPipe, BadRequestException 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 import { TaxService } from './tax.service';
 import { CreateTaxDto } from './dto/create-tax.dto';
@@ -36,8 +48,8 @@ export class TaxController {
   @ApiOperation({ summary: 'Crear un nuevo impuesto' })
   @ApiResponse({ status: 201, type: Tax })
   async create(
-    @Body() createTaxDto: CreateTaxDto, 
-    @GetUser('companyId') companyId: string
+    @Body() createTaxDto: CreateTaxDto,
+    @GetUser('companyId') companyId: string,
   ): Promise<Tax> {
     this.checkContext(companyId);
     return this.taxService.create(companyId, createTaxDto);
@@ -64,7 +76,9 @@ export class TaxController {
   @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
   @ApiOperation({ summary: 'Listar impuestos eliminados (Papelera)' })
   @ApiResponse({ status: 200, type: [Tax] })
-  async findAllDeleted(@GetUser('companyId') companyId: string): Promise<Tax[]> {
+  async findAllDeleted(
+    @GetUser('companyId') companyId: string,
+  ): Promise<Tax[]> {
     this.checkContext(companyId);
     return this.taxService.findAllDeleted(companyId);
   }
@@ -78,8 +92,8 @@ export class TaxController {
   @ApiOperation({ summary: 'Obtener detalle de un impuesto' })
   @ApiResponse({ status: 200, type: Tax })
   async findOne(
-    @Param('id', ParseUUIDPipe) id: string, 
-    @GetUser('companyId') companyId: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser('companyId') companyId: string,
   ): Promise<Tax> {
     this.checkContext(companyId);
     return this.taxService.findOne(id, companyId);
@@ -111,9 +125,9 @@ export class TaxController {
   @ApiOperation({ summary: 'Restaurar un impuesto de la papelera' })
   @ApiResponse({ status: 200, type: Tax })
   async restore(
-    @Param('id', ParseUUIDPipe) id: string, 
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser('companyId') companyId: string,
-    @GetUser('companyRole') companyRole: CompanyRole
+    @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Tax> {
     this.checkContext(companyId);
     return this.taxService.restore(id, companyId, companyRole);
@@ -128,9 +142,9 @@ export class TaxController {
   @ApiOperation({ summary: 'Borrado lógico de impuesto' })
   @ApiResponse({ status: 200, type: Tax })
   async remove(
-    @Param('id', ParseUUIDPipe) id: string, 
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser('companyId') companyId: string,
-    @GetUser('companyRole') companyRole: CompanyRole
+    @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Tax> {
     this.checkContext(companyId);
     return this.taxService.remove(id, companyId, companyRole);
@@ -142,7 +156,9 @@ export class TaxController {
    */
   private checkContext(companyId?: string): void {
     if (!companyId) {
-      throw new BadRequestException('Contexto de patrimonio (companyId) no detectado en la sesión.');
+      throw new BadRequestException(
+        'Contexto de patrimonio (companyId) no detectado en la sesión.',
+      );
     }
   }
 }

@@ -21,7 +21,7 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
-import { LoginDto, TokensDto, SelectCompanyDto} from './dto';
+import { LoginDto, TokensDto, SelectCompanyDto } from './dto';
 import { User } from '../user/entities/user.entity';
 import { User as UserDecorator } from './decorators/user.decorator';
 

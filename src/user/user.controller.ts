@@ -43,14 +43,19 @@ export class UserController {
   @Post()
   @Auth(AppRole.SUPERADMIN, AppRole.ADMIN)
   @ApiOperation({ summary: 'Crear un nuevo usuario (Solo Admin/SuperAdmin)' })
-  @ApiCreatedResponse({ description: 'Usuario creado correctamente', type: UserDto })
+  @ApiCreatedResponse({
+    description: 'Usuario creado correctamente',
+    type: UserDto,
+  })
   create(@Body() dto: CreateUserDto): Promise<UserDto> {
     return this.userService.create(dto);
   }
 
   @Get()
   @Auth(AppRole.SUPERADMIN) // Solo el dueño del sistema lista a todos
-  @ApiOperation({ summary: 'Listar todos los usuarios activos (Solo SuperAdmin)' })
+  @ApiOperation({
+    summary: 'Listar todos los usuarios activos (Solo SuperAdmin)',
+  })
   @ApiOkResponse({ description: 'Listado de usuarios', type: [UserDto] })
   findAll(): Promise<UserDto[]> {
     return this.userService.findAll();

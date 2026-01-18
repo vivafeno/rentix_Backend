@@ -1,5 +1,23 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, ParseUUIDPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiForbiddenResponse, ApiUnauthorizedResponse, ApiCreatedResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  ParseUUIDPipe,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiForbiddenResponse,
+  ApiUnauthorizedResponse,
+  ApiCreatedResponse,
+} from '@nestjs/swagger';
 
 import { CompanyService } from './company.service';
 import { Company } from './entities/company.entity';
@@ -10,16 +28,21 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 
 /**
  * @class CompanyController
- * @description Controlador de orquestación patrimonial (Rentix 2026). 
- * Gestiona el ciclo de vida de las empresas y sus entidades legales bajo 
+ * @description Controlador de orquestación patrimonial (Rentix 2026).
+ * Gestiona el ciclo de vida de las empresas y sus entidades legales bajo
  * estándares Veri*factu para garantizar la trazabilidad fiscal.
  * @author Rentix 2026
  * @version 2.3.0
  */
 @ApiTags('Companies')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Error de autenticación: Token JWT no válido o expirado.' })
-@ApiForbiddenResponse({ description: 'Error de autorización: El rol del usuario no permite esta acción.' })
+@ApiUnauthorizedResponse({
+  description: 'Error de autenticación: Token JWT no válido o expirado.',
+})
+@ApiForbiddenResponse({
+  description:
+    'Error de autorización: El rol del usuario no permite esta acción.',
+})
 @Controller('companies')
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
@@ -33,13 +56,14 @@ export class CompanyController {
    */
   @Post('owner')
   @Auth(AppRole.SUPERADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Alta atómica de Propietario (Owner)',
-    description: 'Genera Address, FiscalEntity y Company en una transacción única.' 
+    description:
+      'Genera Address, FiscalEntity y Company en una transacción única.',
   })
-  @ApiCreatedResponse({ 
+  @ApiCreatedResponse({
     description: 'Empresa y registros legales creados con éxito.',
-    type: Company 
+    type: Company,
   })
   async createOwner(@Body() dto: CreateCompanyLegalDto): Promise<Company> {
     return this.companyService.createOwner(dto);
@@ -59,18 +83,23 @@ export class CompanyController {
 
   /**
    * @method getMyCompanies
-   * @description Punto de entrada para el Dashboard. 
+   * @description Punto de entrada para el Dashboard.
    * Recupera el inventario de empresas accesibles. El SUPERADMIN recibe bypass total.
    * @param {string} userId - ID del usuario extraído del JWT.
    * @param {string} appRole - Rol global para determinar visibilidad.
    */
   @Get('me')
   @Auth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Listado de patrimonios vinculados',
-    description: 'Visión global para SUPERADMIN y filtrada por jerarquía para USER/ADMIN.' 
+    description:
+      'Visión global para SUPERADMIN y filtrada por jerarquía para USER/ADMIN.',
   })
-  @ApiResponse({ status: 200, type: [Company], description: 'Colección de empresas recuperada.' })
+  @ApiResponse({
+    status: 200,
+    type: [Company],
+    description: 'Colección de empresas recuperada.',
+  })
   async getMyCompanies(
     @GetUser('id') userId: string,
     @GetUser('appRole') appRole: string,
@@ -113,13 +142,16 @@ export class CompanyController {
 
   /**
    * @method remove
-   * @description Baja lógica de la empresa (Soft Delete). 
+   * @description Baja lógica de la empresa (Soft Delete).
    * Restringido a SUPERADMIN por impacto en trazabilidad fiscal de facturas generadas.
    */
   @Delete(':id')
   @Auth(AppRole.SUPERADMIN)
   @ApiOperation({ summary: 'Baja lógica de empresa' })
-  @ApiResponse({ status: 204, description: 'Empresa marcada como eliminada correctamente.' })
+  @ApiResponse({
+    status: 204,
+    description: 'Empresa marcada como eliminada correctamente.',
+  })
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('id') userId: string,

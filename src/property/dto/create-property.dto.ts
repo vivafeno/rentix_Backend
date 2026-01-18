@@ -22,10 +22,12 @@ import { CreateAddressDto } from '../../address/dto/create-address.dto';
  * @version 2026.2.0
  */
 export class CreatePropertyDto {
-
   /* --- Identificación y Clasificación --- */
 
-  @ApiProperty({ description: 'Referencia interna (ej. P-VAL-001)', example: 'P-VAL-001' })
+  @ApiProperty({
+    description: 'Referencia interna (ej. P-VAL-001)',
+    example: 'P-VAL-001',
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
@@ -35,12 +37,18 @@ export class CreatePropertyDto {
   @IsEnum(PropertyType)
   tipo: PropertyType; // 🚩 Refactorizado: type -> tipo
 
-  @ApiPropertyOptional({ enum: PropertyStatus, default: PropertyStatus.AVAILABLE })
+  @ApiPropertyOptional({
+    enum: PropertyStatus,
+    default: PropertyStatus.AVAILABLE,
+  })
   @IsOptional()
   @IsEnum(PropertyStatus)
   estado?: PropertyStatus; // 🚩 Refactorizado: status -> estado
 
-  @ApiPropertyOptional({ description: 'Referencia Catastral (Veri*factu)', example: '1234567AB1234C0001DE' })
+  @ApiPropertyOptional({
+    description: 'Referencia Catastral (Veri*factu)',
+    example: '1234567AB1234C0001DE',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(25)
@@ -48,12 +56,15 @@ export class CreatePropertyDto {
 
   /* --- Métricas Físicas --- */
 
-  @ApiProperty({ description: 'Superficie total construida (m2)', example: 120.50 })
+  @ApiProperty({
+    description: 'Superficie total construida (m2)',
+    example: 120.5,
+  })
   @IsNumber()
   @Min(1)
   superficieConstruida: number; // 🚩 Refactorizado
 
-  @ApiProperty({ description: 'Superficie útil habitable (m2)', example: 95.00 })
+  @ApiProperty({ description: 'Superficie útil habitable (m2)', example: 95.0 })
   @IsNumber()
   @Min(1)
   superficieUtil: number; // 🚩 Refactorizado
@@ -86,7 +97,10 @@ export class CreatePropertyDto {
 
   /* --- Eficiencia Energética --- */
 
-  @ApiPropertyOptional({ description: 'Calificación energética (A-G)', example: 'B' })
+  @ApiPropertyOptional({
+    description: 'Calificación energética (A-G)',
+    example: 'B',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(1)
@@ -125,7 +139,10 @@ export class CreatePropertyDto {
   /**
    * @description Dirección física. Veri*factu exige que el inmueble esté localizado.
    */
-  @ApiProperty({ type: CreateAddressDto, description: 'Objeto de dirección física' })
+  @ApiProperty({
+    type: CreateAddressDto,
+    description: 'Objeto de dirección física',
+  })
   @ValidateNested()
   @Type(() => CreateAddressDto)
   address: CreateAddressDto;

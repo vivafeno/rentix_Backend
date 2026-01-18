@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -10,25 +6,24 @@ import { Address } from './entities/address.entity';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { AddressStatus } from './enums/addressStatus.enum';
-import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
 /**
  * @class AddressDraftService
  * @description Gestión de direcciones en estado DRAFT (Hydrated Drafts).
- * Responsable del ciclo de vida temporal antes de la vinculación legal.
- * @author Rentix 2026
- * @version 2.3.0
+ * Responsable del ciclo de vida temporal antes de la vinculación legal en el Wizard.
+ * @version 2.3.1
+ * @author Rentix
  */
 @Injectable()
 export class AddressDraftService {
   constructor(
     @InjectRepository(Address)
     private readonly addressRepo: Repository<Address>,
-  ) { }
+  ) {}
 
   /**
-   * @description Crea una dirección en borrador vinculada al usuario.
-   * El estado inicial es siempre DRAFT para cumplir con el flujo del Wizard.
+   * @method createDraft
+   * @description Crea una dirección en borrador vinculada al usuario creador.
    */
   async createDraft(dto: CreateAddressDto, userId: string): Promise<Address> {
     const address = this.addressRepo.create({
@@ -36,12 +31,12 @@ export class AddressDraftService {
       status: AddressStatus.DRAFT,
       createdByUserId: userId,
     });
-    return this.addressRepo.save(address);
+    return await this.addressRepo.save(address);
   }
 
   /**
-   * @description Recupera un borrador específico.
-   * Implementa validación de propiedad para evitar escalada de privilegios.
+   * @method findDraftById
+   * @description Localiza un borrador asegurando que el usuario sea el propietario del mismo.
    */
   async findDraftById(addressId: string, userId: string): Promise<Address> {
     const address = await this.addressRepo.findOne({
@@ -53,14 +48,17 @@ export class AddressDraftService {
     });
 
     if (!address) {
-      throw new NotFoundException('Borrador de dirección no encontrado o acceso denegado.');
+      throw new NotFoundException(
+        'Borrador de dirección no encontrado o acceso denegado.',
+      );
     }
 
     return address;
   }
 
   /**
-   * @description Actualiza los datos del borrador durante el Wizard.
+   * @method updateDraft
+   * @description Actualiza los datos del borrador durante las fases intermedias del Wizard.
    */
   async updateDraft(
     addressId: string,
@@ -68,31 +66,32 @@ export class AddressDraftService {
     userId: string,
   ): Promise<Address> {
     const address = await this.findDraftById(addressId, userId);
-
-    // Mapeo directo gracias a la normalización de nombres en el DTO
     Object.assign(address, dto);
-
-    return this.addressRepo.save(address);
+    return await this.addressRepo.save(address);
   }
 
   /**
+   * @method attachToCompany
    * @description Transiciona la dirección de DRAFT a ACTIVE vinculándola a un patrimonio.
-   * Blueprint 2026: Verificación de contexto antes de la hidratación final.
+   * Resuelve error de linter 84 eliminando parámetros no utilizados.
+   * @param {string} addressId UUID de la dirección.
+   * @param {string} companyId ID de la empresa destino.
+   * @param {string} userId ID del usuario que ejecuta la acción.
+   * @returns {Promise<Address>} Dirección activada y vinculada.
    */
   async attachToCompany(
     addressId: string,
     companyId: string,
     userId: string,
-    appRole: AppRole,
   ): Promise<Address> {
-    // 1. Validamos que el borrador pertenezca al usuario (o sea SUPERADMIN)
+    // 1. Validamos la propiedad del borrador
     const address = await this.findDraftById(addressId, userId);
 
     // 2. Hidratación y Cambio de Estado
     address.companyId = companyId;
     address.status = AddressStatus.ACTIVE;
-    address.isDefault = true; // Por defecto, la dirección vinculada en el wizard es la principal
+    address.isDefault = true;
 
-    return this.addressRepo.save(address);
+    return await this.addressRepo.save(address);
   }
 }

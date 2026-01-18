@@ -1,29 +1,24 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { 
-  IsOptional, 
-  IsString, 
-  IsUUID, 
-  ValidateNested, 
-  IsEmail,
-  MaxLength,
-  IsNotEmpty
-} from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID, ValidateNested, IsNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
 
-// Importaciones corregidas según tus rutas
-import { CreateFiscalEntityDto } from 'src/fiscal/dto/create-fiscal.dto';
+import { CreateFiscalDto } from '../../fiscal/dto/create-fiscal.dto';
 import { CreateAddressDto } from 'src/address/dto/create-address.dto';
-import { CreateCompanyDto } from './createCompany.dto';
+import { CreateCompanyDto } from './';
 
 /**
+ * @class CreateCompanyLegalDto
  * @description DTO Maestro para la creación atómica de sujetos legales.
  * Orquesta la validación de los tres bloques: Empresa, Fiscal y Dirección.
- * @version 2026.1.17
+ * @version 2026.2.0
+ * @author Rentix
  */
 export class CreateCompanyLegalDto {
-
+  /**
+   * @description ID del usuario al que se vinculará la entidad (Owner/Tenant/Viewer).
+   */
   @ApiProperty({
-    description: 'ID del usuario al que se vinculará la entidad (Owner/Tenant/Viewer)',
+    description: 'ID del usuario al que se vinculará la entidad (UUID v4)',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @IsUUID('4', { message: 'El ID de usuario debe ser un UUID válido' })
@@ -31,24 +26,32 @@ export class CreateCompanyLegalDto {
   userId: string;
 
   /**
-   * @description Datos básicos de la empresa (Nombre comercial, email, teléfono).
-   * Resuelve el error de propiedad inexistente en el Service.
+   * @description Datos básicos de la empresa/patrimonio.
    */
-  @ApiProperty({ type: CreateCompanyDto })
+  @ApiProperty({
+    description: 'Configuración de la entidad de empresa',
+    type: CreateCompanyDto,
+  })
   @ValidateNested()
   @Type(() => CreateCompanyDto)
   @IsNotEmpty()
   company: CreateCompanyDto;
 
+  /**
+   * @description Datos de identidad fiscal (NIF, Razón Social, etc).
+   */
   @ApiProperty({
-    description: 'Datos de identidad fiscal (Alineado con FacturaE/VeriFactu)',
-    type: CreateFiscalEntityDto,
+    description: 'Datos de identidad fiscal (Veri*factu Compliant)',
+    type: CreateFiscalDto,
   })
   @ValidateNested()
-  @Type(() => CreateFiscalEntityDto)
+  @Type(() => CreateFiscalDto) // 🚩 Sincronizado con el nuevo nombre
   @IsNotEmpty()
-  fiscal: CreateFiscalEntityDto;
+  fiscal: CreateFiscalDto;
 
+  /**
+   * @description Dirección física para notificaciones legales.
+   */
   @ApiProperty({
     description: 'Dirección fiscal y de notificaciones',
     type: CreateAddressDto,

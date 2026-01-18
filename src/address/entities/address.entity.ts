@@ -1,4 +1,12 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index, BeforeInsert, BeforeUpdate } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  BeforeInsert,
+  BeforeUpdate,
+} from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntity } from 'src/common/base/base.entity';
 import { Company } from 'src/company/entities/company.entity';
@@ -8,9 +16,10 @@ import { AddressType } from '../enums/addressType.enum';
 import { AddressStatus } from '../enums/addressStatus.enum';
 
 /**
+ * @class Address
  * @description Gestión de direcciones alineada con el estándar Veri*factu y FacturaE.
- * Se eliminan las líneas múltiples para cumplir con el esquema único de la AEAT.
- * @version 2026.2.0
+ * Centraliza la lógica de normalización postal para todo el ecosistema Rentix.
+ * @version 2026.2.1
  */
 @Entity('addresses')
 @Index(['companyId'])
@@ -20,7 +29,6 @@ import { AddressStatus } from '../enums/addressStatus.enum';
 @Index(['createdByUserId'])
 @Index('IDX_ADDRESS_CITY_SEARCH', ['companyId', 'poblacion'])
 export class Address extends BaseEntity {
-
   /* ------------------------------------------------------------------
    * RELACIONES Y CONTEXTO
    * ------------------------------------------------------------------ */
@@ -29,6 +37,7 @@ export class Address extends BaseEntity {
   @Column({ name: 'company_id', type: 'uuid', nullable: true })
   companyId?: string;
 
+  // 🚩 Solución linter: Tipado explícito del retorno de la relación
   @ManyToOne(() => Company, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'company_id' })
   company?: Company;
@@ -37,7 +46,10 @@ export class Address extends BaseEntity {
   @Column({ name: 'tenant_id', type: 'uuid', nullable: true })
   tenantId?: string;
 
-  @ManyToOne(() => Tenant, (tenant) => tenant.addresses, { nullable: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => Tenant, (tenant) => tenant.direcciones, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'tenant_id' })
   tenant?: Tenant;
 
@@ -45,7 +57,10 @@ export class Address extends BaseEntity {
   @Column({ name: 'client_profile_id', type: 'uuid', nullable: true })
   clientProfileId?: string;
 
-  @ManyToOne(() => TenantProfile, (cp) => cp.addresses, { nullable: true, onDelete: 'CASCADE' })
+  @ManyToOne((): typeof TenantProfile => TenantProfile, (cp) => cp.addresses, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'client_profile_id' })
   clientProfile?: TenantProfile;
 
@@ -61,7 +76,10 @@ export class Address extends BaseEntity {
   @Column({ type: 'enum', enum: AddressStatus, default: AddressStatus.DRAFT })
   status: AddressStatus;
 
-  @ApiProperty({ enum: AddressType, description: 'FISCAL, NOTIFICACION, PROPIEDAD, etc.' })
+  @ApiProperty({
+    enum: AddressType,
+    description: 'FISCAL, NOTIFICACION, PROPIEDAD, etc.',
+  })
   @Column({ type: 'enum', enum: AddressType })
   type: AddressType;
 
@@ -70,7 +88,7 @@ export class Address extends BaseEntity {
   isDefault: boolean;
 
   /* ------------------------------------------------------------------
-   * DATOS POSTALES (VERI*FACTU / FACTURAE COMPLIANT)
+   * DATOS POSTALES
    * ------------------------------------------------------------------ */
 
   @ApiProperty({ example: 'Calle de Alcalá 1, Piso 2º' })
@@ -89,17 +107,18 @@ export class Address extends BaseEntity {
   @Column({ name: 'provincia', nullable: true })
   provincia?: string;
 
-  /**
-   * @description Código de país ISO 3166-1 alpha-3 (ESP).
-   */
   @ApiProperty({ example: 'ESP', default: 'ESP' })
   @Column({ name: 'codigo_pais', length: 3, default: 'ESP' })
   codigoPais: string;
 
   /* ------------------------------------------------------------------
-   * CICLO DE VIDA Y NORMALIZACIÓN
+   * CICLO DE VIDA
    * ------------------------------------------------------------------ */
 
+  /**
+   * @method normalizeData
+   * @description Hook de persistencia para garantizar datos limpios en DB.
+   */
   @BeforeInsert()
   @BeforeUpdate()
   normalizeData(): void {

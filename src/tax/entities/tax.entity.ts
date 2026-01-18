@@ -12,7 +12,6 @@ import { TaxType } from '../enums/tax-type.enum';
  */
 @Entity('taxes')
 export class Tax extends BaseEntity {
-
   /* --- CONTEXTO PATRIMONIAL --- */
 
   @ApiProperty({ description: 'UUID de la empresa emisora' })
@@ -26,25 +25,33 @@ export class Tax extends BaseEntity {
 
   /* --- DEFINICIÓN FISCAL (Veri*factu) --- */
 
-  @ApiProperty({ example: 'IVA Exento - Alquiler Vivienda', description: 'Nombre descriptivo' })
+  @ApiProperty({
+    example: 'IVA Exento - Alquiler Vivienda',
+    description: 'Nombre descriptivo',
+  })
   @Column({ name: 'nombre', length: 100 })
   nombre: string;
 
-  @ApiProperty({ enum: TaxType, description: 'Categoría impositiva (IVA, IRPF, IGIC, IPSI)' })
+  @ApiProperty({
+    enum: TaxType,
+    description: 'Categoría impositiva (IVA, IRPF, IGIC, IPSI)',
+  })
   @Column({ type: 'enum', enum: TaxType, default: TaxType.IVA })
   tipo: TaxType;
 
-  @ApiProperty({ example: 21.00, description: 'Tipo impositivo aplicado' })
-  @Column({ 
+  @ApiProperty({ example: 21.0, description: 'Tipo impositivo aplicado' })
+  @Column({
     name: 'porcentaje',
-    type: 'decimal', 
-    precision: 5, 
-    scale: 2, 
-    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) }
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
   porcentaje: number;
 
-  @ApiProperty({ description: 'Si es true, minora el total de la factura (Retención)' })
+  @ApiProperty({
+    description: 'Si es true, minora el total de la factura (Retención)',
+  })
   @Column({ name: 'es_retencion', type: 'boolean', default: false })
   esRetencion: boolean;
 
@@ -55,7 +62,10 @@ export class Tax extends BaseEntity {
    * Obligatorio para facturas al 0% (ej. E1 para alquiler de viviendas).
    * Veri*factu lo exige para el nodo <CausaExencion>.
    */
-  @ApiProperty({ example: 'E1', description: 'Código AEAT: E1 (Vivienda), E2 (Enseñanza), etc.' })
+  @ApiProperty({
+    example: 'E1',
+    description: 'Código AEAT: E1 (Vivienda), E2 (Enseñanza), etc.',
+  })
   @Column({ name: 'causa_exencion', length: 5, nullable: true })
   causaExencion?: string;
 

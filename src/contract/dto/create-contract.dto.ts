@@ -1,9 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { 
-  IsUUID, IsNumber, IsDateString, IsEnum, IsArray, 
-  IsOptional, Min, Max, ArrayMinSize 
+import {
+  IsUUID,
+  IsNumber,
+  IsDateString,
+  IsEnum,
+  IsArray,
+  IsOptional,
+  Min,
+  Max,
+  ArrayMinSize,
 } from 'class-validator';
-import { FrecuenciaPago, MetodoPago, ContractStatus } from '../enums/contract.enums';
+import {
+  FrecuenciaPago,
+  MetodoPago,
+  ContractStatus,
+} from '../enums/contract.enums';
 
 /**
  * @class CreateContractDto
@@ -11,14 +22,13 @@ import { FrecuenciaPago, MetodoPago, ContractStatus } from '../enums/contract.en
  * Incluye metadatos para la generación estricta de tipos en Angular.
  */
 export class CreateContractDto {
-
   @ApiProperty({ description: 'ID del inmueble objeto del alquiler' })
   @IsUUID()
   propertyId: string;
 
-  @ApiProperty({ 
-    type: [String], 
-    description: 'IDs de los inquilinos firmantes (Mínimo 1)' 
+  @ApiProperty({
+    type: [String],
+    description: 'IDs de los inquilinos firmantes (Mínimo 1)',
   })
   @IsArray()
   @IsUUID('4', { each: true })
@@ -27,12 +37,12 @@ export class CreateContractDto {
 
   /* --- CONDICIONES ECONÓMICAS --- */
 
-  @ApiProperty({ example: 1200.00 })
+  @ApiProperty({ example: 1200.0 })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   rentaMensual: number;
 
-  @ApiPropertyOptional({ example: 2400.00, default: 0 })
+  @ApiPropertyOptional({ example: 2400.0, default: 0 })
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
@@ -49,18 +59,18 @@ export class CreateContractDto {
 
   /* --- CONFIGURACIÓN DE FACTURACIÓN --- */
 
-  @ApiProperty({ 
-    enum: FrecuenciaPago, 
+  @ApiProperty({
+    enum: FrecuenciaPago,
     enumName: 'FrecuenciaPago', // 🚩 Clave para ng-openapi-gen
-    default: FrecuenciaPago.MENSUAL 
+    default: FrecuenciaPago.MENSUAL,
   })
   @IsEnum(FrecuenciaPago)
   frecuenciaPago: FrecuenciaPago;
 
-  @ApiProperty({ 
-    enum: MetodoPago, 
+  @ApiProperty({
+    enum: MetodoPago,
     enumName: 'MetodoPago', // 🚩 Clave para ng-openapi-gen
-    default: MetodoPago.TRANSFERENCIA 
+    default: MetodoPago.TRANSFERENCIA,
   })
   @IsEnum(MetodoPago)
   metodoPago: MetodoPago;
@@ -82,10 +92,10 @@ export class CreateContractDto {
   @Min(1)
   duracionMeses: number;
 
-  @ApiPropertyOptional({ 
-    enum: ContractStatus, 
+  @ApiPropertyOptional({
+    enum: ContractStatus,
     enumName: 'ContractStatus', // 🚩 Clave para ng-openapi-gen
-    default: ContractStatus.ACTIVO 
+    default: ContractStatus.ACTIVO,
   })
   @IsOptional()
   @IsEnum(ContractStatus)

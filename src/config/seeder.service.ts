@@ -45,8 +45,8 @@ export class SeederService {
     };
 
     // create() devuelve un objeto único cuando se le pasa un objeto único
-    const newAdmin = this.userRepo.create(newAdminPayload as unknown as User); 
-    
+    const newAdmin = this.userRepo.create(newAdminPayload as unknown as User);
+
     return await this.userRepo.save(newAdmin);
   }
 }

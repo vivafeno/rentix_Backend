@@ -15,19 +15,20 @@ import { Expose } from 'class-transformer';
 @Entity('fiscal_entities')
 @Index('IDX_FISCAL_ENTITY_GLOBAL', ['nif'], {
   unique: true,
-  where: 'company_id IS NULL'
+  where: 'company_id IS NULL',
 })
 @Index('IDX_FISCAL_ENTITY_TENANT', ['nif', 'companyId'], {
   unique: true,
-  where: 'company_id IS NOT NULL'
+  where: 'company_id IS NOT NULL',
 })
 export class FiscalEntity extends BaseEntity {
-
   /* ------------------------------------------------------------------
    * CONTEXTO MULTI-TENANT
    * ------------------------------------------------------------------ */
 
-  @ApiPropertyOptional({ description: 'ID de la empresa propietaria (Null si es global)' })
+  @ApiPropertyOptional({
+    description: 'ID de la empresa propietaria (Null si es global)',
+  })
   @Column({ name: 'company_id', type: 'uuid', nullable: true })
   companyId?: string;
 
@@ -59,7 +60,10 @@ export class FiscalEntity extends BaseEntity {
   })
   tipoIdFiscal: TaxIdType;
 
-  @ApiProperty({ description: 'NIF/CIF del obligado tributario', example: 'B12345678' })
+  @ApiProperty({
+    description: 'NIF/CIF del obligado tributario',
+    example: 'B12345678',
+  })
   @Column({ name: 'nif', length: 20 })
   nif: string;
 
@@ -67,14 +71,17 @@ export class FiscalEntity extends BaseEntity {
    * NOMBRES Y RAZÓN SOCIAL (UNIFICADO VERI*FACTU)
    * ------------------------------------------------------------------ */
 
-  @ApiProperty({ 
-    description: 'Nombre y Apellidos o Razón Social Completa', 
-    example: 'Rentix Solutions S.L.' 
+  @ApiProperty({
+    description: 'Nombre y Apellidos o Razón Social Completa',
+    example: 'Rentix Solutions S.L.',
   })
   @Column({ name: 'nombre_razon_social' })
   nombreRazonSocial: string;
 
-  @ApiPropertyOptional({ description: 'Nombre comercial (informativo)', example: 'Rentix App' })
+  @ApiPropertyOptional({
+    description: 'Nombre comercial (informativo)',
+    example: 'Rentix App',
+  })
   @Column({ name: 'nombre_comercial', nullable: true })
   nombreComercial?: string;
 
@@ -95,7 +102,11 @@ export class FiscalEntity extends BaseEntity {
   })
   tipoResidencia: ResidenceType;
 
-  @ApiProperty({ description: 'Código ISO país (ESP)', example: 'ESP', default: 'ESP' })
+  @ApiProperty({
+    description: 'Código ISO país (ESP)',
+    example: 'ESP',
+    default: 'ESP',
+  })
   @Column({ name: 'codigo_pais', length: 3, default: 'ESP' })
   codigoPais: string;
 

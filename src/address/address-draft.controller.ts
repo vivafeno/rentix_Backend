@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Patch,
-  Param,
-  Body,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Get, Patch, Param, Body } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -22,9 +14,6 @@ import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { Address } from './entities/address.entity';
 
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { Auth } from 'src/auth/decorators/auth.decorator';
@@ -40,9 +29,7 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 @ApiBearerAuth()
 @Controller('addresses/drafts')
 export class AddressDraftController {
-  constructor(
-    private readonly addressDraftService: AddressDraftService,
-  ) {}
+  constructor(private readonly addressDraftService: AddressDraftService) {}
 
   /**
    * @method createDraft
@@ -53,7 +40,8 @@ export class AddressDraftController {
   @Auth()
   @ApiOperation({
     summary: 'Crear dirección en borrador',
-    description: 'Crea una dirección sin asociación empresarial (estado DRAFT) para Wizards.'
+    description:
+      'Crea una dirección sin asociación empresarial (estado DRAFT) para Wizards.',
   })
   @ApiBody({ type: CreateAddressDto })
   @ApiCreatedResponse({
@@ -110,7 +98,8 @@ export class AddressDraftController {
   @Auth()
   @ApiOperation({
     summary: 'Asociar dirección en borrador a una empresa',
-    description: 'Transiciona el estado de DRAFT a ACTIVE y establece el vínculo patrimonial.'
+    description:
+      'Transiciona el estado de DRAFT a ACTIVE y establece el vínculo patrimonial.',
   })
   @ApiParam({ name: 'addressId', description: 'UUID de la dirección.' })
   @ApiParam({ name: 'companyId', description: 'UUID de la empresa destino.' })
@@ -125,7 +114,7 @@ export class AddressDraftController {
       addressId,
       companyId,
       userId,
-      appRole
+      appRole,
     );
   }
 }

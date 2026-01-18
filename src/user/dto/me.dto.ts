@@ -14,13 +14,15 @@ export class CompanyRoleDto {
   companyId: string;
 
   @ApiProperty({
-    description: 'Nombre comercial o legal de la empresa para mostrar en el selector del Front',
+    description:
+      'Nombre comercial o legal de la empresa para mostrar en el selector del Front',
     example: 'Rentix SL',
   })
   companyName: string;
 
   @ApiProperty({
-    description: 'Nivel de permisos del usuario dentro de esta empresa específica',
+    description:
+      'Nivel de permisos del usuario dentro de esta empresa específica',
     enum: CompanyRole,
     example: CompanyRole.OWNER,
   })
@@ -39,32 +41,35 @@ export class MeDto {
   id: string;
 
   @ApiProperty({
-    description: 'Correo electrónico principal utilizado para login y notificaciones',
+    description:
+      'Correo electrónico principal utilizado para login y notificaciones',
     example: 'user@rentix.app',
   })
   email: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Nombre de pila del usuario (procedente del perfil)',
-    example: 'System' 
+    example: 'System',
   })
   firstName?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Apellidos del usuario',
-    example: 'Admin' 
+    example: 'Admin',
   })
   lastName?: string;
 
   @ApiProperty({
-    description: 'Rol administrativo global que determina el acceso a funciones maestras de la App',
+    description:
+      'Rol administrativo global que determina el acceso a funciones maestras de la App',
     enum: AppRole,
     example: AppRole.SUPERADMIN,
   })
   appRole: AppRole;
 
   @ApiProperty({
-    description: 'Listado de empresas en las que el usuario participa y su rol en cada una',
+    description:
+      'Listado de empresas en las que el usuario participa y su rol en cada una',
     type: [CompanyRoleDto],
   })
   companyRoles: CompanyRoleDto[];

@@ -13,25 +13,28 @@ import { Transform } from 'class-transformer';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
 /**
+ * @class CreateUserDto
  * @description Data Transfer Object para la creación de usuarios.
- * Sigue el estándar Blueprint 2026 con tipado estricto, validaciones y sanitización.
- * @version 2026.1.17
+ * Sigue el estándar Blueprint 2026 con tipado estricto y sanitización obligatoria.
+ * @version 2026.1.18
+ * @author Rentix
  */
 export class CreateUserDto {
-
   /**
-   * @description Identificador único de acceso. Normalizado a minúsculas.
+   * @description Identificador único de acceso. Normalizado a minúsculas y sin espacios.
    */
   @ApiProperty({
     description: 'Correo electrónico único del usuario',
     example: 'user@example.com',
   })
   @IsEmail({}, { message: 'El formato del email no es válido' })
-  @Transform(({ value }) => value?.toLowerCase().trim())
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.toLowerCase().trim() : value,
+  ) // 🛡️ Solución: Tipado explícito para eliminar 'unsafe member access'
   email: string;
 
   /**
-   * @description Contraseña de acceso. Se recomienda complejidad alta.
+   * @description Contraseña de acceso (Hash se genera en el Service).
    */
   @ApiProperty({
     description: 'Contraseña del usuario (mínimo 6 caracteres)',
@@ -43,7 +46,7 @@ export class CreateUserDto {
   password: string;
 
   /**
-   * @description Nombre de pila. Capturado en la hidratación del draft del wizard.
+   * @description Nombre de pila del usuario.
    */
   @ApiPropertyOptional({
     description: 'Nombre del usuario',
@@ -52,11 +55,13 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   firstName?: string;
 
   /**
-   * @description Apellidos. Capturado en la hidratación del draft del wizard.
+   * @description Apellidos del usuario.
    */
   @ApiPropertyOptional({
     description: 'Apellidos del usuario',
@@ -65,11 +70,13 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   lastName?: string;
 
   /**
-   * @description Teléfono de contacto en formato internacional.
+   * @description Teléfono de contacto.
    */
   @ApiPropertyOptional({
     description: 'Teléfono de contacto',
@@ -78,11 +85,13 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   phone?: string;
 
   /**
-   * @description Enlace a la imagen de perfil (S3/Cloudinary/etc).
+   * @description Enlace a la imagen de perfil.
    */
   @ApiPropertyOptional({
     description: 'URL de la foto de perfil',
@@ -93,11 +102,10 @@ export class CreateUserDto {
   avatarUrl?: string;
 
   /**
-   * @description Rol de aplicación. 
-   * Nota: El backend sobrescribirá esto a USER si el creador no es SUPERADMIN.
+   * @description Rol de aplicación global.
    */
   @ApiPropertyOptional({
-    description: 'Rol global del usuario dentro del sistema',
+    description: 'Rol global del usuario',
     enum: AppRole,
     example: AppRole.USER,
     default: AppRole.USER,

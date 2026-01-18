@@ -5,7 +5,7 @@ import { TipoContactoInterno } from '../entities/contact.entity';
 export class CreateContactDto {
   @ApiProperty({
     example: 'Ana López',
-    description: 'Nombre completo del contacto interno'
+    description: 'Nombre completo del contacto interno',
   })
   @IsString()
   nombre: string;
@@ -13,14 +13,14 @@ export class CreateContactDto {
   @ApiProperty({
     enum: TipoContactoInterno,
     example: TipoContactoInterno.DIRECCION,
-    description: 'Tipo de contacto interno'
+    description: 'Tipo de contacto interno',
   })
   @IsEnum(TipoContactoInterno)
   tipoContacto: TipoContactoInterno;
 
   @ApiPropertyOptional({
     example: 'ana.lopez@ejemplo.com',
-    description: 'Correo electrónico del contacto (opcional)'
+    description: 'Correo electrónico del contacto (opcional)',
   })
   @IsString()
   @IsOptional()
@@ -28,7 +28,7 @@ export class CreateContactDto {
 
   @ApiPropertyOptional({
     example: '612345678',
-    description: 'Teléfono del contacto (opcional)'
+    description: 'Teléfono del contacto (opcional)',
   })
   @IsString()
   @IsOptional()
@@ -36,7 +36,7 @@ export class CreateContactDto {
 
   @ApiPropertyOptional({
     example: 'Directora técnica',
-    description: 'Cargo en la empresa (opcional)'
+    description: 'Cargo en la empresa (opcional)',
   })
   @IsString()
   @IsOptional()
@@ -44,7 +44,7 @@ export class CreateContactDto {
 
   @ApiPropertyOptional({
     example: 'Calle Falsa 123',
-    description: 'Dirección postal del contacto (opcional)'
+    description: 'Dirección postal del contacto (opcional)',
   })
   @IsString()
   @IsOptional()
@@ -52,7 +52,7 @@ export class CreateContactDto {
 
   @ApiPropertyOptional({
     example: true,
-    description: 'Activo/inactivo (opcional, por defecto activo)'
+    description: 'Activo/inactivo (opcional, por defecto activo)',
   })
   @IsBoolean()
   @IsOptional()

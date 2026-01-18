@@ -1,10 +1,4 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { BaseEntity } from 'src/common/base/base.entity';
@@ -22,7 +16,6 @@ import { CompanyRole } from '../enums/companyRole.enum';
 @Index(['userId', 'companyId'], { unique: true }) // Evita duplicidad de roles para un mismo usuario en la misma empresa
 @Index(['role'])
 export class CompanyRoleEntity extends BaseEntity {
-
   /**
    * @description Autoridad delegada en el contexto patrimonial.
    * Determina las capacidades de facturación y gestión de activos.
@@ -56,14 +49,10 @@ export class CompanyRoleEntity extends BaseEntity {
     description: 'Usuario vinculado al rol patrimonial',
     type: () => User,
   })
-  @ManyToOne(
-    () => User,
-    (user) => user.companyRoles,
-    {
-      onDelete: 'CASCADE',
-      nullable: false,
-    },
-  )
+  @ManyToOne(() => User, (user) => user.companyRoles, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
@@ -85,14 +74,10 @@ export class CompanyRoleEntity extends BaseEntity {
     description: 'Empresa asociada a este nivel de autoridad',
     type: () => Company,
   })
-  @ManyToOne(
-    () => Company,
-    (company) => company.companyRoles,
-    {
-      onDelete: 'CASCADE',
-      nullable: false,
-    },
-  )
+  @ManyToOne(() => Company, (company) => company.companyRoles, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   @JoinColumn({ name: 'company_id' })
   company: Company;
 }

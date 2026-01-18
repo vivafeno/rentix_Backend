@@ -6,8 +6,8 @@ import { TenantProfile } from './entities/tenant-profile.entity';
 import { Company } from 'src/company/entities/company.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TenantProfile, Company,])],
+  imports: [TypeOrmModule.forFeature([TenantProfile, Company])],
   controllers: [TenantProfileController],
   providers: [TenantProfileService],
 })
-export class TenantProfileModule { }
+export class TenantProfileModule {}

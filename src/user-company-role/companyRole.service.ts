@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -10,7 +14,8 @@ import { UpdateUserCompanyRoleDto } from './dto/updateUserCompanyRole.dto';
  * @class UserCompanyRoleService
  * @description Lógica de negocio para la gestión de autoridad y acceso (RBAC).
  * Centraliza la administración de roles en el contexto patrimonial de Rentix 2026.
- * @version 2.3.0
+ * @version 2.3.1
+ * @author Rentix
  */
 @Injectable()
 export class UserCompanyRoleService {
@@ -21,12 +26,13 @@ export class UserCompanyRoleService {
 
   /**
    * @method create
-   * @description Registra un nuevo vínculo de autoridad. 
-   * Valida la existencia del vínculo previo para evitar duplicidades mediante el índice único de la DB.
+   * @description Registra un nuevo vínculo de autoridad.
+   * Resuelve el error de linter mediante tipado del objeto de error de DB.
+   * @param {CreateUserCompanyRoleDto} dto Datos del vínculo (Usuario, Empresa y Rol).
+   * @returns {Promise<CompanyRoleEntity>} Vínculo creado con relaciones hidratadas.
    */
   async create(dto: CreateUserCompanyRoleDto): Promise<CompanyRoleEntity> {
     try {
-      // Optimizamos: Usamos los IDs directos para evitar SELECTs innecesarios de User/Company
       const entity = this.repo.create({
         role: dto.role,
         userId: dto.userId,
@@ -34,10 +40,15 @@ export class UserCompanyRoleService {
       });
 
       const saved = await this.repo.save(entity);
-      return this.findOne(saved.id); // Retornamos con relaciones para el contrato OpenAPI
-    } catch (error) {
-      if (error.code === '23505') { // Código estándar Postgres para Unique Violation
-        throw new ConflictException('El usuario ya tiene un rol asignado en esta empresa');
+      return this.findOne(saved.id);
+    } catch (error: unknown) {
+      // 🚩 Solución linter: Casting seguro de error de Postgres
+      const dbError = error as { code?: string };
+
+      if (dbError.code === '23505') {
+        throw new ConflictException(
+          'Seguridad: El usuario ya tiene un rol asignado en esta organización.',
+        );
       }
       throw error;
     }
@@ -50,13 +61,14 @@ export class UserCompanyRoleService {
   async findAll(): Promise<CompanyRoleEntity[]> {
     return this.repo.find({
       relations: ['user', 'company'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
   /**
    * @method findOne
    * @description Obtiene un vínculo específico validando su existencia.
+   * @param {string} id UUID del vínculo.
    */
   async findOne(id: string): Promise<CompanyRoleEntity> {
     const entity = await this.repo.findOne({
@@ -65,7 +77,9 @@ export class UserCompanyRoleService {
     });
 
     if (!entity) {
-      throw new NotFoundException(`Vínculo con id ${id} no encontrado`);
+      throw new NotFoundException(
+        `Vínculo de autoridad con ID ${id} no encontrado.`,
+      );
     }
 
     return entity;
@@ -73,7 +87,7 @@ export class UserCompanyRoleService {
 
   /**
    * @method update
-   * @description Modifica el nivel de privilegio. El userId y companyId permanecen inmutables.
+   * @description Modifica el nivel de privilegio.
    */
   async update(
     id: string,
@@ -91,12 +105,12 @@ export class UserCompanyRoleService {
   /**
    * @method remove
    * @description Revoca el acceso de forma permanente.
-   * @returns {Promise<{ message: string }>} Confirmación explícita para el frontend.
+   * @param {string} id UUID del vínculo a eliminar.
    */
   async remove(id: string): Promise<{ message: string }> {
     const entity = await this.findOne(id);
     await this.repo.remove(entity);
 
-    return { message: 'Vínculo de autoridad eliminado correctamente' };
+    return { message: 'Vínculo de autoridad revocado correctamente.' };
   }
 }

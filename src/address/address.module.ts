@@ -25,13 +25,10 @@ import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRol
      * - CompanyRoleEntity: Necesaria para verificar si el usuario tiene permisos
      * (Owner/Admin) sobre la empresa antes de modificar sus direcciones.
      */
-    TypeOrmModule.forFeature([
-      Address,
-      CompanyRoleEntity,
-    ]),
+    TypeOrmModule.forFeature([Address, CompanyRoleEntity]),
   ],
   controllers: [AddressController],
   providers: [AddressService],
   exports: [AddressService],
 })
-export class AddressModule { }
+export class AddressModule {}

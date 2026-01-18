@@ -1,4 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+} from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Tax } from '../../tax/entities/tax.entity';
 
@@ -16,7 +25,7 @@ export class BillingConcept {
   @Column()
   label: string;
 
-  @ApiProperty({ example: 1000.00 })
+  @ApiProperty({ example: 1000.0 })
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   defaultPrice: number;
 

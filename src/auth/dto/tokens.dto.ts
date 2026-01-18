@@ -5,7 +5,6 @@ import { ApiProperty } from '@nestjs/swagger';
  * devueltos tras autenticación o refresh.
  */
 export class TokensDto {
-
   @ApiProperty({
     description: 'Access token JWT utilizado para autenticar las peticiones',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',

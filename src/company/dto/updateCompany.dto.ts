@@ -1,41 +1,46 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsOptional, ValidateNested, IsEmail, IsString, MaxLength } from 'class-validator';
+import {
+  IsOptional,
+  ValidateNested,
+  IsEmail,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
-import { CreateFiscalEntityDto } from '../../fiscal/dto/create-fiscal.dto';
+import { CreateFiscalDto } from '../../fiscal/dto/create-fiscal.dto';
 import { CreateAddressDto } from 'src/address/dto/create-address.dto';
 
 /**
+ * @class UpdateFiscalEntityDto
  * @description DTO parcial para la actualización de la Identidad Fiscal.
- * Hereda todas las validaciones de CreateFiscalIdentityDto pero las hace opcionales.
  */
-export class UpdateFacturaePartyDto extends PartialType(CreateFiscalEntityDto) {}
+export class UpdateFiscalEntityDto extends PartialType(CreateFiscalDto) {}
 
 /**
+ * @class UpdateFiscalAddressDto
  * @description DTO parcial para la actualización de la Dirección Fiscal.
- * Hereda todas las validaciones de CreateAddressDto pero las hace opcionales.
  */
 export class UpdateFiscalAddressDto extends PartialType(CreateAddressDto) {}
 
 /**
- * @description DTO para la actualización de Empresa/Patrimonio.
- * Permite edición parcial y anidada siguiendo el estándar Blueprint 2026.
- * @version 2026.1.17
+ * @class UpdateCompanyDto
+ * @description DTO para la actualización de Empresa/Patrimonio (Rentix 2026).
+ * Resuelve errores de linter mediante tipado estricto en transformaciones.
+ * @version 2026.2.0
  */
 export class UpdateCompanyDto {
-
   /**
-   * @description Datos fiscales actualizables. 
-   * Nota: El taxId (CIF/NIF) suele marcarse como readonly en el servicio si ya hay facturas.
+   * @description Actualización parcial de identidad fiscal.
    */
   @ApiPropertyOptional({
     description: 'Actualización parcial de identidad fiscal',
-    type: UpdateFacturaePartyDto,
+    type: UpdateFiscalEntityDto,
   })
   @IsOptional()
   @ValidateNested()
-  @Type(() => UpdateFacturaePartyDto)
-  facturaeParty?: UpdateFacturaePartyDto;
+  @Type(() => UpdateFiscalEntityDto)
+  fiscalEntity?: UpdateFiscalEntityDto; // 🚩 Sincronizado: de facturaeParty
 
   /**
    * @description Dirección fiscal actualizable.
@@ -50,19 +55,21 @@ export class UpdateCompanyDto {
   fiscalAddress?: UpdateFiscalAddressDto;
 
   /**
-   * @description Email de contacto corporativo. Normalizado a minúsculas.
+   * @description Email de contacto corporativo. Normalizado a minúsculas con tipado seguro.
    */
   @ApiPropertyOptional({
     description: 'Email de contacto de la empresa',
     example: 'contacto@patrimonio.com',
   })
   @IsOptional()
-  @IsEmail({}, { message: 'El formato del email de contacto no es válido' })
-  @Transform(({ value }) => value?.toLowerCase().trim())
+  @IsEmail({}, { message: 'El formato del email no es válido' })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.toLowerCase().trim() : value,
+  )
   email?: string;
 
   /**
-   * @description Teléfono de contacto. Sanitizado (trim).
+   * @description Teléfono de contacto. Sanitizado con tipado seguro.
    */
   @ApiPropertyOptional({
     description: 'Teléfono de contacto de la empresa',
@@ -71,6 +78,8 @@ export class UpdateCompanyDto {
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   phone?: string;
 }

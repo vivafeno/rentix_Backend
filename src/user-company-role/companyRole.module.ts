@@ -8,13 +8,7 @@ import { User } from 'src/user/entities/user.entity';
 import { Company } from 'src/company/entities/company.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      CompanyRoleEntity,
-      User,
-      Company,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([CompanyRoleEntity, User, Company])],
   controllers: [UserCompanyRoleController],
   providers: [UserCompanyRoleService],
 })

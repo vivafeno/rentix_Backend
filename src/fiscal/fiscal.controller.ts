@@ -9,59 +9,52 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 
-import { FiscalIdentityService } from './fiscal.service';
-import { CreateFiscalEntityDto } from './dto/create-fiscal.dto';
+import { FiscalService } from './fiscal.service';
+import { CreateFiscalDto } from './dto/create-fiscal.dto';
 import { FiscalEntity } from './entities/fiscalEntity';
-
 import { Auth } from 'src/auth/decorators/auth.decorator';
 
 /**
- * FiscalIdentityController
- *
- * Gestión de identidades fiscales para Facturae (España).
- * * Contexto:
- * Este controlador es el paso intermedio del Wizard de creación de empresa.
- * Recibe datos fiscales validados y genera una identidad única (NIF) en el sistema.
+ * @class FiscalIdentityController
+ * @description Gestión de identidades fiscales compatibles con FacturaE y Veri*factu.
+ * Actúa como orquestador del Wizard de cumplimiento legal para nuevas empresas.
+ * @version 2026.2.0
+ * @author Rentix
  */
-@ApiTags('Fiscal Identities') // Nombre más claro y estándar
+@ApiTags('Fiscal Identities')
 @ApiBearerAuth()
-@Controller('fiscal-identities') // RESTful: recurso en plural y guiones
+@Controller('fiscal-identities')
 export class FiscalIdentityController {
-  constructor(
-    private readonly fiscalIdentityService: FiscalIdentityService,
-  ) {}
+  constructor(private readonly fiscalIdentityService: FiscalService) {}
 
   /**
-   * Crear una identidad fiscal
-   * * Paso del Wizard:
-   * 1. User (creado) -> 2. Address (creado) -> 3. **FiscalIdentity** -> 4. Company
+   * @method create
+   * @description Registra una nueva entidad fiscal validada.
+   * Resuelve errores de "Unsafe assignment" mediante el uso de tipos de retorno explícitos.
+   * @param {CreateFiscalDto} dto Datos de la entidad fiscal (NIF/CIF, Razón Social).
+   * @returns {Promise<FiscalEntity>} Entidad fiscal persistida.
    */
   @Post()
-  @Auth() // 👈 Seguridad: Solo usuarios registrados pueden iniciar este trámite
+  @Auth()
   @ApiOperation({
     summary: 'Registrar nueva identidad fiscal (Wizard)',
     description: `
       Crea una entidad fiscal validada para Facturae España.
-      
-      - Valida formato NIF/CIF.
-      - Asegura coherencia entre Persona Física (Nombre/Apellidos) vs Jurídica (Razón Social).
-      - Sanitiza la entrada para cumplir estándares XML.
+      Valida NIF/CIF y asegura coherencia entre tipo de persona y datos obligatorios.
     `,
   })
-  @ApiBody({ type: CreateFiscalEntityDto })
+  @ApiBody({ type: CreateFiscalDto })
   @ApiCreatedResponse({
     description: 'Identidad fiscal registrada correctamente',
     type: FiscalEntity,
   })
   @ApiBadRequestResponse({
-    description: 'Error de validación (ej: Falta Razón Social en empresa o NIF inválido)',
+    description: 'Error de validación en NIF o estructura.',
   })
-  @ApiConflictResponse({
-    description: 'El NIF/CIF ya está registrado en el sistema',
-  })
-  create(
-    @Body() dto: CreateFiscalEntityDto,
-  ): Promise<FiscalEntity> {
-    return this.fiscalIdentityService.create(dto);
+  @ApiConflictResponse({ description: 'El NIF/CIF ya existe en el sistema.' })
+  async create(@Body() dto: CreateFiscalDto): Promise<FiscalEntity> {
+    // 🛡️ Forzamos el await para asegurar la resolución de la promesa antes de retornar
+    // y evitar que el linter pierda la trazabilidad del tipo.
+    return await this.fiscalIdentityService.create(dto);
   }
 }

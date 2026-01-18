@@ -25,7 +25,9 @@ export class BillingConceptService {
       // Asignamos el objeto con el ID, no solo el string
       defaultTax: { id: dto.defaultTaxId } as Tax,
       // Manejamos el opcional evitando el null si no viene
-      ...(dto.defaultRetentionId && { defaultRetention: { id: dto.defaultRetentionId } as Tax })
+      ...(dto.defaultRetentionId && {
+        defaultRetention: { id: dto.defaultRetentionId } as Tax,
+      }),
     };
 
     const concept = this.conceptRepository.create(conceptData);
@@ -34,28 +36,31 @@ export class BillingConceptService {
 
   async findAll(): Promise<BillingConcept[]> {
     return await this.conceptRepository.find({
-      order: { name: 'ASC' }
+      order: { name: 'ASC' },
     });
   }
 
   async findOne(id: string): Promise<BillingConcept> {
     const concept = await this.conceptRepository.findOne({
-      where: { id }
+      where: { id },
     });
     if (!concept) throw new NotFoundException(`Concepto ${id} no encontrado`);
     return concept;
   }
 
-  async update(id: string, dto: UpdateBillingConceptDto): Promise<BillingConcept> {
+  async update(
+    id: string,
+    dto: UpdateBillingConceptDto,
+  ): Promise<BillingConcept> {
     const concept = await this.findOne(id);
-    
+
     // Preparamos los datos de actualización
     const updateData: DeepPartial<BillingConcept> = { ...dto };
-    
+
     if (dto.defaultTaxId) {
       updateData.defaultTax = { id: dto.defaultTaxId } as Tax;
     }
-    
+
     if (dto.defaultRetentionId) {
       updateData.defaultRetention = { id: dto.defaultRetentionId } as Tax;
     }
@@ -75,8 +80,8 @@ export class BillingConceptService {
         id: true,
         name: true,
         label: true,
-        defaultPrice: true
-      }
+        defaultPrice: true,
+      },
     });
   }
 }

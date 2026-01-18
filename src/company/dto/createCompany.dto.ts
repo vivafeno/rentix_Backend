@@ -1,23 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { 
-  IsNotEmpty, 
-  IsUUID, 
-  IsOptional, 
-  ValidateNested, 
-  IsObject 
+import {
+  IsNotEmpty,
+  IsUUID,
+  IsOptional,
+  ValidateNested,
+  IsObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-import { CreateFiscalEntityDto } from 'src/fiscal/dto/create-fiscal.dto';
+import { CreateFiscalDto } from 'src/fiscal/dto/create-fiscal.dto';
 import { CreateAddressDto } from 'src/address/dto/create-address.dto';
 
 /**
+ * @class CreateCompanyDto
  * @description DTO para la creación de Empresa/Patrimonio.
  * Permite vinculación por ID o creación anidada (Atomic Creation).
- * @version 2026.1.17
+ * Sincronizado con FiscalEntity (v2026.2.0).
  */
 export class CreateCompanyDto {
-
   /* ------------------------------------------------------------------
    * IDENTIDAD FISCAL
    * ------------------------------------------------------------------ */
@@ -28,17 +28,17 @@ export class CreateCompanyDto {
   })
   @IsOptional()
   @IsUUID()
-  facturaePartyId?: string;
+  fiscalEntityId?: string; // 🚩 Sincronizado: de facturaePartyId
 
   @ApiPropertyOptional({
-    description: 'Datos para crear una nueva identidad fiscal (Draft)',
-    type: () => CreateFiscalEntityDto,
+    description: 'Datos para crear una nueva identidad fiscal (Hydrated Draft)',
+    type: () => CreateFiscalDto,
   })
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Type(() => CreateFiscalEntityDto)
-  facturaeParty?: CreateFiscalEntityDto;
+  @Type(() => CreateFiscalDto) // 🚩 Sincronizado: de CreateFiscalEntityDto
+  fiscalEntity?: CreateFiscalDto; // 🚩 Sincronizado: de facturaeParty
 
   /* ------------------------------------------------------------------
    * DIRECCIÓN FISCAL
@@ -53,7 +53,7 @@ export class CreateCompanyDto {
   fiscalAddressId?: string;
 
   @ApiPropertyOptional({
-    description: 'Datos para crear una nueva dirección (Draft)',
+    description: 'Datos para crear una nueva dirección (Hydrated Draft)',
     type: () => CreateAddressDto,
   })
   @IsOptional()
@@ -67,14 +67,16 @@ export class CreateCompanyDto {
    * ------------------------------------------------------------------ */
 
   /**
-   * @description ID del usuario OWNER. 
-   * Blueprint: Opcional en DTO porque el Backend prioriza el ID del JWT.
+   * @description ID del usuario OWNER.
+   * Blueprint 2026: Requerido para la transacción atómica inicial.
    */
   @ApiProperty({
-    description: 'ID del usuario que será el OWNER',
+    description: 'ID del usuario que será el OWNER del patrimonio',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
-  @IsNotEmpty({ message: 'El ID del usuario es requerido para el vínculo inicial' })
+  @IsNotEmpty({
+    message: 'El ID del usuario es requerido para el vínculo de propiedad.',
+  })
   @IsUUID()
   userId: string;
 }

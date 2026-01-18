@@ -28,11 +28,10 @@ import { User } from 'src/user/entities/user.entity';
 @Entity('tenant_profiles')
 @Index(['companyId', 'internalCode'], { unique: true })
 export class TenantProfile extends BaseEntity {
-
   /* ------------------------------------------------------------------
    * 🏢 TENANT (EMPRESA PROPIETARIA)
    * ------------------------------------------------------------------ */
-  
+
   @ApiProperty({ type: () => Company })
   @ManyToOne(() => Company, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'company_id' })
@@ -46,10 +45,10 @@ export class TenantProfile extends BaseEntity {
    * ------------------------------------------------------------------ */
 
   @ApiProperty({ description: 'Datos fiscales validados (NIF, Razón Social)' })
-  @OneToOne(() => FiscalEntity, { 
-    cascade: true, 
+  @OneToOne(() => FiscalEntity, {
+    cascade: true,
     eager: true, // Carga automática para mostrar nombre en listados
-    onDelete: 'CASCADE' 
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'fiscal_identity_id' })
   fiscalIdentity: FiscalEntity;
@@ -58,14 +57,16 @@ export class TenantProfile extends BaseEntity {
    * ⚙️ DATOS DE GESTIÓN (CRM)
    * ------------------------------------------------------------------ */
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Código interno único por empresa (ej: CLI-2024-001)',
-    example: 'CLI-001'
+    example: 'CLI-001',
   })
   @Column({ name: 'internal_code', length: 50 })
   internalCode: string;
 
-  @ApiPropertyOptional({ description: 'Email principal para facturación electrónica' })
+  @ApiPropertyOptional({
+    description: 'Email principal para facturación electrónica',
+  })
   @Column({ name: 'billing_email', nullable: true })
   billingEmail?: string;
 
@@ -77,16 +78,17 @@ export class TenantProfile extends BaseEntity {
    * 💰 CONDICIONES DE PAGO (CRÍTICO FACTURAE)
    * ------------------------------------------------------------------ */
 
-  @ApiPropertyOptional({ 
-    description: 'Método de pago habitual (ej: TRANSFERENCIA, RECIBO, EFECTIVO)',
-    example: 'TRANSFERENCIA'
+  @ApiPropertyOptional({
+    description:
+      'Método de pago habitual (ej: TRANSFERENCIA, RECIBO, EFECTIVO)',
+    example: 'TRANSFERENCIA',
   })
   @Column({ name: 'payment_method', nullable: true, default: 'TRANSFERENCIA' })
   paymentMethod?: string;
 
-  @ApiProperty({ 
-    description: 'Días de vencimiento para cálculo automático (0 = Contado)', 
-    default: 0 
+  @ApiProperty({
+    description: 'Días de vencimiento para cálculo automático (0 = Contado)',
+    default: 0,
   })
   @Column({ name: 'payment_days', default: 0 })
   paymentDays: number;
@@ -99,9 +101,9 @@ export class TenantProfile extends BaseEntity {
    * 🔐 ACCESO / PORTAL
    * ------------------------------------------------------------------ */
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Usuario vinculado para acceso al portal de clientes',
-    type: () => User // <--- ESTO ROMPE EL CICLO INFINITO EN SWAGGER
+    type: () => User, // <--- ESTO ROMPE EL CICLO INFINITO EN SWAGGER
   })
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'user_id' })

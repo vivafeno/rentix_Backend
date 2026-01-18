@@ -6,7 +6,6 @@ import { IsEmail, IsString, MinLength } from 'class-validator';
  * Define el contrato OpenAPI del endpoint de autenticación.
  */
 export class LoginDto {
-
   @ApiProperty({
     description: 'Correo electrónico del usuario',
     example: 'user@example.com',

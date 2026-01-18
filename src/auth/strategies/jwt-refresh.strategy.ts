@@ -2,56 +2,57 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { AppRole } from '../enums/user-global-role.enum';
+import { ActiveUserData } from '../interfaces/jwt-payload.interface';
 
 /**
+ * @class JwtRefreshStrategy
  * @description Estrategia de Validación de Token de Refresco (Blueprint 2026).
- * Se encarga de validar el Refresh Token enviado en el cuerpo de la petición
- * para emitir nuevos Access Tokens sin requerir login manual.
- * * @author Rentix
- * @version 2026.1.18
+ * Gestiona la rotación de tokens mediante validación en el cuerpo de la petición.
+ * @version 2026.1.19
  */
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
-  
-  /**
-   * @description Configura la estrategia extrayendo el token desde el body.
-   * @param configService Inyección del servicio de configuración para acceso seguro a secretos.
-   */
+export class JwtRefreshStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor(private readonly configService: ConfigService) {
     const secret = configService.get<string>('JWT_REFRESH_SECRET');
 
     if (!secret) {
-      throw new Error('CONFIG_ERROR: JWT_REFRESH_SECRET no definido en el entorno.');
+      throw new Error(
+        'CONFIG_ERROR: JWT_REFRESH_SECRET no definido en el entorno.',
+      );
     }
 
     super({
-      // Blueprint 2026: Extraemos el token del campo 'refreshToken' del body
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
       ignoreExpiration: false,
       secretOrKey: secret,
-      passReqToCallback: true, // Permite acceder a la request original si fuera necesario
+      passReqToCallback: true,
     });
   }
 
   /**
+   * @method validate
    * @description Valida el payload del Refresh Token.
-   * A diferencia del Access Token, este suele ser más ligero pero debe contener 
-   * la identidad suficiente para la re-emisión.
-   * * @param req Objeto Request de Express
-   * @param payload Estructura decodificada del token (sub, email, appRole)
-   * @returns Identidad simplificada del usuario
+   * Resuelve errores 49, 56, 57 y 58 mediante tipado estricto y eliminación de async innecesario.
+   * @param {Request} _req Petición original (no utilizada)
+   * @param {ActiveUserData} payload Estructura decodificada del token
+   * @returns {ActiveUserData} Datos del usuario activo
    */
-  async validate(req: any, payload: any) {
-    if (!payload) {
+  validate(_req: unknown, payload: ActiveUserData | undefined): ActiveUserData {
+    if (!payload || !payload.sub) {
       throw new UnauthorizedException('Refresh Token malformado o inválido.');
     }
 
-    // Retornamos el payload hidratado para que el controlador de Refresh lo procese
-    return { 
-      userId: payload.sub, 
-      email: payload.email, 
-      appRole: payload.appRole as AppRole 
+    // 🚩 Solución linter: Retornamos el objeto tipado directamente.
+    // Se elimina el 'async' ya que no hay operaciones de E/S (I/O).
+    return {
+      sub: payload.sub,
+      email: payload.email,
+      appRole: payload.appRole,
+      companyId: payload.companyId || '',
+      companyRole: payload.companyRole || '',
     };
   }
 }

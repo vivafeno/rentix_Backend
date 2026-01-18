@@ -9,14 +9,13 @@ import { CreateTaxDto } from './create-tax.dto';
  * @version 2026.2.0
  */
 export class UpdateTaxDto extends PartialType(CreateTaxDto) {
-  
   /**
    * @description Control de disponibilidad operativa.
    * Si es false, el impuesto no aparecerá en el selector de contratos/facturas.
    */
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Estado de disponibilidad operativa del impuesto',
-    example: true 
+    example: true,
   })
   @IsBoolean()
   @IsOptional()

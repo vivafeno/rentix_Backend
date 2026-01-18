@@ -68,10 +68,7 @@ export class VatRateService {
   /* ─────────────────────────────────────
    * Actualizar IVA
    * ───────────────────────────────────── */
-  async update(
-    id: string,
-    dto: UpdateVatRateDto,
-  ): Promise<VatRate | null> {
+  async update(id: string, dto: UpdateVatRateDto): Promise<VatRate | null> {
     const vatRate = await this.vatRateRepo.findOne({ where: { id } });
     if (!vatRate) return null;
 

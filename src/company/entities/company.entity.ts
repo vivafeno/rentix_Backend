@@ -24,7 +24,6 @@ import { Property } from 'src/property/entities/property.entity';
  */
 @Entity('companies')
 export class Company extends BaseEntity {
-
   /* ------------------------------------------------------------------
    * IDENTIDAD FISCAL (NIF, Razón Social)
    * ------------------------------------------------------------------ */
@@ -47,13 +46,14 @@ export class Company extends BaseEntity {
    * @returns {FiscalEntity} Objeto con NIF y Razón Social.
    */
   @ApiProperty({
-    description: 'Objeto completo de la identidad fiscal (Razón social, NIF...)',
+    description:
+      'Objeto completo de la identidad fiscal (Razón social, NIF...)',
     type: () => FiscalEntity,
   })
-  @OneToOne(() => FiscalEntity, (fiscalEntity) => fiscalEntity.company, { 
+  @OneToOne(() => FiscalEntity, (fiscalEntity) => fiscalEntity.company, {
     eager: true,
     cascade: ['insert', 'update'],
-    onDelete: 'RESTRICT' // Seguridad: No permitimos borrar datos fiscales si hay empresa activa
+    onDelete: 'RESTRICT', // Seguridad: No permitimos borrar datos fiscales si hay empresa activa
   })
   @JoinColumn({ name: 'facturae_party_id' })
   fiscalEntity: FiscalEntity; // Refactorizado de facturaeParty para cumplimiento Veri*factu
@@ -84,10 +84,10 @@ export class Company extends BaseEntity {
     description: 'Objeto completo de la dirección fiscal',
     type: () => Address,
   })
-  @OneToOne(() => Address, { 
+  @OneToOne(() => Address, {
     nullable: true,
     eager: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   @JoinColumn({ name: 'fiscal_address_id' })
   fiscalAddress?: Address;
@@ -138,9 +138,9 @@ export class Company extends BaseEntity {
   /**
    * @description Lista de inmuebles vinculados a este patrimonio.
    */
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Inventario de propiedades (inmuebles) de la empresa',
-    type: () => [Property]
+    type: () => [Property],
   })
   @OneToMany(() => Property, (property) => property.company, {
     eager: false,

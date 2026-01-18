@@ -10,13 +10,12 @@ import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
  * @version 2026.2.0
  */
 export class CreateUserCompanyRoleDto {
-
   /* ------------------------------------------------------------------
    * SUJETO (USUARIO)
    * ------------------------------------------------------------------ */
 
   /**
-   * @description Identificador único del usuario. 
+   * @description Identificador único del usuario.
    * Debe existir previamente en la tabla de identidades globales.
    */
   @ApiProperty({
@@ -33,7 +32,7 @@ export class CreateUserCompanyRoleDto {
    * ------------------------------------------------------------------ */
 
   /**
-   * @description Identificador único del patrimonio. 
+   * @description Identificador único del patrimonio.
    * Determina el ámbito de visibilidad de direcciones y facturas Veri*factu.
    */
   @ApiProperty({

@@ -10,7 +10,6 @@ import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
  * @version 2026.2.0
  */
 export class UpdateUserCompanyRoleDto {
-
   /**
    * @description Nuevo nivel de privilegio a asignar.
    * La transición entre roles (ej. de VIEWER a OWNER) debe estar validada por un ADMIN/SUPERADMIN.

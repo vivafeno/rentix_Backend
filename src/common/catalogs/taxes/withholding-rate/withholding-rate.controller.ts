@@ -102,10 +102,7 @@ export class WithholdingRateController {
    * ───────────────────────────────────── */
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar tipo de retención' })
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateWithholdingRateDto,
-  ) {
+  async update(@Param('id') id: string, @Body() dto: UpdateWithholdingRateDto) {
     const rate = await this.withholdingRateService.update(id, dto);
     if (!rate) {
       throw new NotFoundException('Retención no encontrada');
@@ -123,9 +120,7 @@ export class WithholdingRateController {
   async deactivate(@Param('id') id: string) {
     const ok = await this.withholdingRateService.deactivate(id);
     if (!ok) {
-      throw new NotFoundException(
-        'Retención no encontrada o ya inactiva',
-      );
+      throw new NotFoundException('Retención no encontrada o ya inactiva');
     }
     return { message: 'Retención desactivada correctamente' };
   }

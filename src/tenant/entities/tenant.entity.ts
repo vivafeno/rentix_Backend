@@ -1,4 +1,12 @@
-import { Entity, Column, ManyToOne, OneToMany, OneToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from 'src/common/base/base.entity';
 import { Company } from 'src/company/entities/company.entity';
@@ -8,25 +16,24 @@ import { TenantStatus } from '../enums/tenant-status.enum';
 
 /**
  * @class Tenant
- * @description Entidad Arrendatario. Gestiona el perfil receptor de facturas.
- * Alineado con FacturaE 3.2.x y Veri*factu.
- * @version 2026.2.0
+ * @description Entidad Arrendatario. Gestiona el perfil receptor de facturas y SEPA.
+ * @version 2026.2.1
+ * @author Rentix
  */
 @Entity('tenants')
 @Index(['companyId', 'fiscalIdentityId'], { unique: true })
 export class Tenant extends BaseEntity {
-
   /* --- IDENTIFICACIÓN & ESTADO --- */
 
-  @ApiProperty({ example: 'TEN-2026-001', description: 'Referencia interna administrativa' })
+  @ApiProperty({ description: 'Referencia interna administrativa' })
   @Column({ name: 'codigo_interno', nullable: true })
-  codigoInterno: string; // 🚩 Sincronizado: internalCode -> codigoInterno
+  codigoInterno: string;
 
-  @ApiProperty({ enum: TenantStatus, example: TenantStatus.ACTIVE })
+  @ApiProperty({ enum: TenantStatus })
   @Column({ type: 'enum', enum: TenantStatus, default: TenantStatus.ACTIVE })
-  estado: TenantStatus; // 🚩 Sincronizado: status -> estado
+  estado: TenantStatus;
 
-  /* --- CONTACTO & COMUNICACIÓN --- */
+  /* --- CONTACTO --- */
 
   @ApiProperty({ example: 'facturacion@arrendatario.es' })
   @Column({ name: 'email_notificaciones', nullable: true })
@@ -34,24 +41,23 @@ export class Tenant extends BaseEntity {
 
   @ApiProperty({ example: '+34 600000000' })
   @Column({ name: 'telefono', nullable: true })
-  telefono: string; // 🚩 Sincronizado
+  telefono: string;
 
-  /* --- INFORMACIÓN FINANCIERA (SEPA / FACTURAE) --- */
+  /* --- INFORMACIÓN FINANCIERA --- */
 
-  @ApiProperty({ example: 'ES210000...', description: 'IBAN para remesas SEPA' })
+  @ApiProperty({ description: 'IBAN para remesas SEPA' })
   @Column({ name: 'iban_bancario', nullable: true, length: 34 })
-  ibanBancario: string; // 🚩 Sincronizado
+  ibanBancario: string;
 
-  /**
-   * @description Código de Residencia AEAT: 1=España, 2=UE, 3=Extranjero.
-   */
-  @ApiProperty({ example: '1', description: 'Código de residencia fiscal' })
+  @ApiProperty({
+    description: 'Código de residencia fiscal (1=ES, 2=UE, 3=EXT)',
+  })
   @Column({ name: 'codigo_residencia', default: '1', length: 1 })
   codigoResidencia: string;
 
-  /* --- RELACIONES & MULTI-TENANCY --- */
+  /* --- RELACIONES --- */
 
-  @ApiProperty({ description: 'UUID de la empresa propietaria del registro' })
+  @ApiProperty({ description: 'UUID de la empresa propietaria' })
   @Column({ name: 'company_id', type: 'uuid' })
   companyId: string;
 
@@ -59,10 +65,6 @@ export class Tenant extends BaseEntity {
   @JoinColumn({ name: 'company_id' })
   company: Company;
 
-  /**
-   * @description Relación con la identidad legal (NIF/CIF).
-   * Unimos por ID para facilitar la creación atómica desde el DTO.
-   */
   @ApiProperty({ description: 'UUID de la identidad fiscal vinculada' })
   @Column({ name: 'fiscal_identity_id', type: 'uuid' })
   fiscalIdentityId: string;
@@ -72,10 +74,13 @@ export class Tenant extends BaseEntity {
   fiscalIdentity: FiscalEntity;
 
   /**
-   * @description Direcciones del inquilino.
-   * La dirección con AddressType.FISCAL será la que use Veri*factu.
+   * @description Relación bidireccional con direcciones.
+   * Se usa 'direcciones' en lugar de 'addresses' para consistencia con el Blueprint.
    */
   @ApiProperty({ type: () => Address, isArray: true })
-  @OneToMany(() => Address, (address) => address.tenant, { cascade: true, eager: true })
-  direcciones: Address[]; // 🚩 Sincronizado: addresses -> direcciones
+  @OneToMany(() => Address, (address) => address.tenant, {
+    cascade: true,
+    eager: false, // Cambiado a false para optimizar rendimiento si no se requiere siempre
+  })
+  direcciones: Address[];
 }

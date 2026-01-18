@@ -30,7 +30,6 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
-
 @ApiTags('CompanyRole')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -48,9 +47,7 @@ export class UserCompanyRoleController {
     description: 'Vínculo creado',
     type: CompanyRoleEntity,
   })
-  create(
-    @Body() dto: CreateUserCompanyRoleDto,
-  ): Promise<CompanyRoleEntity> {
+  create(@Body() dto: CreateUserCompanyRoleDto): Promise<CompanyRoleEntity> {
     return this.userCompanyRoleService.create(dto);
   }
 

@@ -13,7 +13,6 @@ import { TenantProfile } from 'src/tenant-profile/entities/tenant-profile.entity
  */
 @Entity('users')
 export class User extends BaseEntity {
-
   /**
    * @description Correo electrónico único. Actúa como identificador de login.
    */
@@ -68,7 +67,7 @@ export class User extends BaseEntity {
    * ------------------------------------------------------------------ */
 
   /**
-   * @description Rol de sistema (SUPERADMIN, ADMIN, USER). 
+   * @description Rol de sistema (SUPERADMIN, ADMIN, USER).
    * Determina el acceso a módulos globales de la aplicación.
    */
   @ApiProperty({
@@ -111,19 +110,20 @@ export class User extends BaseEntity {
    * Blueprint 2026: Uso de cascade para permitir creación atómica en Wizard.
    */
   @ApiPropertyOptional({
-    description: 'Roles del usuario en diferentes patrimonios (OWNER, TENANT, VIEWER)',
-    type: () => [CompanyRoleEntity], 
+    description:
+      'Roles del usuario en diferentes patrimonios (OWNER, TENANT, VIEWER)',
+    type: () => [CompanyRoleEntity],
   })
   @OneToMany(() => CompanyRoleEntity, (ucr) => ucr.user, { cascade: true })
   companyRoles: CompanyRoleEntity[];
 
   /**
-   * @description Perfiles de arrendatario asociados. 
+   * @description Perfiles de arrendatario asociados.
    * Un usuario puede ser tenant en múltiples propiedades (mismo u otro Owner).
    */
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Detalles de perfil de arrendatario (datos fiscales, etc.)',
-    type: () => [TenantProfile] 
+    type: () => [TenantProfile],
   })
   @OneToMany(() => TenantProfile, (tp) => tp.user, { cascade: true })
   tenantProfiles: TenantProfile[]; // Renombrado a tenantProfiles para consistencia con tu lógica de roles

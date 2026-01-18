@@ -9,6 +9,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
 import { MeDto } from './dto/me.dto';
 
+/**
+ * @class UserService
+ * @description Gestión de identidades de usuario, credenciales y perfiles.
+ * Maneja el mapeo de roles y el contexto patrimonial para el frontend.
+ * @version 2026.1.19
+ * @author Rentix
+ */
 @Injectable()
 export class UserService {
   constructor(
@@ -20,13 +27,17 @@ export class UserService {
    * MAPPERS (Privados)
    * ------------------------------------------------------------------ */
 
+  /**
+   * @method toDto
+   * @description Transforma la entidad User en un DTO seguro sin datos sensibles.
+   */
   private toDto(user: User): UserDto {
     return {
       id: user.id,
       email: user.email,
-      firstName: user.firstName, 
+      firstName: user.firstName,
       lastName: user.lastName,
-      appRole: user.appRole,     
+      appRole: user.appRole,
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
@@ -60,13 +71,19 @@ export class UserService {
       relations: ['companyRoles', 'companyRoles.company'],
     });
 
-    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    if (!user) {
+      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    }
     return this.toDto(user);
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<UserDto> {
-    const user = await this.userRepository.findOne({ where: { id, isActive: true } });
-    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    const user = await this.userRepository.findOne({
+      where: { id, isActive: true },
+    });
+    if (!user) {
+      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    }
 
     if (dto.password) {
       dto.password = await bcrypt.hash(dto.password, 10);
@@ -79,25 +96,29 @@ export class UserService {
 
   async remove(id: string): Promise<void> {
     const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) throw new NotFoundException(`Usuario con id ${id} no encontrado`);
-    
+    if (!user) {
+      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    }
+
     user.isActive = false;
     await this.userRepository.save(user);
   }
 
   /* ------------------------------------------------------------------
-   * AUTH HELPERS (Uso de QueryBuilder para campos ocultos)
+   * AUTH HELPERS
    * ------------------------------------------------------------------ */
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.createQueryBuilder('user')
+    return this.userRepository
+      .createQueryBuilder('user')
       .addSelect('user.password')
       .where('user.email = :email', { email })
       .getOne();
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.userRepository.createQueryBuilder('user')
+    return this.userRepository
+      .createQueryBuilder('user')
       .addSelect('user.refreshTokenHash')
       .where('user.id = :id', { id })
       .getOne();
@@ -111,35 +132,45 @@ export class UserService {
    * GET ME (Perfil completo para el Front)
    * ------------------------------------------------------------------ */
 
+  /**
+   * @method findMe
+   * @description Recupera el perfil completo incluyendo relaciones fiscales actualizadas.
+   * Resuelve errores de linter mapeando correctamente a FiscalEntity.
+   */
   async findMe(userId: string): Promise<MeDto> {
     const user = await this.userRepository.findOne({
       where: { id: userId, isActive: true },
       relations: [
         'companyRoles',
         'companyRoles.company',
-        'companyRoles.company.facturaeParty',
+        'companyRoles.company.fiscalEntity', // 🚩 Sincronizado: de facturaeParty
       ],
     });
 
-    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
 
     return {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      appRole: user.appRole, 
+      appRole: user.appRole,
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      
-      // 👇 MAPEO CORREGIDO CON FACTURAE NAME
-      companyRoles: user.companyRoles?.map((cr) => ({
-        companyId: cr.company.id,
-        // Usamos el getter inteligente que calcula si es Razón Social o Nombre Legal
-        companyName: cr.company.facturaeParty?.facturaeName || 'Empresa sin nombre', 
-        role: cr.role,
-      })) || [],
+
+      // 🚩 MAPEO SINCRONIZADO CON FISCALENTITY
+      companyRoles:
+        user.companyRoles?.map((cr) => ({
+          companyId: cr.company.id,
+          // 🛡️ Usamos el nuevo campo nombreRazonSocial
+          companyName:
+            cr.company.fiscalEntity?.nombreRazonSocial ||
+            'Empresa sin nombre fiscal',
+          role: cr.role,
+        })) || [],
     };
   }
 }

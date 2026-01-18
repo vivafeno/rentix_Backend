@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { I18nModule as NestI18nModule, QueryResolver, HeaderResolver, AcceptLanguageResolver } from 'nestjs-i18n';
+import {
+  I18nModule as NestI18nModule,
+  QueryResolver,
+  HeaderResolver,
+  AcceptLanguageResolver,
+} from 'nestjs-i18n';
 import * as path from 'path';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
@@ -48,12 +53,12 @@ import { FacturaeModule } from './fiscal/fiscal.module';
           autoLoadEntities: true,
           // 🚨 CONFIGURACIÓN DE DESARROLLO SEGURO
           synchronize: !isProd, // Crea columnas nuevas sin borrar datos
-          dropSchema: false,   // 🛡️ PROTECCIÓN: Evita el borrado de datos al reiniciar
+          dropSchema: false, // 🛡️ PROTECCIÓN: Evita el borrado de datos al reiniciar
           logging: !isProd ? ['query', 'error'] : false,
           namingStrategy: new SnakeNamingStrategy(),
           ssl: isProd ? { rejectUnauthorized: false } : false,
         };
-      }
+      },
     }),
 
     // 3. INTERNACIONALIZACIÓN
@@ -68,7 +73,10 @@ import { FacturaeModule } from './fiscal/fiscal.module';
         new HeaderResolver(['x-lang', 'x-locale']),
         new AcceptLanguageResolver(),
       ],
-      typesOutputPath: path.join(process.cwd(), 'src/i18n/generated-i18n-types.d.ts'),
+      typesOutputPath: path.join(
+        process.cwd(),
+        'src/i18n/generated-i18n-types.d.ts',
+      ),
     }),
 
     // 4. MÓDULOS DE SISTEMA Y NEGOCIO

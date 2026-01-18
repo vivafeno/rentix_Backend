@@ -15,7 +15,11 @@ import { Company } from 'src/company/entities/company.entity';
 import { Property } from 'src/property/entities/property.entity';
 import { Tenant } from 'src/tenant/entities/tenant.entity';
 import { Tax } from 'src/tax/entities/tax.entity';
-import { FrecuenciaPago, MetodoPago, ContractStatus } from '../enums/contract.enums';
+import {
+  FrecuenciaPago,
+  MetodoPago,
+  ContractStatus,
+} from '../enums/contract.enums';
 
 /**
  * @class Contract
@@ -26,7 +30,6 @@ import { FrecuenciaPago, MetodoPago, ContractStatus } from '../enums/contract.en
  */
 @Entity('contracts')
 export class Contract extends BaseEntity {
-
   /* --- RELACIONES CORE --- */
 
   /** @property companyId - Referencia al propietario legal (Multi-tenancy) */
@@ -40,7 +43,9 @@ export class Contract extends BaseEntity {
   propietario: Company;
 
   /** @property propertyId - Referencia al activo inmobiliario arrendado */
-  @ApiProperty({ description: 'ID del activo inmobiliario objeto del contrato' })
+  @ApiProperty({
+    description: 'ID del activo inmobiliario objeto del contrato',
+  })
   @Column({ name: 'property_id', type: 'uuid' })
   propertyId: string;
 
@@ -49,37 +54,40 @@ export class Contract extends BaseEntity {
   inmueble: Property;
 
   /** @property inquilinos - Colección de arrendatarios firmantes */
-  @ApiProperty({ type: () => [Tenant], description: 'Arrendatarios vinculados' })
+  @ApiProperty({
+    type: () => [Tenant],
+    description: 'Arrendatarios vinculados',
+  })
   @ManyToMany(() => Tenant, { eager: true })
   @JoinTable({
     name: 'contract_tenants',
     joinColumn: { name: 'contract_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'tenant_id', referencedColumnName: 'id' }
+    inverseJoinColumn: { name: 'tenant_id', referencedColumnName: 'id' },
   })
   inquilinos: Tenant[];
 
   /* --- ECONOMÍA Y FISCALIDAD --- */
 
   /** @property rentaMensual - Importe neto de la renta mensual */
-  @ApiProperty({ example: 1200.00, description: 'Base imponible de la renta' })
-  @Column({ 
-    name: 'renta_mensual', 
-    type: 'decimal', 
-    precision: 12, 
-    scale: 2, 
-    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) }
+  @ApiProperty({ example: 1200.0, description: 'Base imponible de la renta' })
+  @Column({
+    name: 'renta_mensual',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
   rentaMensual: number;
 
   /** @property fianza - Depósito de garantía legal */
-  @ApiProperty({ example: 2400.00, description: 'Importe de fianza' })
-  @Column({ 
-    name: 'fianza', 
-    type: 'decimal', 
-    precision: 12, 
-    scale: 2, 
-    default: 0, 
-    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) }
+  @ApiProperty({ example: 2400.0, description: 'Importe de fianza' })
+  @Column({
+    name: 'fianza',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
   fianza: number;
 
@@ -96,27 +104,35 @@ export class Contract extends BaseEntity {
   /* --- GESTIÓN Y ESTADOS (ENUMS) --- */
 
   /** @property frecuenciaPago - Ciclo de facturación */
-  @ApiProperty({ 
-    enum: FrecuenciaPago, 
-    enumName: 'FrecuenciaPago' 
+  @ApiProperty({
+    enum: FrecuenciaPago,
+    enumName: 'FrecuenciaPago',
   })
-  @Column({ type: 'enum', enum: FrecuenciaPago, default: FrecuenciaPago.MENSUAL })
+  @Column({
+    type: 'enum',
+    enum: FrecuenciaPago,
+    default: FrecuenciaPago.MENSUAL,
+  })
   frecuenciaPago: FrecuenciaPago;
 
   /** @property metodoPago - Vía de liquidación del recibo */
-  @ApiProperty({ 
-    enum: MetodoPago, 
-    enumName: 'MetodoPago' 
+  @ApiProperty({
+    enum: MetodoPago,
+    enumName: 'MetodoPago',
   })
   @Column({ type: 'enum', enum: MetodoPago, default: MetodoPago.TRANSFERENCIA })
   metodoPago: MetodoPago;
 
   /** @property estado - Situación administrativa del contrato */
-  @ApiProperty({ 
-    enum: ContractStatus, 
-    enumName: 'ContractStatus' 
+  @ApiProperty({
+    enum: ContractStatus,
+    enumName: 'ContractStatus',
   })
-  @Column({ type: 'enum', enum: ContractStatus, default: ContractStatus.ACTIVO })
+  @Column({
+    type: 'enum',
+    enum: ContractStatus,
+    default: ContractStatus.ACTIVO,
+  })
   estado: ContractStatus;
 
   /* --- TEMPORALIDAD --- */
@@ -160,7 +176,8 @@ export class Contract extends BaseEntity {
    */
   get tiempoRestanteDias(): number {
     const hoy = new Date();
-    const diferencia = new Date(this.fechaVencimiento).getTime() - hoy.getTime();
+    const diferencia =
+      new Date(this.fechaVencimiento).getTime() - hoy.getTime();
     return Math.max(0, Math.ceil(diferencia / (1000 * 60 * 60 * 24)));
   }
 }

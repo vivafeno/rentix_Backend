@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt'; // 🛡️ Eliminado JwtService (error línea 2)
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -14,12 +14,16 @@ import { UserModule } from 'src/user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../user/entities/user.entity';
 
+/**
+ * @class AuthModule
+ * @description Módulo central de seguridad de Rentix. Orquesta estrategias Passport y JWT.
+ * @version 2026.1.18
+ */
 @Module({
-  
   imports: [
     TypeOrmModule.forFeature([User]),
     UserModule,
-    PassportModule, // sin defaultStrategy
+    PassportModule,
     ConfigModule,
 
     JwtModule.registerAsync({
@@ -34,15 +38,7 @@ import { User } from '../user/entities/user.entity';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    LocalStrategy,
-    JwtStrategy,
-    JwtRefreshStrategy,
-  ],
-  exports: [
-    AuthService,
-    JwtModule, 
-  ],
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtRefreshStrategy],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

@@ -1,45 +1,48 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { HealthService } from './health.service';
 
-@ApiTags('health')
+/**
+ * @class HealthController
+ * @description Orquestador de monitorización del sistema.
+ * @version 2026.1.18
+ */
+@ApiTags('System Health')
 @Controller('health')
 export class HealthController {
   constructor(private readonly health: HealthService) {}
 
+  /**
+   * @method check
+   * @description Liveness probe básica.
+   * Eliminado await innecesario para cumplir con @typescript-eslint/await-thenable.
+   */
   @Get()
-  @ApiOkResponse({
-    description: 'Simple liveness check',
-    schema: {
-      type: 'object',
-      example: { status: 'ok' },
-    },
-  })
-  async check() {
+  @ApiOperation({ summary: 'Liveness check' })
+  @ApiOkResponse({ description: 'Simple liveness check' })
+  check(): { status: string } {
     return this.health.liveness();
   }
 
+  /**
+   * @method db
+   * @description Verifica la conectividad con la DB.
+   */
   @Get('db')
-  @ApiOkResponse({
-    description: 'Database connectivity check',
-    schema: {
-      type: 'object',
-      example: { database: 'up' },
-    },
-  })
-  async db() {
-    return this.health.pingDb();
+  @ApiOperation({ summary: 'Database connectivity check' })
+  @ApiOkResponse({ description: 'Database status and latency' })
+  async db(): Promise<unknown> {
+    // Aquí sí usamos await porque pingDb() suele ser asíncrono (I/O de DB)
+    return await this.health.pingDb();
   }
 
+  /**
+   * @method ready
+   * @description Readiness probe.
+   */
   @Get('ready')
-  @ApiOkResponse({
-    description: 'Readiness check (aggregates required deps)',
-    schema: {
-      type: 'object',
-      example: { status: 'ready' },
-    },
-  })
-  async ready() {
-    return this.health.readiness();
+  @ApiOperation({ summary: 'Readiness check' })
+  async ready(): Promise<{ status: string }> {
+    return await this.health.readiness();
   }
 }

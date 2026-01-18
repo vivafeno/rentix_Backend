@@ -21,14 +21,11 @@ import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRol
       Company,
       FiscalEntity,
       Address,
-      CompanyRoleEntity
+      CompanyRoleEntity,
     ]),
   ],
   controllers: [CompanyController],
   providers: [CompanyService],
-  exports: [
-    CompanyService, 
-    TypeOrmModule 
-  ],
+  exports: [CompanyService, TypeOrmModule],
 })
 export class CompanyModule {}

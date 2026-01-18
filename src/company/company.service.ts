@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, Repository, EntityManager } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -7,13 +12,15 @@ import { FiscalEntity } from 'src/fiscal/entities/fiscalEntity';
 import { Address } from 'src/address/entities/address.entity';
 import { CreateCompanyLegalDto, UpdateCompanyDto } from './dto';
 import { CompanyRoleEntity } from '../user-company-role/entities/userCompanyRole.entity';
-import { CompanyRole } from 'src/user-company-role/entities/userCompanyRole.entity';
+import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
+import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
 /**
+ * @class CompanyService
  * @description Servicio de gestión patrimonial con aislamiento de datos y persistencia atómica.
- * Alineado con estándares Veri*factu 2026 para la integridad de datos fiscales.
- * @author Rentix 2026
- * @version 2.2.0
+ * Implementa el estándar Rentix 2026 para garantizar la integridad de sujetos legales.
+ * @version 2.2.1
+ * @author Rentix
  */
 @Injectable()
 export class CompanyService {
@@ -23,40 +30,42 @@ export class CompanyService {
     @InjectRepository(Company)
     private readonly companyRepository: Repository<Company>,
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   /**
-   * @description Orquestador central para el alta de sujetos legales (Owners, Tenants, Viewers).
-   * @param {CreateCompanyLegalDto} dto - Datos de identidad, fiscales y dirección.
-   * @param {CompanyRole} role - Rol patrimonial a asignar.
-   * @returns {Promise<Company>} Entidad de empresa creada.
+   * @method createAtomicCompany
+   * @description Orquestador central para el alta de sujetos legales mediante transacciones atómicas.
+   * Resuelve errores de linter mediante tipado de errores desconocidos.
    */
-  private async createAtomicCompany(dto: CreateCompanyLegalDto, role: CompanyRole): Promise<Company> {
+  private async createAtomicCompany(
+    dto: CreateCompanyLegalDto,
+    role: CompanyRole,
+  ): Promise<Company> {
     return await this.dataSource.transaction(async (manager: EntityManager) => {
       try {
-        // 1. Persistencia de Dirección (Nomenclatura Veri*factu)
+        // 1. Persistencia de Dirección
         const address = await manager.save(
           manager.create(Address, {
             ...dto.address,
             isDefault: true,
-          })
+          }),
         );
 
-        // 2. Persistencia de Entidad Fiscal (Mapeo directo NIF/Nombre)
+        // 2. Persistencia de Entidad Fiscal
         const fiscal = await manager.save(
           manager.create(FiscalEntity, {
             ...dto.fiscal,
-          })
+          }),
         );
 
-        // 3. Creación de la Compañía (Vínculo de llaves foráneas actualizadas)
+        // 3. Creación de la Compañía
         const company = await manager.save(
           manager.create(Company, {
             ...(dto.company || {}),
-            fiscalEntityId: fiscal.id, // Refactorizado: de facturaePartyId
+            fiscalEntityId: fiscal.id,
             fiscalAddressId: address.id,
             createdByUserId: dto.userId,
-          })
+          }),
         );
 
         // 4. Asignación de Rol de Empresa (Contexto Patrimonial)
@@ -65,95 +74,98 @@ export class CompanyService {
             userId: dto.userId,
             companyId: company.id,
             role: role,
-          })
+          }),
         );
 
         return company;
-      } catch (error) {
-        this.logger.error(`Error en transacción atómica: ${error.message}`);
-        throw new InternalServerErrorException('Fallo en la persistencia del bloque legal');
+      } catch (error: unknown) {
+        // 🚩 Solución error linter: Acceso seguro a .message
+        const errorMessage =
+          error instanceof Error ? error.message : 'Error desconocido';
+        this.logger.error(`Error en transacción atómica: ${errorMessage}`);
+
+        throw new InternalServerErrorException(
+          'Fallo en la persistencia del bloque legal. Transacción revertida.',
+        );
       }
     });
   }
 
-  /**
-   * @description Alta de propietario con infraestructura legal completa.
-   */
   async createOwner(dto: CreateCompanyLegalDto): Promise<Company> {
     return this.createAtomicCompany(dto, CompanyRole.OWNER);
   }
 
-  /**
-   * @description Alta de inquilino con infraestructura legal completa.
-   */
   async createTenant(dto: CreateCompanyLegalDto): Promise<Company> {
     return this.createAtomicCompany(dto, CompanyRole.TENANT);
   }
 
-  /**
-   * @description Alta de gestor/asesor con infraestructura legal completa.
-   */
   async createViewer(dto: CreateCompanyLegalDto): Promise<Company> {
     return this.createAtomicCompany(dto, CompanyRole.VIEWER);
   }
 
   /**
-   * @description Obtiene listado de empresas aplicando jerarquía de roles (Bypass SUPERADMIN).
-   * @param {string} userId - ID del usuario activo.
-   * @param {string} appRole - Rol de aplicación.
-   * @returns {Promise<Company[]>}
+   * @method findAllByUser
+   * @description Lista empresas según jerarquía. Usa AppRole Enum para evitar comparaciones inseguras.
    */
-  async findAllByUser(userId: string, appRole: string): Promise<Company[]> {
-    const relations = ['fiscalEntity', 'fiscalAddress']; // Sincronizado con nombres de la entidad
+  async findAllByUser(userId: string, appRole: AppRole): Promise<Company[]> {
+    const relations = ['fiscalEntity', 'fiscalAddress'];
 
-    if (appRole === 'SUPERADMIN') {
+    if (appRole === AppRole.SUPERADMIN) {
       return this.companyRepository.find({
         relations,
-        order: { createdAt: 'DESC' }
+        order: { createdAt: 'DESC' },
       });
     }
 
     return this.companyRepository.find({
       where: { companyRoles: { userId } },
       relations,
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
   /**
-   * @description Obtiene una empresa específica validando acceso.
-   * @param {string} id - ID de la empresa.
-   * @param {string} userId - ID del usuario.
-   * @param {string} appRole - Rol de aplicación.
+   * @method findOne
+   * @description Obtiene una empresa validando el acceso del usuario.
    */
-  async findOne(id: string, userId: string, appRole: string): Promise<Company> {
+  async findOne(
+    id: string,
+    userId: string,
+    appRole: AppRole,
+  ): Promise<Company> {
     const relations = ['fiscalEntity', 'fiscalAddress'];
-    const whereCondition = appRole === 'SUPERADMIN' 
-      ? { id } 
-      : { id, companyRoles: { userId } };
+
+    // 🛡️ Blindaje de condición de búsqueda
+    const whereCondition =
+      appRole === AppRole.SUPERADMIN
+        ? { id }
+        : { id, companyRoles: { userId } };
 
     const company = await this.companyRepository.findOne({
       where: whereCondition,
       relations,
     });
 
-    if (!company) throw new NotFoundException('Patrimonio no encontrado o acceso denegado');
+    if (!company) {
+      throw new NotFoundException(
+        'Patrimonio no encontrado o acceso denegado.',
+      );
+    }
     return company;
   }
 
-  /**
-   * @description Actualiza datos de empresa previa validación de permisos.
-   */
-  async update(id: string, updateDto: UpdateCompanyDto, userId: string, appRole: string): Promise<Company> {
+  async update(
+    id: string,
+    updateDto: UpdateCompanyDto,
+    userId: string,
+    appRole: AppRole,
+  ): Promise<Company> {
     const company = await this.findOne(id, userId, appRole);
     const updated = Object.assign(company, updateDto);
     return this.companyRepository.save(updated);
   }
 
-  /**
-   * @description Eliminación lógica de empresa.
-   */
-  async remove(id: string, userId: string, appRole: string): Promise<void> {
+  async remove(id: string, userId: string, appRole: AppRole): Promise<void> {
     const company = await this.findOne(id, userId, appRole);
     await this.companyRepository.softRemove(company);
   }

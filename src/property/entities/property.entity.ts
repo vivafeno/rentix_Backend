@@ -1,4 +1,11 @@
-import { Entity, Column, ManyToOne, OneToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  OneToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { BaseEntity } from 'src/common/base/base.entity';
@@ -12,12 +19,15 @@ import { PropertyType, PropertyStatus, PropertyOrientation } from '../enums';
  * @version 2026.2.0
  */
 @Entity('properties')
-@Index('IDX_PROPERTY_COMPANY_CODE', ['companyId', 'codigoInterno'], { unique: true })
+@Index('IDX_PROPERTY_COMPANY_CODE', ['companyId', 'codigoInterno'], {
+  unique: true,
+})
 export class Property extends BaseEntity {
-
   /* --- IDENTIFICACIÓN LEGAL Y ORGANIZATIVA --- */
 
-  @ApiProperty({ description: 'UUID de la organización propietaria (Tenant Isolation)' })
+  @ApiProperty({
+    description: 'UUID de la organización propietaria (Tenant Isolation)',
+  })
   @Index()
   @Column({ name: 'company_id', type: 'uuid' })
   companyId: string;
@@ -26,35 +36,47 @@ export class Property extends BaseEntity {
   @JoinColumn({ name: 'company_id' })
   company: Company;
 
-  @ApiProperty({ description: 'Código de referencia interno (ej. P01-4A)', example: 'P01-4A' })
+  @ApiProperty({
+    description: 'Código de referencia interno (ej. P01-4A)',
+    example: 'P01-4A',
+  })
   @Column({ name: 'codigo_interno', length: 50 })
   codigoInterno: string; // 🚩 Sincronizado: internalCode -> codigoInterno
 
-  @ApiPropertyOptional({ description: 'Referencia Catastral oficial (20 caracteres)', example: '9876543VK4797S0001AY' })
+  @ApiPropertyOptional({
+    description: 'Referencia Catastral oficial (20 caracteres)',
+    example: '9876543VK4797S0001AY',
+  })
   @Column({ name: 'referencia_catastral', length: 25, nullable: true })
   referenciaCatastral?: string; // 🚩 Sincronizado: cadastralReference -> referenciaCatastral
 
   /* --- MÉTRICAS DE SUPERFICIE (ISO 9836) --- */
 
-  @ApiProperty({ description: 'Superficie total construida en m²', example: 120.50 })
+  @ApiProperty({
+    description: 'Superficie total construida en m²',
+    example: 120.5,
+  })
   @Column({
     name: 'superficie_construida',
     type: 'decimal',
     precision: 8,
     scale: 2,
     nullable: true,
-    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) }
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
   superficieConstruida: number;
 
-  @ApiProperty({ description: 'Superficie útil habitable en m²', example: 95.00 })
+  @ApiProperty({
+    description: 'Superficie útil habitable en m²',
+    example: 95.0,
+  })
   @Column({
     name: 'superficie_util',
     type: 'decimal',
     precision: 8,
     scale: 2,
     nullable: true,
-    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) }
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
   superficieUtil: number;
 
@@ -64,7 +86,10 @@ export class Property extends BaseEntity {
   @Column({ name: 'año_construccion', type: 'int', nullable: true })
   anoConstruccion: number;
 
-  @ApiPropertyOptional({ enum: PropertyOrientation, description: 'Orientación del inmueble' })
+  @ApiPropertyOptional({
+    enum: PropertyOrientation,
+    description: 'Orientación del inmueble',
+  })
   @Column({ type: 'enum', enum: PropertyOrientation, nullable: true })
   orientacion: PropertyOrientation;
 
@@ -78,7 +103,10 @@ export class Property extends BaseEntity {
 
   /* --- EFICIENCIA ENERGÉTICA --- */
 
-  @ApiPropertyOptional({ description: 'Calificación energética (A-G)', example: 'B' })
+  @ApiPropertyOptional({
+    description: 'Calificación energética (A-G)',
+    example: 'B',
+  })
   @Column({ name: 'certificado_energetico', length: 1, nullable: true })
   certificadoEnergetico: string; // 🚩 Más claro para el usuario español
 
@@ -94,19 +122,33 @@ export class Property extends BaseEntity {
 
   /* --- ESTADO Y LOCALIZACIÓN --- */
 
-  @ApiProperty({ enum: PropertyType, description: 'Tipología del activo (Piso, Local, etc.)' })
+  @ApiProperty({
+    enum: PropertyType,
+    description: 'Tipología del activo (Piso, Local, etc.)',
+  })
   @Column({ type: 'enum', enum: PropertyType })
   tipo: PropertyType;
 
-  @ApiProperty({ enum: PropertyStatus, description: 'Estado operativo', default: PropertyStatus.AVAILABLE })
-  @Column({ type: 'enum', enum: PropertyStatus, default: PropertyStatus.AVAILABLE })
+  @ApiProperty({
+    enum: PropertyStatus,
+    description: 'Estado operativo',
+    default: PropertyStatus.AVAILABLE,
+  })
+  @Column({
+    type: 'enum',
+    enum: PropertyStatus,
+    default: PropertyStatus.AVAILABLE,
+  })
   estado: PropertyStatus;
 
   /**
    * @description Relación con la dirección física.
    * Veri*factu: El inmueble DEBE tener dirección para ser facturable.
    */
-  @ApiProperty({ type: () => Address, description: 'Dirección física del inmueble' })
+  @ApiProperty({
+    type: () => Address,
+    description: 'Dirección física del inmueble',
+  })
   @OneToOne(() => Address, { cascade: true, eager: true })
   @JoinColumn({ name: 'address_id' })
   address: Address;

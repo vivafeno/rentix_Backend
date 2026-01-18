@@ -18,7 +18,9 @@ import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
 /**
  * @class TaxService
  * @description Gestión de tipos impositivos con validación Veri*factu.
- * @version 2026.2.1
+ * Controla la lógica de impuestos (IVA, IRPF, IGIC) y su integridad fiscal.
+ * @version 2026.2.2
+ * @author Rentix
  */
 @Injectable()
 export class TaxService {
@@ -29,21 +31,23 @@ export class TaxService {
 
   /**
    * @method create
-   * @description Registra un impuesto. Soluciona el error de tipado del Enum 'tipo'.
+   * @description Registra un nuevo impuesto validando coherencia fiscal.
    */
   async create(companyId: string, dto: CreateTaxDto): Promise<Tax> {
     if (dto.porcentaje === 0 && !dto.causaExencion) {
-      throw new BadRequestException('Facturas exentas requieren Causa de Exención.');
+      throw new BadRequestException(
+        'Las facturas con 0% de IVA requieren especificar una Causa de Exención según Veri*factu.',
+      );
     }
 
-    // Resolvemos el error 2769: Casteo explícito al tipo del Enum
     const taxType = dto.tipo as TaxType;
     const codigoFacturae = dto.codigoFacturae || this.mapFacturaECode(taxType);
-    const esRetencion = taxType === TaxType.IRPF ? true : (dto.esRetencion ?? false);
+    const esRetencion =
+      taxType === TaxType.IRPF ? true : (dto.esRetencion ?? false);
 
     const tax = this.taxRepo.create({
       ...dto,
-      tipo: taxType, // Tipado corregido
+      tipo: taxType,
       companyId,
       codigoFacturae,
       esRetencion,
@@ -51,14 +55,14 @@ export class TaxService {
 
     try {
       return await this.taxRepo.save(tax);
-    } catch (error) {
-      this.handleDBExceptions(error);
+    } catch (error: unknown) {
+      return this.handleDBExceptions(error);
     }
   }
 
   /**
    * @method findAll
-   * @description Corregido error 2740: Aseguramos el retorno de Array.
+   * @description Lista impuestos operativos filtrados por empresa.
    */
   async findAll(companyId: string): Promise<Tax[]> {
     return await this.taxRepo.find({
@@ -67,48 +71,62 @@ export class TaxService {
     });
   }
 
+  /**
+   * @method findAllDeleted
+   * @description Recupera el histórico de impuestos eliminados (Papelera).
+   */
   async findAllDeleted(companyId: string): Promise<Tax[]> {
     return await this.taxRepo.find({
       where: { companyId, deletedAt: Not(IsNull()) },
       withDeleted: true,
+      order: { deletedAt: 'DESC' },
     });
   }
 
+  /**
+   * @method findOne
+   * @description Localiza un impuesto por ID con aislamiento de datos.
+   */
   async findOne(id: string, companyId: string): Promise<Tax> {
     const tax = await this.taxRepo.findOne({
       where: { id, companyId },
       withDeleted: true,
     });
 
-    if (!tax) throw new NotFoundException('Impuesto no localizado.');
+    if (!tax)
+      throw new NotFoundException(`Impuesto con ID ${id} no localizado.`);
     return tax;
   }
 
+  /**
+   * @method update
+   * @description Actualización parcial de impuestos.
+   */
   async update(id: string, companyId: string, dto: UpdateTaxDto): Promise<Tax> {
     const tax = await this.findOne(id, companyId);
-    
-    // Si se actualiza el tipo, asegurar el casteo
+
     if (dto.tipo) {
       tax.tipo = dto.tipo as TaxType;
     }
-    
+
     Object.assign(tax, dto);
 
     try {
       return await this.taxRepo.save(tax);
-    } catch (error) {
-      this.handleDBExceptions(error);
+    } catch (error: unknown) {
+      return this.handleDBExceptions(error);
     }
   }
 
   /**
    * @method remove
-   * @description Corregido error 2339: CompanyRole solo tiene OWNER, TENANT, VIEWER.
+   * @description Soft-delete restringido al OWNER del patrimonio.
    */
   async remove(id: string, companyId: string, role: CompanyRole): Promise<Tax> {
-    // Blindaje Total: Solo el dueño del patrimonio gestiona impuestos
     if (role !== CompanyRole.OWNER) {
-      throw new ForbiddenException('Solo el OWNER puede eliminar impuestos.');
+      throw new ForbiddenException(
+        'Privilegios insuficientes: Solo el OWNER gestiona la política fiscal.',
+      );
     }
 
     const tax = await this.findOne(id, companyId);
@@ -118,10 +136,17 @@ export class TaxService {
 
   /**
    * @method restore
+   * @description Reactiva un impuesto eliminado.
    */
-  async restore(id: string, companyId: string, role: CompanyRole): Promise<Tax> {
+  async restore(
+    id: string,
+    companyId: string,
+    role: CompanyRole,
+  ): Promise<Tax> {
     if (role !== CompanyRole.OWNER) {
-      throw new ForbiddenException('Solo el OWNER puede restaurar impuestos.');
+      throw new ForbiddenException(
+        'Operación denegada: Se requiere rol OWNER.',
+      );
     }
 
     const tax = await this.findOne(id, companyId);
@@ -129,6 +154,11 @@ export class TaxService {
     return await this.taxRepo.save(tax);
   }
 
+  /**
+   * @private
+   * @method mapFacturaECode
+   * @description Mapeo de códigos oficiales de la AEAT para FacturaE.
+   */
   private mapFacturaECode(type: TaxType): string {
     const mapping: Record<TaxType, string> = {
       [TaxType.IVA]: '01',
@@ -140,10 +170,23 @@ export class TaxService {
     return mapping[type] || '01';
   }
 
-  private handleDBExceptions(error: any): never {
-    if (error.code === '23505') {
-      throw new ConflictException('Impuesto duplicado para esta empresa.');
+  /**
+   * @private
+   * @method handleDBExceptions
+   * @description Procesa excepciones de integridad con tipado seguro.
+   * Resuelve el error de linter en la línea 151.
+   */
+  private handleDBExceptions(error: unknown): never {
+    const dbError = error as { code?: string };
+
+    if (dbError.code === '23505') {
+      throw new ConflictException(
+        'Ya existe un impuesto registrado con esos parámetros para esta empresa.',
+      );
     }
-    throw new InternalServerErrorException('Error procesando el impuesto.');
+
+    throw new InternalServerErrorException(
+      'Error de persistencia en el módulo fiscal.',
+    );
   }
 }

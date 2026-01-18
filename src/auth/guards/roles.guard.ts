@@ -3,60 +3,52 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY, AllowedRoles } from '../decorators/roles.decorator';
+import type { Request } from 'express'; // 🛡️ Importación para tipado de Request
+import { ROLES_KEY } from '../decorators/roles.decorator';
+import type { ActiveUserData } from '../interfaces/jwt-payload.interface';
+import { AppRole } from '../enums/user-global-role.enum';
+import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
 
 /**
- * @description Guard de Autorización Jerárquica (Blueprint 2026).
- * Valida el acceso basado en una doble comprobación: 
- * 1. Roles de Aplicación (SUPERADMIN, ADMIN) - Alcance Global.
- * 2. Roles de Empresa (OWNER, TENANT, VIEWER) - Alcance de Contexto.
- * * @author Rentix
- * @version 2026.1.18
+ * @class RolesGuard
+ * @description Guard de Autorización Jerárquica basado en Blueprint 2026.
+ * Valida el acceso mediante la intersección de Roles Globales (AppRole) y de Empresa (CompanyRole).
+ * @version 2026.1.20
  */
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   /**
-   * @description Determina si la petición actual cumple con los requisitos de rol.
-   * @param context Contexto de ejecución de NestJS
-   * @returns {boolean} True si el acceso es concedido
-   * @throws {UnauthorizedException} Si el usuario no existe en la request
-   * @throws {ForbiddenException} Si los roles no coinciden con los requeridos
+   * @method canActivate
+   * @description Valida si el usuario posee los roles requeridos.
+   * Resuelve errores de linter mediante el tipado de la Request y casting seguro.
    */
   canActivate(context: ExecutionContext): boolean {
-    // 1. Extracción de Metadatos (Roles definidos en el decorador @Roles)
-    const requiredRoles = this.reflector.getAllAndOverride<AllowedRoles[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<
+      (AppRole | CompanyRole)[]
+    >(ROLES_KEY, [context.getHandler(), context.getClass()]);
 
-    // Si no hay roles definidos, el endpoint es de libre acceso para usuarios autenticados
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
 
-    // 2. Extracción de Usuario desde la Request (Inyectado por JwtAuthGuard)
-    const request = context.switchToHttp().getRequest();
+    // 🛡️ Blindaje de tipos: Tipamos la request para que 'user' sea ActiveUserData y no 'any'
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { user?: ActiveUserData }>();
     const user = request.user;
 
     if (!user) {
-      throw new UnauthorizedException('Identidad de usuario no verificada en el contexto');
+      return false;
     }
 
-    /**
-     * @description COMPROBACIÓN MAESTRA DE ROLES (Blueprint 2026)
-     * Un usuario tiene acceso si:
-     * - Su rol global (appRole) está en la lista permitida.
-     * - O su rol de contexto (companyRole) está en la lista permitida.
-     */
+    // Comprobación de acceso comparando con el payload del JWT tipado
     const hasAccess = requiredRoles.some((role) => {
-      const isAppRole = user.appRole === role;
-      const isCompanyRole = user.companyRole === role;
-      
+      const isAppRole = user.appRole === (role as AppRole);
+      const isCompanyRole = user.companyRole === (role as CompanyRole);
       return isAppRole || isCompanyRole;
     });
 
@@ -66,8 +58,8 @@ export class RolesGuard implements CanActivate {
         required: requiredRoles,
         current: {
           app: user.appRole,
-          company: user.companyRole || 'NONE'
-        }
+          company: user.companyRole || 'NONE',
+        },
       });
     }
 

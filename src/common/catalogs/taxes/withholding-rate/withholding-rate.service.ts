@@ -15,9 +15,7 @@ export class WithholdingRateService {
   /* ─────────────────────────────────────
    * Crear retención
    * ───────────────────────────────────── */
-  async create(
-    dto: CreateWithholdingRateDto,
-  ): Promise<WithholdingRate> {
+  async create(dto: CreateWithholdingRateDto): Promise<WithholdingRate> {
     if (dto.isDefault) {
       const existingDefault = await this.withholdingRepo.findOne({
         where: {

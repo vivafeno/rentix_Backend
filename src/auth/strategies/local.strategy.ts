@@ -13,7 +13,6 @@ import { User } from '../../user/entities/user.entity';
  */
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
-  
   /**
    * @description Configura la estrategia para mapear 'email' como el campo de usuario.
    * @param authService Servicio de autenticación para validación de lógica de negocio.

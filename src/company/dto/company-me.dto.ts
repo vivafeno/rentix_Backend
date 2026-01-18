@@ -7,7 +7,6 @@ import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
  * @version 2026.1.17
  */
 export class CompanyMeDto {
-
   /**
    * @description Identificador único de la empresa/patrimonio.
    */

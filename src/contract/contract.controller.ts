@@ -1,7 +1,19 @@
-import { 
-  Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 import { ContractService } from './contract.service';
 import { CreateContractDto } from './dto/create-contract.dto';
@@ -38,9 +50,13 @@ export class ContractController {
   async create(
     @Body() createContractDto: CreateContractDto,
     @GetUser('companyId') companyId: string,
-    @GetUser('companyRole') companyRole: CompanyRole
+    @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Contract> {
-    return this.contractService.create(companyId, createContractDto, companyRole);
+    return this.contractService.create(
+      companyId,
+      createContractDto,
+      companyRole,
+    );
   }
 
   /**
@@ -65,7 +81,7 @@ export class ContractController {
   @ApiResponse({ status: 200, type: Contract })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string
+    @GetUser('companyId') companyId: string,
   ): Promise<Contract> {
     return this.contractService.findOne(id, companyId);
   }
@@ -83,9 +99,14 @@ export class ContractController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateContractDto: UpdateContractDto,
     @GetUser('companyId') companyId: string,
-    @GetUser('companyRole') companyRole: CompanyRole
+    @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Contract> {
-    return this.contractService.update(id, companyId, updateContractDto, companyRole);
+    return this.contractService.update(
+      id,
+      companyId,
+      updateContractDto,
+      companyRole,
+    );
   }
 
   /**
@@ -96,11 +117,14 @@ export class ContractController {
   @Delete(':id')
   @Auth(AppRole.SUPERADMIN, AppRole.ADMIN)
   @ApiOperation({ summary: 'Borrado lógico de contrato' })
-  @ApiResponse({ status: 200, description: 'Contrato desactivado correctamente' })
+  @ApiResponse({
+    status: 200,
+    description: 'Contrato desactivado correctamente',
+  })
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('companyId') companyId: string,
-    @GetUser('companyRole') companyRole: CompanyRole
+    @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<void> {
     return this.contractService.remove(id, companyId, companyRole);
   }

@@ -7,7 +7,6 @@ import {
   Param,
   Body,
   Query,
-  NotFoundException,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import {
@@ -54,14 +53,15 @@ export class AddressController {
    */
   @Post('draft')
   @Auth()
-  @ApiOperation({ 
-    summary: 'Crear dirección temporal (Paso del Wizard)', 
-    description: 'Crea una dirección en estado DRAFT vinculada al creador para posterior hidratación.'
+  @ApiOperation({
+    summary: 'Crear dirección temporal (Paso del Wizard)',
+    description:
+      'Crea una dirección en estado DRAFT vinculada al creador para posterior hidratación.',
   })
   @ApiCreatedResponse({ type: Address })
   async createDraft(
     @Body() dto: CreateAddressDto,
-    @GetUser('id') userId: string
+    @GetUser('id') userId: string,
   ): Promise<Address> {
     return this.addressService.createDraft(dto, userId);
   }
@@ -76,7 +76,7 @@ export class AddressController {
   @ApiOkResponse({ type: Address })
   async findDraft(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('id') userId: string
+    @GetUser('id') userId: string,
   ): Promise<Address> {
     return this.addressService.findDraft(id, userId);
   }
@@ -92,7 +92,7 @@ export class AddressController {
   async updateDraft(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateAddressDto,
-    @GetUser('id') userId: string
+    @GetUser('id') userId: string,
   ): Promise<Address> {
     return this.addressService.updateDraft(id, dto, userId);
   }
@@ -108,9 +108,10 @@ export class AddressController {
    */
   @Get('/company/:companyId')
   @Auth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Listar direcciones de una empresa',
-    description: 'Aplica aislamiento por contexto de empresa y validación de roles.'
+    description:
+      'Aplica aislamiento por contexto de empresa y validación de roles.',
   })
   @ApiOkResponse({ type: [Address] })
   async findAllForCompany(
@@ -139,7 +140,12 @@ export class AddressController {
     @GetUser('id') userId: string,
     @GetUser('appRole') appRole: AppRole,
   ): Promise<{ message: string }> {
-    await this.addressService.softDeleteForCompany(companyId, addressId, userId, appRole);
+    await this.addressService.softDeleteForCompany(
+      companyId,
+      addressId,
+      userId,
+      appRole,
+    );
     return { message: 'Dirección desactivada correctamente' };
   }
 }

@@ -15,20 +15,22 @@ import { Tenant } from '../tenant/entities/tenant.entity';
 import { Contract } from '../contract/entities/contract.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([
-    User,
-    Company,
-    CompanyRoleEntity,
-    FiscalEntity,
-    Address,
-    VatRate,
-    WithholdingRate,
-    Tax,
-    Property,
-    Tenant,
-    Contract,
-  ])],
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      Company,
+      CompanyRoleEntity,
+      FiscalEntity,
+      Address,
+      VatRate,
+      WithholdingRate,
+      Tax,
+      Property,
+      Tenant,
+      Contract,
+    ]),
+  ],
   providers: [SeederService],
   exports: [SeederService],
 })
-export class SeederModule { }
+export class SeederModule {}

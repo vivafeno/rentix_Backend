@@ -18,14 +18,9 @@ import { FiscalEntity } from './entities/fiscalEntity';
  *   desde otros módulos (Company, seeds, etc.)
  */
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([FiscalEntity]),
-  ],
+  imports: [TypeOrmModule.forFeature([FiscalEntity])],
   controllers: [FiscalIdentityController],
   providers: [FiscalIdentityService],
-  exports: [
-    TypeOrmModule,
-    FiscalIdentityService,
-  ],
+  exports: [TypeOrmModule, FiscalIdentityService],
 })
 export class FacturaeModule {}

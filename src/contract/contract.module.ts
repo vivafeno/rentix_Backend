@@ -19,15 +19,10 @@ import { Tax } from 'src/tax/entities/tax.entity';
 @Module({
   imports: [
     /**
-     * Registramos Contract y sus dependencias directas para permitir 
+     * Registramos Contract y sus dependencias directas para permitir
      * validaciones de integridad referencial dentro del mismo contexto.
      */
-    TypeOrmModule.forFeature([
-      Contract, 
-      Property, 
-      Tenant, 
-      Tax
-    ]),
+    TypeOrmModule.forFeature([Contract, Property, Tenant, Tax]),
   ],
   controllers: [ContractController],
   providers: [ContractService],
@@ -36,7 +31,7 @@ import { Tax } from 'src/tax/entities/tax.entity';
      * Exportamos el servicio para permitir que el futuro InvoiceModule
      * consulte términos contractuales para la generación de facturas.
      */
-    ContractService
+    ContractService,
   ],
 })
 export class ContractModule {}

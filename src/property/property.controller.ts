@@ -9,7 +9,12 @@ import {
   ParseUUIDPipe,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -42,9 +47,7 @@ export class PropertyController {
   @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
   @ApiOperation({ summary: 'Consultar activos operativos del patrimonio' })
   @ApiResponse({ status: 200, type: [Property] })
-  async findAll(
-    @GetUser('companyId') companyId: string,
-  ): Promise<Property[]> {
+  async findAll(@GetUser('companyId') companyId: string): Promise<Property[]> {
     this.validateCompanyContext(companyId);
     return this.propertyService.findAll(companyId);
   }
@@ -153,7 +156,9 @@ export class PropertyController {
    */
   private validateCompanyContext(companyId: string | undefined): void {
     if (!companyId) {
-      throw new BadRequestException('Contexto de empresa (companyId) es requerido para operar con activos.');
+      throw new BadRequestException(
+        'Contexto de empresa (companyId) es requerido para operar con activos.',
+      );
     }
   }
 }

@@ -116,10 +116,7 @@ export class VatRateController {
     description: 'IVA actualizado',
     type: VatRate,
   })
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateVatRateDto,
-  ) {
+  async update(@Param('id') id: string, @Body() dto: UpdateVatRateDto) {
     const vatRate = await this.vatRateService.update(id, dto);
     if (!vatRate) {
       throw new NotFoundException('IVA no encontrado');

@@ -6,10 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaxModule } from 'src/tax/tax.module';
 
 @Module({
-  imports: [
-  TypeOrmModule.forFeature([BillingConcept]),
-  TaxModule, 
-  ],
+  imports: [TypeOrmModule.forFeature([BillingConcept]), TaxModule],
   controllers: [BillingConceptController],
   providers: [BillingConceptService],
   exports: [BillingConceptService],

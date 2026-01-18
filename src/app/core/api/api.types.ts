@@ -4,2682 +4,2742 @@
  */
 
 export interface paths {
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["HealthController_check"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  '/health': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/health/db": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["HealthController_db"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get: operations['HealthController_check'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/health/db': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/health/ready": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["HealthController_ready"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get: operations['HealthController_db'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/health/ready': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/user": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar todos los usuarios activos */
-        get: operations["UserController_findAll"];
-        put?: never;
-        /** Crear un nuevo usuario */
-        post: operations["UserController_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get: operations['HealthController_ready'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/user': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/user/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["UserController_getMe"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Listar todos los usuarios activos */
+    get: operations['UserController_findAll'];
+    put?: never;
+    /** Crear un nuevo usuario */
+    post: operations['UserController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/user/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/user/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Obtener un usuario por ID */
-        get: operations["UserController_findOne"];
-        put?: never;
-        post?: never;
-        /** Desactivar un usuario (soft delete) */
-        delete: operations["UserController_remove"];
-        options?: never;
-        head?: never;
-        /** Actualizar un usuario */
-        patch: operations["UserController_update"];
-        trace?: never;
+    get: operations['UserController_getMe'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/user/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/user-company-role": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar todos los vínculos usuario-empresa */
-        get: operations["UserCompanyRoleController_findAll"];
-        put?: never;
-        /** Crear vínculo de usuario-empresa con rol */
-        post: operations["UserCompanyRoleController_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Obtener un usuario por ID */
+    get: operations['UserController_findOne'];
+    put?: never;
+    post?: never;
+    /** Desactivar un usuario (soft delete) */
+    delete: operations['UserController_remove'];
+    options?: never;
+    head?: never;
+    /** Actualizar un usuario */
+    patch: operations['UserController_update'];
+    trace?: never;
+  };
+  '/user-company-role': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/user-company-role/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Obtener vínculo usuario-empresa por ID */
-        get: operations["UserCompanyRoleController_findOne"];
-        put?: never;
-        post?: never;
-        /** Eliminar vínculo usuario-empresa por ID */
-        delete: operations["UserCompanyRoleController_remove"];
-        options?: never;
-        head?: never;
-        /** Actualizar vínculo usuario-empresa por ID */
-        patch: operations["UserCompanyRoleController_update"];
-        trace?: never;
+    /** Listar todos los vínculos usuario-empresa */
+    get: operations['UserCompanyRoleController_findAll'];
+    put?: never;
+    /** Crear vínculo de usuario-empresa con rol */
+    post: operations['UserCompanyRoleController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/user-company-role/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/companies/legal": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Crear empresa (flujo legal completo)
-         * @description Crea empresa + identidad fiscal + dirección fiscal y asigna OWNER al creador
-         */
-        post: operations["CompanyController_createLegalCompany"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Obtener vínculo usuario-empresa por ID */
+    get: operations['UserCompanyRoleController_findOne'];
+    put?: never;
+    post?: never;
+    /** Eliminar vínculo usuario-empresa por ID */
+    delete: operations['UserCompanyRoleController_remove'];
+    options?: never;
+    head?: never;
+    /** Actualizar vínculo usuario-empresa por ID */
+    patch: operations['UserCompanyRoleController_update'];
+    trace?: never;
+  };
+  '/companies/legal': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/companies/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Empresas del usuario autenticado
-         * @description Devuelve las empresas a las que pertenece el usuario con su rol
-         */
-        get: operations["CompanyController_getMyCompanies"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /**
+     * Crear empresa (flujo legal completo)
+     * @description Crea empresa + identidad fiscal + dirección fiscal y asigna OWNER al creador
+     */
+    post: operations['CompanyController_createLegalCompany'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/companies/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/companies": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["CompanyController_findAll"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Empresas del usuario autenticado
+     * @description Devuelve las empresas a las que pertenece el usuario con su rol
+     */
+    get: operations['CompanyController_getMyCompanies'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/companies': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/client-profiles/company/{companyId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar clientes de una empresa */
-        get: operations["ClientProfileController_findAll"];
-        put?: never;
-        /** Crear cliente para una empresa */
-        post: operations["ClientProfileController_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get: operations['CompanyController_findAll'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/client-profiles/company/{companyId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/client-profiles/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Obtener cliente por ID */
-        get: operations["ClientProfileController_findOne"];
-        put?: never;
-        post?: never;
-        /** Desactivar cliente (soft delete) */
-        delete: operations["ClientProfileController_remove"];
-        options?: never;
-        head?: never;
-        /** Actualizar cliente */
-        patch: operations["ClientProfileController_update"];
-        trace?: never;
+    /** Listar clientes de una empresa */
+    get: operations['ClientProfileController_findAll'];
+    put?: never;
+    /** Crear cliente para una empresa */
+    post: operations['ClientProfileController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/client-profiles/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Login con email y password */
-        post: operations["AuthController_login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Obtener cliente por ID */
+    get: operations['ClientProfileController_findOne'];
+    put?: never;
+    post?: never;
+    /** Desactivar cliente (soft delete) */
+    delete: operations['ClientProfileController_remove'];
+    options?: never;
+    head?: never;
+    /** Actualizar cliente */
+    patch: operations['ClientProfileController_update'];
+    trace?: never;
+  };
+  '/auth/login': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/auth/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Generar un nuevo access token usando refresh */
-        post: operations["AuthController_refresh"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /** Login con email y password */
+    post: operations['AuthController_login'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/refresh': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Cerrar sesión e invalidar refresh token */
-        post: operations["AuthController_logout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /** Generar un nuevo access token usando refresh */
+    post: operations['AuthController_refresh'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/logout': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/context/select-company": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["CompanyContextController_selectCompany"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /** Cerrar sesión e invalidar refresh token */
+    post: operations['AuthController_logout'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/context/select-company': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/companies/{companyId}/addresses": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Listar direcciones de una empresa
-         * @description Por defecto solo muestra direcciones activas. Usa showInactive=true para incluir las inactivas.
-         */
-        get: operations["AddressController_findAllForCompany"];
-        put?: never;
-        /**
-         * Crear dirección para una empresa
-         * @description Crea una dirección asociada a una empresa. Solo puede existir una dirección FISCAL activa por empresa.
-         */
-        post: operations["AddressController_createForCompany"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    post: operations['CompanyContextController_selectCompany'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/companies/{companyId}/addresses': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/companies/{companyId}/addresses/{addressId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Obtener una dirección concreta de una empresa */
-        get: operations["AddressController_findOneForCompany"];
-        put?: never;
-        post?: never;
-        /**
-         * Desactivar dirección (soft delete)
-         * @description Marca la dirección como inactiva (isActive=false)
-         */
-        delete: operations["AddressController_removeForCompany"];
-        options?: never;
-        head?: never;
-        /** Actualizar dirección de una empresa */
-        patch: operations["AddressController_updateForCompany"];
-        trace?: never;
+    /**
+     * Listar direcciones de una empresa
+     * @description Por defecto solo muestra direcciones activas. Usa showInactive=true para incluir las inactivas.
+     */
+    get: operations['AddressController_findAllForCompany'];
+    put?: never;
+    /**
+     * Crear dirección para una empresa
+     * @description Crea una dirección asociada a una empresa. Solo puede existir una dirección FISCAL activa por empresa.
+     */
+    post: operations['AddressController_createForCompany'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/companies/{companyId}/addresses/{addressId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/contact": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar contactos activos */
-        get: operations["ContactController_findAll"];
-        put?: never;
-        /** Crear nuevo contacto */
-        post: operations["ContactController_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Obtener una dirección concreta de una empresa */
+    get: operations['AddressController_findOneForCompany'];
+    put?: never;
+    post?: never;
+    /**
+     * Desactivar dirección (soft delete)
+     * @description Marca la dirección como inactiva (isActive=false)
+     */
+    delete: operations['AddressController_removeForCompany'];
+    options?: never;
+    head?: never;
+    /** Actualizar dirección de una empresa */
+    patch: operations['AddressController_updateForCompany'];
+    trace?: never;
+  };
+  '/contact': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/contact/inactive": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar contactos inactivos */
-        get: operations["ContactController_findInactive"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Listar contactos activos */
+    get: operations['ContactController_findAll'];
+    put?: never;
+    /** Crear nuevo contacto */
+    post: operations['ContactController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contact/inactive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/contact/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Buscar contacto por id */
-        get: operations["ContactController_findOne"];
-        put?: never;
-        post?: never;
-        /** Eliminar contacto (soft delete) */
-        delete: operations["ContactController_remove"];
-        options?: never;
-        head?: never;
-        /** Actualizar contacto por id */
-        patch: operations["ContactController_update"];
-        trace?: never;
+    /** Listar contactos inactivos */
+    get: operations['ContactController_findInactive'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/contact/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/client": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["ClientController_findAll"];
-        put?: never;
-        post: operations["ClientController_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Buscar contacto por id */
+    get: operations['ContactController_findOne'];
+    put?: never;
+    post?: never;
+    /** Eliminar contacto (soft delete) */
+    delete: operations['ContactController_remove'];
+    options?: never;
+    head?: never;
+    /** Actualizar contacto por id */
+    patch: operations['ContactController_update'];
+    trace?: never;
+  };
+  '/client': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/client/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["ClientController_findOne"];
-        put?: never;
-        post?: never;
-        delete: operations["ClientController_remove"];
-        options?: never;
-        head?: never;
-        patch: operations["ClientController_update"];
-        trace?: never;
+    get: operations['ClientController_findAll'];
+    put?: never;
+    post: operations['ClientController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/client/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/companies/{companyId}/properties": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar inmuebles de una empresa */
-        get: operations["PropertyController_findAll"];
-        put?: never;
-        /** Crear inmueble para una empresa */
-        post: operations["PropertyController_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get: operations['ClientController_findOne'];
+    put?: never;
+    post?: never;
+    delete: operations['ClientController_remove'];
+    options?: never;
+    head?: never;
+    patch: operations['ClientController_update'];
+    trace?: never;
+  };
+  '/companies/{companyId}/properties': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/companies/{companyId}/properties/{propertyId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Obtener inmueble concreto */
-        get: operations["PropertyController_findOne"];
-        put?: never;
-        post?: never;
-        /** Desactivar inmueble (soft delete) */
-        delete: operations["PropertyController_remove"];
-        options?: never;
-        head?: never;
-        /** Actualizar inmueble */
-        patch: operations["PropertyController_update"];
-        trace?: never;
+    /** Listar inmuebles de una empresa */
+    get: operations['PropertyController_findAll'];
+    put?: never;
+    /** Crear inmueble para una empresa */
+    post: operations['PropertyController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/companies/{companyId}/properties/{propertyId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/companies/{companyId}/contracts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Listar contratos de una empresa
-         * @description Por defecto solo devuelve contratos activos. Usa showInactive=true para incluir contratos inactivos.
-         */
-        get: operations["ContractController_findAllForCompany"];
-        put?: never;
-        /**
-         * Crear contrato para una empresa
-         * @description Crea un contrato asociado a una empresa, un cliente y un inmueble. El contrato define las condiciones económicas y temporales, pero no genera facturas.
-         */
-        post: operations["ContractController_createForCompany"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Obtener inmueble concreto */
+    get: operations['PropertyController_findOne'];
+    put?: never;
+    post?: never;
+    /** Desactivar inmueble (soft delete) */
+    delete: operations['PropertyController_remove'];
+    options?: never;
+    head?: never;
+    /** Actualizar inmueble */
+    patch: operations['PropertyController_update'];
+    trace?: never;
+  };
+  '/companies/{companyId}/contracts': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/companies/{companyId}/contracts/{contractId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Obtener un contrato concreto */
-        get: operations["ContractController_findOneForCompany"];
-        put?: never;
-        post?: never;
-        /**
-         * Desactivar contrato (soft delete)
-         * @description Marca el contrato como inactivo (isActive=false) y cambia su estado a INACTIVO.
-         */
-        delete: operations["ContractController_removeForCompany"];
-        options?: never;
-        head?: never;
-        /** Actualizar contrato */
-        patch: operations["ContractController_updateForCompany"];
-        trace?: never;
+    /**
+     * Listar contratos de una empresa
+     * @description Por defecto solo devuelve contratos activos. Usa showInactive=true para incluir contratos inactivos.
+     */
+    get: operations['ContractController_findAllForCompany'];
+    put?: never;
+    /**
+     * Crear contrato para una empresa
+     * @description Crea un contrato asociado a una empresa, un cliente y un inmueble. El contrato define las condiciones económicas y temporales, pero no genera facturas.
+     */
+    post: operations['ContractController_createForCompany'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/companies/{companyId}/contracts/{contractId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /** Obtener un contrato concreto */
+    get: operations['ContractController_findOneForCompany'];
+    put?: never;
+    post?: never;
+    /**
+     * Desactivar contrato (soft delete)
+     * @description Marca el contrato como inactivo (isActive=false) y cambia su estado a INACTIVO.
+     */
+    delete: operations['ContractController_removeForCompany'];
+    options?: never;
+    head?: never;
+    /** Actualizar contrato */
+    patch: operations['ContractController_updateForCompany'];
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        CreateUserDto: {
-            /**
-             * @description Correo electrónico único del usuario
-             * @example user@example.com
-             */
-            email: string;
-            /**
-             * @description Contraseña del usuario (mínimo 6 caracteres)
-             * @example StrongPassword123!
-             */
-            password: string;
-            /**
-             * @description Rol global del usuario (ej. superadmin)
-             * @example superadmin, admin, user
-             */
-            appRole?: string;
-        };
-        UserDto: {
-            /** @example user@example.com */
-            email: string;
-            /** @example superadmin, admin, user */
-            appRole: string;
-        };
-        CompanyRoleDto: {
-            companyId: string;
-            companyName: string;
-            /** @enum {string} */
-            role: "OWNER" | "ADMIN" | "MANAGER" | "VIEWER";
-        };
-        MeDto: {
-            id: string;
-            email: string;
-            /** @enum {string} */
-            appRole: "SUPERADMIN" | "ADMIN" | "USER";
-            companyRoles?: components["schemas"]["CompanyRoleDto"][];
-            clientProfiles?: string[];
-            isActive: boolean;
-            /** Format: date-time */
-            created_at: string;
-            /** Format: date-time */
-            updated_at: string;
-        };
-        UpdateUserDto: {
-            /**
-             * @description Correo electrónico único del usuario
-             * @example user@example.com
-             */
-            email?: string;
-            /**
-             * @description Contraseña del usuario (mínimo 6 caracteres)
-             * @example StrongPassword123!
-             */
-            password?: string;
-            /**
-             * @description Rol global del usuario (ej. superadmin)
-             * @example superadmin, admin, user
-             */
-            appRole?: string;
-        };
-        CreateUserCompanyRoleDto: {
-            /**
-             * @description UUID del usuario que tendrá el rol asignado
-             * @example aa04f32e-6dba-43af-9363-579e00a53c8b
-             */
-            userId: string;
-            /**
-             * @description UUID de la empresa donde se asigna el rol
-             * @example f54e632a-91be-4bcd-8f40-3ae5cdc3b9e2
-             */
-            companyId: string;
-            /**
-             * @description Tipo de rol dentro de la empresa: owner, manager, client, etc.
-             * @example OWNER
-             * @enum {string}
-             */
-            role: "OWNER" | "ADMIN" | "MANAGER" | "VIEWER";
-        };
-        UserCompanyRole: Record<string, never>;
-        UpdateUserCompanyRoleDto: {
-            /**
-             * @description UUID del usuario que tendrá el rol asignado
-             * @example aa04f32e-6dba-43af-9363-579e00a53c8b
-             */
-            userId?: string;
-            /**
-             * @description UUID de la empresa donde se asigna el rol
-             * @example f54e632a-91be-4bcd-8f40-3ae5cdc3b9e2
-             */
-            companyId?: string;
-            /**
-             * @description Tipo de rol dentro de la empresa: owner, manager, client, etc.
-             * @example OWNER
-             * @enum {string}
-             */
-            role?: "OWNER" | "ADMIN" | "MANAGER" | "VIEWER";
-        };
-        CreateFacturaePartyDto: {
-            /**
-             * @description Tipo de persona fiscal
-             * @example LEGAL_ENTITY
-             * @enum {string}
-             */
-            personType: "PERSON" | "LEGAL_ENTITY";
-            /**
-             * @description Tipo de identificación fiscal
-             * @example CIF
-             * @enum {string}
-             */
-            taxIdType: "NIF" | "CIF" | "NIE" | "PASSPORT" | "VAT";
-            /**
-             * @description Identificador fiscal (NIF, CIF, NIE, etc.)
-             * @example B12345678
-             */
-            taxId: string;
-            /**
-             * @description Nombre legal o razón social
-             * @example Industria Soluciones SL
-             */
-            legalName: string;
-            /**
-             * @description Nombre comercial
-             * @example InduSol
-             */
-            tradeName?: string;
-            /**
-             * @description Régimen fiscal
-             * @default GENERAL
-             * @enum {string}
-             */
-            taxRegime: "GENERAL" | "SIMPLIFIED" | "EXEMPT" | "OTHER";
-            /**
-             * @description Sujeto o exento de impuestos
-             * @default SUBJECT
-             * @enum {string}
-             */
-            subjectType: "SUBJECT" | "EXEMPT";
-            /**
-             * @description Residencia fiscal según Facturae
-             * @example R
-             * @enum {string}
-             */
-            residenceType?: "R" | "U" | "E" | "O";
-        };
-        CreateAddressDto: {
-            /**
-             * @description Tipo de dirección dentro del sistema
-             * @example FISCAL
-             * @enum {string}
-             */
-            type: "FISCAL" | "COMMERCIAL" | "PROPERTY" | "OTHER";
-            /**
-             * @description Residencia fiscal según Facturae
-             * @example IN_SPAIN
-             * @enum {string}
-             */
-            residenceType: "IN_SPAIN" | "OUTSIDE_SPAIN";
-            /**
-             * @description Dirección principal
-             * @example Calle Mayor 12
-             */
-            addressLine1: string;
-            /**
-             * @description Información adicional de la dirección
-             * @example 2º B
-             */
-            addressLine2?: string;
-            /**
-             * @description Código postal
-             * @example 46060
-             */
-            postalCode: string;
-            /**
-             * @description Ciudad / municipio
-             * @example Valencia
-             */
-            city: string;
-            /**
-             * @description Provincia (obligatoria si residenceType = IN_SPAIN)
-             * @example Valencia
-             */
-            province: string;
-            /**
-             * @description Código de país ISO-3166-1 alpha-2
-             * @default ES
-             * @example ES
-             */
-            countryCode: string;
-            /**
-             * @description Indica si es la dirección principal para su tipo
-             * @example true
-             */
-            isDefault?: boolean;
-        };
-        CreateCompanyLegalDto: {
-            /**
-             * @description Usuario que será OWNER de la empresa
-             * @example uuid
-             */
-            ownerUserId: string;
-            /** @description Identidad fiscal (Facturae) */
-            facturaeParty: components["schemas"]["CreateFacturaePartyDto"];
-            /** @description Dirección fiscal */
-            fiscalAddress: components["schemas"]["CreateAddressDto"];
-            /** @description Email de contacto */
-            email?: string;
-            /** @description Teléfono de contacto */
-            phone?: string;
-        };
-        CreateClientProfileDto: {
-            /**
-             * @description Nombre completo o razón social del cliente
-             * @example Pepe González SL
-             */
-            name: string;
-            /**
-             * @description NIF/CIF del cliente
-             * @example B12345678
-             */
-            nif: string;
-            /**
-             * @description Correo electrónico del cliente (opcional)
-             * @example pepe@email.com
-             */
-            email?: string;
-            /**
-             * @description Teléfono del cliente (opcional)
-             * @example 612345678
-             */
-            phone?: string;
-            /**
-             * @description UUID de la empresa asociada
-             * @example 60eb3add-8fb2-4f82-8233-4ff2b12a156d
-             */
-            companyId: string;
-            /**
-             * @description UUID del usuario asociado (opcional)
-             * @example 70ab3cde-1be2-4f18-b233-5ae2c67b34ef
-             */
-            userId?: string;
-        };
-        UpdateClientProfileDto: {
-            /**
-             * @description Nombre completo o razón social del cliente
-             * @example Pepe González SL
-             */
-            name?: string;
-            /**
-             * @description NIF/CIF del cliente
-             * @example B12345678
-             */
-            nif?: string;
-            /**
-             * @description Correo electrónico del cliente (opcional)
-             * @example pepe@email.com
-             */
-            email?: string;
-            /**
-             * @description Teléfono del cliente (opcional)
-             * @example 612345678
-             */
-            phone?: string;
-            /**
-             * @description UUID de la empresa asociada
-             * @example 60eb3add-8fb2-4f82-8233-4ff2b12a156d
-             */
-            companyId?: string;
-            /**
-             * @description UUID del usuario asociado (opcional)
-             * @example 70ab3cde-1be2-4f18-b233-5ae2c67b34ef
-             */
-            userId?: string;
-        };
-        LoginDto: {
-            /**
-             * @description Correo electrónico del usuario. Debe ser único y registrado previamente.
-             * @example user@example.com
-             */
-            email: string;
-            /**
-             * @description Contraseña del usuario (mínimo 6 caracteres)
-             * @example password123
-             */
-            password: string;
-        };
-        TokensDto: {
-            /**
-             * @description Access token JWT
-             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-             */
-            accessToken: string;
-            /**
-             * @description Refresh token JWT
-             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-             */
-            refreshToken: string;
-        };
-        SelectCompanyDto: {
-            /**
-             * @description UUID de la empresa que el usuario quiere activar como compañía actual en sesión
-             * @example 8e2c4cae-5a4f-4264-befe-2a406fa4adcb
-             */
-            companyId: string;
-        };
-        Address: {
-            /**
-             * Format: uuid
-             * @description Empresa propietaria de la dirección
-             */
-            companyId: string;
-            /**
-             * Format: uuid
-             * @description Cliente asociado a la dirección (opcional)
-             */
-            clientProfileId?: string;
-            /**
-             * @description Tipo de dirección según su uso funcional
-             * @example FISCAL
-             * @enum {string}
-             */
-            type: "FISCAL" | "COMMERCIAL" | "PROPERTY" | "OTHER";
-            /** @example Calle Mayor 12 */
-            addressLine1: string;
-            /** @example 3º izquierda */
-            addressLine2?: string;
-            /** @example 28001 */
-            postalCode: string;
-            /** @example Madrid */
-            city: string;
-            /** @example Madrid */
-            province: string;
-            /**
-             * @description Código de país ISO-3166-1 alpha-2
-             * @example ES
-             */
-            countryCode: string;
-            /**
-             * @description Indica si es la dirección principal para su tipo
-             * @example true
-             */
-            isDefault: boolean;
-        };
-        UpdateAddressDto: {
-            /**
-             * @description Tipo de dirección dentro del sistema
-             * @example FISCAL
-             * @enum {string}
-             */
-            type?: "FISCAL" | "COMMERCIAL" | "PROPERTY" | "OTHER";
-            /**
-             * @description Residencia fiscal según Facturae
-             * @example IN_SPAIN
-             * @enum {string}
-             */
-            residenceType?: "IN_SPAIN" | "OUTSIDE_SPAIN";
-            /**
-             * @description Dirección principal
-             * @example Calle Mayor 12
-             */
-            addressLine1?: string;
-            /**
-             * @description Información adicional de la dirección
-             * @example 2º B
-             */
-            addressLine2?: string;
-            /**
-             * @description Código postal
-             * @example 46060
-             */
-            postalCode?: string;
-            /**
-             * @description Ciudad / municipio
-             * @example Valencia
-             */
-            city?: string;
-            /**
-             * @description Provincia (obligatoria si residenceType = IN_SPAIN)
-             * @example Valencia
-             */
-            province?: string;
-            /**
-             * @description Código de país ISO-3166-1 alpha-2
-             * @default ES
-             * @example ES
-             */
-            countryCode: string;
-            /**
-             * @description Indica si es la dirección principal para su tipo
-             * @example true
-             */
-            isDefault?: boolean;
-        };
-        CreateContactDto: {
-            /**
-             * @description Nombre completo del contacto interno
-             * @example Ana López
-             */
-            nombre: string;
-            /**
-             * @description Tipo de contacto interno
-             * @example DIRECCION
-             * @enum {string}
-             */
-            tipoContacto: "DIRECCION" | "EMERGENCIAS" | "GESTORIA" | "ADMINISTRACION" | "PERSONAL" | "OTRO" | "General" | "Emergencias" | "Otro";
-            /**
-             * @description Correo electrónico del contacto (opcional)
-             * @example ana.lopez@ejemplo.com
-             */
-            email?: string;
-            /**
-             * @description Teléfono del contacto (opcional)
-             * @example 612345678
-             */
-            telefono?: string;
-            /**
-             * @description Cargo en la empresa (opcional)
-             * @example Directora técnica
-             */
-            cargo?: string;
-            /**
-             * @description Dirección postal del contacto (opcional)
-             * @example Calle Falsa 123
-             */
-            direccion?: string;
-            /**
-             * @description Activo/inactivo (opcional, por defecto activo)
-             * @example true
-             */
-            isActive?: boolean;
-        };
-        Contact: {
-            /**
-             * @description Nombre completo del contacto interno
-             * @example Ana López
-             */
-            nombre: string;
-            /**
-             * @description Tipo de contacto interno
-             * @example General
-             * @enum {string}
-             */
-            tipoContacto: "DIRECCION" | "EMERGENCIAS" | "GESTORIA" | "ADMINISTRACION" | "PERSONAL" | "OTRO" | "General" | "Emergencias" | "Otro";
-            /**
-             * @description Correo electrónico (opcional)
-             * @example ana.lopez@ejemplo.com
-             */
-            email?: string;
-            /**
-             * @description Teléfono de contacto (opcional)
-             * @example 612345678
-             */
-            telefono?: string;
-            /**
-             * @description Cargo en la empresa (opcional)
-             * @example Directora técnica
-             */
-            cargo?: string;
-            /**
-             * @description Dirección puntual del contacto (opcional)
-             * @example Calle Falsa 123
-             */
-            direccion?: string;
-        };
-        UpdateContactDto: {
-            /**
-             * @description Nombre completo del contacto interno
-             * @example Ana López
-             */
-            nombre?: string;
-            /**
-             * @description Tipo de contacto interno
-             * @example DIRECCION
-             * @enum {string}
-             */
-            tipoContacto?: "DIRECCION" | "EMERGENCIAS" | "GESTORIA" | "ADMINISTRACION" | "PERSONAL" | "OTRO" | "General" | "Emergencias" | "Otro";
-            /**
-             * @description Correo electrónico del contacto (opcional)
-             * @example ana.lopez@ejemplo.com
-             */
-            email?: string;
-            /**
-             * @description Teléfono del contacto (opcional)
-             * @example 612345678
-             */
-            telefono?: string;
-            /**
-             * @description Cargo en la empresa (opcional)
-             * @example Directora técnica
-             */
-            cargo?: string;
-            /**
-             * @description Dirección postal del contacto (opcional)
-             * @example Calle Falsa 123
-             */
-            direccion?: string;
-            /**
-             * @description Activo/inactivo (opcional, por defecto activo)
-             * @example true
-             */
-            isActive?: boolean;
-        };
-        CreateClientDto: {
-            /**
-             * @description Empresa propietaria del cliente
-             * @example f2a1e0d9-4c6a-4d1e-9b3a-1c2d3e4f5678
-             */
-            companyId: string;
-            /**
-             * @description Identidad fiscal del cliente (FacturaeParty)
-             * @example c1b2a3d4-1111-4aaa-9bbb-ccccdddd0000
-             */
-            facturaePartyId: string;
-            /**
-             * @description Dirección fiscal del cliente
-             * @example d4e5f6a7-2222-4bbb-8ccc-ddddeeeeffff
-             */
-            fiscalAddressId: string;
-        };
-        UpdateClientDto: {
-            /**
-             * @description Empresa propietaria del cliente
-             * @example f2a1e0d9-4c6a-4d1e-9b3a-1c2d3e4f5678
-             */
-            companyId?: string;
-            /**
-             * @description Identidad fiscal del cliente (FacturaeParty)
-             * @example c1b2a3d4-1111-4aaa-9bbb-ccccdddd0000
-             */
-            facturaePartyId?: string;
-            /**
-             * @description Dirección fiscal del cliente
-             * @example d4e5f6a7-2222-4bbb-8ccc-ddddeeeeffff
-             */
-            fiscalAddressId?: string;
-        };
-        CreatePropertyDto: {
-            /**
-             * Format: uuid
-             * @description ID de la dirección (Address type PROPERTY)
-             */
-            addressId: string;
-            /** @example P-VAL-001 */
-            reference?: string;
-            /** @enum {string} */
-            type: "VIVIENDA" | "LOCAL_COMERCIAL" | "GARAJE" | "TRASTERO" | "TERRENO" | "OTRO";
-            /** @enum {string} */
-            status: "DISPONIBLE" | "ALQUILADO" | "BLOQUEADO" | "INACTIVO";
-            /** @example 1234567AB1234C0001DE */
-            cadastralReference?: string;
-            /** @example 85 */
-            surfaceM2?: number;
-            /** @example 3 */
-            rooms?: number;
-            /** @example 2 */
-            bathrooms?: number;
-            /** @example 3º */
-            floor?: string;
-            /** @example 39.4699 */
-            latitude?: number;
-            /** @example -0.3763 */
-            longitude?: number;
-        };
-        Property: {
-            /**
-             * Format: uuid
-             * @description Empresa propietaria del inmueble
-             */
-            companyId: string;
-            /**
-             * Format: uuid
-             * @description Dirección asociada al inmueble
-             */
-            addressId: string;
-            /**
-             * @description Referencia interna del inmueble
-             * @example P-VAL-001
-             */
-            reference: string;
-            /**
-             * @description Referencia catastral
-             * @example 1234567AB1234C0001DE
-             */
-            cadastralReference?: string;
-            /**
-             * @description Tipo de inmueble
-             * @enum {string}
-             */
-            type: "VIVIENDA" | "LOCAL_COMERCIAL" | "GARAJE" | "TRASTERO" | "TERRENO" | "OTRO";
-            /**
-             * @description Estado actual del inmueble
-             * @enum {string}
-             */
-            status: "DISPONIBLE" | "ALQUILADO" | "BLOQUEADO" | "INACTIVO";
-            /** @example 85 */
-            surfaceM2?: number;
-            /** @example 3 */
-            rooms?: number;
-            /** @example 2 */
-            bathrooms?: number;
-            /** @example 3º */
-            floor?: string;
-            /** @example 39.4699 */
-            latitude?: number;
-            /** @example -0.3763 */
-            longitude?: number;
-        };
-        UpdatePropertyDto: {
-            /**
-             * Format: uuid
-             * @description ID de la dirección (Address type PROPERTY)
-             */
-            addressId?: string;
-            /** @example P-VAL-001 */
-            reference?: string;
-            /** @enum {string} */
-            type?: "VIVIENDA" | "LOCAL_COMERCIAL" | "GARAJE" | "TRASTERO" | "TERRENO" | "OTRO";
-            /** @enum {string} */
-            status?: "DISPONIBLE" | "ALQUILADO" | "BLOQUEADO" | "INACTIVO";
-            /** @example 1234567AB1234C0001DE */
-            cadastralReference?: string;
-            /** @example 85 */
-            surfaceM2?: number;
-            /** @example 3 */
-            rooms?: number;
-            /** @example 2 */
-            bathrooms?: number;
-            /** @example 3º */
-            floor?: string;
-            /** @example 39.4699 */
-            latitude?: number;
-            /** @example -0.3763 */
-            longitude?: number;
-        };
-        CreateContractDto: {
-            /**
-             * Format: uuid
-             * @description Cliente asociado al contrato
-             */
-            clientProfileId: string;
-            /**
-             * Format: uuid
-             * @description Inmueble asociado al contrato
-             */
-            propertyId: string;
-            /**
-             * @description Número o referencia interna del contrato
-             * @example CTR-2024-001
-             */
-            numeroContrato: string;
-            /**
-             * @description Tipo de contrato
-             * @enum {string}
-             */
-            tipoContrato: "ALQUILER" | "CESION" | "TEMPORAL" | "OTRO";
-            /**
-             * @description Estado inicial del contrato
-             * @example ACTIVO
-             * @enum {string}
-             */
-            estadoContrato: "BORRADOR" | "ACTIVO" | "FINALIZADO" | "RESCINDIDO" | "INACTIVO";
-            /**
-             * @description Fecha de firma del contrato
-             * @example 2024-01-15
-             */
-            fechaFirma: string;
-            /**
-             * @description Fecha de inicio del contrato
-             * @example 2024-02-01
-             */
-            fechaInicio: string;
-            /**
-             * @description Duración inicial del contrato en meses
-             * @example 12
-             */
-            duracionMeses: number;
-            /**
-             * @description Fecha de finalización prevista del contrato
-             * @example 2025-01-31
-             */
-            fechaFin: string;
-            /**
-             * @description Importe base del contrato sin impuestos
-             * @example 750
-             */
-            importeBase: number;
-            /**
-             * @description Periodicidad de facturación
-             * @enum {string}
-             */
-            periodicidad: "MENSUAL" | "BIMESTRAL" | "TRIMESTRAL" | "ANUAL";
-            /**
-             * Format: uuid
-             * @description ID del tipo de IVA aplicable (catálogo VAT)
-             */
-            vatRateId: string;
-            /**
-             * Format: uuid
-             * @description ID del tipo de retención aplicable (catálogo Withholding)
-             */
-            withholdingRateId: string;
-            /**
-             * @description Importe entregado como fianza
-             * @example 1500
-             */
-            fianzaImporte?: number;
-            /**
-             * @description Meses de carencia sin facturación
-             * @example 0
-             */
-            mesesCarencia?: number;
-            /**
-             * @description Avisar antes de la finalización del contrato
-             * @example true
-             */
-            avisarFinContrato?: boolean;
-            /**
-             * @description Indica si el contrato tiene revisión IPC
-             * @example true
-             */
-            revisionIpcActiva?: boolean;
-            /**
-             * @description Fecha prevista de revisión IPC
-             * @example 2025-02-01
-             */
-            fechaRevisionIpc?: string;
-            /**
-             * @description Avisar cuando llegue la revisión IPC
-             * @example true
-             */
-            avisarRevisionIpc?: boolean;
-            /** @description Descripción de gastos adicionales */
-            gastosDescripcion?: string;
-            /** @description Observaciones generales del contrato */
-            observaciones?: string;
-        };
-        Contract: {
-            /**
-             * Format: uuid
-             * @description Empresa propietaria del contrato
-             */
-            companyId: string;
-            /**
-             * Format: uuid
-             * @description Cliente asociado al contrato
-             */
-            clientProfileId: string;
-            /**
-             * Format: uuid
-             * @description Inmueble asociado al contrato
-             */
-            propertyId: string;
-            /**
-             * @description Número o referencia interna del contrato
-             * @example CTR-2024-001
-             */
-            numeroContrato: string;
-            /**
-             * @description Tipo de contrato (alquiler, cesión, etc.)
-             * @enum {string}
-             */
-            tipoContrato: "ALQUILER" | "CESION" | "TEMPORAL" | "OTRO";
-            /**
-             * @description Estado actual del contrato
-             * @enum {string}
-             */
-            estadoContrato: "BORRADOR" | "ACTIVO" | "FINALIZADO" | "RESCINDIDO" | "INACTIVO";
-            /**
-             * Format: date-time
-             * @description Fecha de firma del contrato
-             * @example 2024-01-15
-             */
-            fechaFirma: string;
-            /**
-             * Format: date-time
-             * @description Fecha de inicio del contrato
-             * @example 2024-02-01
-             */
-            fechaInicio: string;
-            /**
-             * @description Duración inicial del contrato en meses
-             * @example 12
-             */
-            duracionMeses: number;
-            /**
-             * Format: date-time
-             * @description Fecha de finalización prevista del contrato
-             * @example 2025-01-31
-             */
-            fechaFin: string;
-            /**
-             * Format: date-time
-             * @description Fecha de rescisión anticipada, si aplica
-             * @example 2024-10-15
-             */
-            fechaRescision?: string;
-            /**
-             * @description Indica si el contrato se renueva automáticamente
-             * @example true
-             */
-            renovacionAutomatica: boolean;
-            /**
-             * @description Meses de preaviso requeridos
-             * @example 2
-             */
-            preavisoMeses?: number;
-            /**
-             * @description Importe base sin impuestos
-             * @example 750
-             */
-            importeBase: number;
-            /**
-             * @description Moneda del contrato (ISO-4217)
-             * @example EUR
-             */
-            moneda: string;
-            /**
-             * @description Periodicidad de facturación
-             * @enum {string}
-             */
-            periodicidad: "MENSUAL" | "BIMESTRAL" | "TRIMESTRAL" | "ANUAL";
-            /**
-             * Format: uuid
-             * @description Tipo de IVA aplicado al contrato
-             */
-            vatRateId: string;
-            /**
-             * Format: uuid
-             * @description Tipo de retención aplicado al contrato
-             */
-            withholdingRateId: string;
-            /**
-             * @description Importe entregado como fianza
-             * @example 1500
-             */
-            fianzaImporte?: number;
-            /**
-             * @description Meses de carencia sin facturación
-             * @example 2
-             */
-            mesesCarencia: number;
-            /**
-             * @description Avisar antes de la finalización del contrato
-             * @example true
-             */
-            avisarFinContrato: boolean;
-            /**
-             * @description Indica si el contrato tiene revisión IPC
-             * @example true
-             */
-            revisionIpcActiva: boolean;
-            /**
-             * Format: date-time
-             * @description Fecha prevista de revisión IPC
-             * @example 2025-02-01
-             */
-            fechaRevisionIpc?: string;
-            /**
-             * @description Avisar cuando llegue la revisión IPC
-             * @example true
-             */
-            avisarRevisionIpc: boolean;
-            /** @description Descripción de gastos adicionales */
-            gastosDescripcion?: string;
-            /** @description Observaciones generales del contrato */
-            observaciones?: string;
-        };
-        UpdateContractDto: {
-            /**
-             * Format: uuid
-             * @description Cliente asociado al contrato
-             */
-            clientProfileId?: string;
-            /**
-             * Format: uuid
-             * @description Inmueble asociado al contrato
-             */
-            propertyId?: string;
-            /**
-             * @description Número o referencia interna del contrato
-             * @example CTR-2024-001
-             */
-            numeroContrato?: string;
-            /**
-             * @description Tipo de contrato
-             * @enum {string}
-             */
-            tipoContrato?: "ALQUILER" | "CESION" | "TEMPORAL" | "OTRO";
-            /**
-             * @description Estado inicial del contrato
-             * @example ACTIVO
-             * @enum {string}
-             */
-            estadoContrato?: "BORRADOR" | "ACTIVO" | "FINALIZADO" | "RESCINDIDO" | "INACTIVO";
-            /**
-             * @description Fecha de firma del contrato
-             * @example 2024-01-15
-             */
-            fechaFirma?: string;
-            /**
-             * @description Fecha de inicio del contrato
-             * @example 2024-02-01
-             */
-            fechaInicio?: string;
-            /**
-             * @description Duración inicial del contrato en meses
-             * @example 12
-             */
-            duracionMeses?: number;
-            /**
-             * @description Fecha de finalización prevista del contrato
-             * @example 2025-01-31
-             */
-            fechaFin?: string;
-            /**
-             * @description Importe base del contrato sin impuestos
-             * @example 750
-             */
-            importeBase?: number;
-            /**
-             * @description Periodicidad de facturación
-             * @enum {string}
-             */
-            periodicidad?: "MENSUAL" | "BIMESTRAL" | "TRIMESTRAL" | "ANUAL";
-            /**
-             * Format: uuid
-             * @description ID del tipo de IVA aplicable (catálogo VAT)
-             */
-            vatRateId?: string;
-            /**
-             * Format: uuid
-             * @description ID del tipo de retención aplicable (catálogo Withholding)
-             */
-            withholdingRateId?: string;
-            /**
-             * @description Importe entregado como fianza
-             * @example 1500
-             */
-            fianzaImporte?: number;
-            /**
-             * @description Meses de carencia sin facturación
-             * @example 0
-             */
-            mesesCarencia?: number;
-            /**
-             * @description Avisar antes de la finalización del contrato
-             * @example true
-             */
-            avisarFinContrato?: boolean;
-            /**
-             * @description Indica si el contrato tiene revisión IPC
-             * @example true
-             */
-            revisionIpcActiva?: boolean;
-            /**
-             * @description Fecha prevista de revisión IPC
-             * @example 2025-02-01
-             */
-            fechaRevisionIpc?: string;
-            /**
-             * @description Avisar cuando llegue la revisión IPC
-             * @example true
-             */
-            avisarRevisionIpc?: boolean;
-            /** @description Descripción de gastos adicionales */
-            gastosDescripcion?: string;
-            /** @description Observaciones generales del contrato */
-            observaciones?: string;
-        };
+  schemas: {
+    CreateUserDto: {
+      /**
+       * @description Correo electrónico único del usuario
+       * @example user@example.com
+       */
+      email: string;
+      /**
+       * @description Contraseña del usuario (mínimo 6 caracteres)
+       * @example StrongPassword123!
+       */
+      password: string;
+      /**
+       * @description Rol global del usuario (ej. superadmin)
+       * @example superadmin, admin, user
+       */
+      appRole?: string;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    UserDto: {
+      /** @example user@example.com */
+      email: string;
+      /** @example superadmin, admin, user */
+      appRole: string;
+    };
+    CompanyRoleDto: {
+      companyId: string;
+      companyName: string;
+      /** @enum {string} */
+      role: 'OWNER' | 'ADMIN' | 'MANAGER' | 'VIEWER';
+    };
+    MeDto: {
+      id: string;
+      email: string;
+      /** @enum {string} */
+      appRole: 'SUPERADMIN' | 'ADMIN' | 'USER';
+      companyRoles?: components['schemas']['CompanyRoleDto'][];
+      clientProfiles?: string[];
+      isActive: boolean;
+      /** Format: date-time */
+      created_at: string;
+      /** Format: date-time */
+      updated_at: string;
+    };
+    UpdateUserDto: {
+      /**
+       * @description Correo electrónico único del usuario
+       * @example user@example.com
+       */
+      email?: string;
+      /**
+       * @description Contraseña del usuario (mínimo 6 caracteres)
+       * @example StrongPassword123!
+       */
+      password?: string;
+      /**
+       * @description Rol global del usuario (ej. superadmin)
+       * @example superadmin, admin, user
+       */
+      appRole?: string;
+    };
+    CreateUserCompanyRoleDto: {
+      /**
+       * @description UUID del usuario que tendrá el rol asignado
+       * @example aa04f32e-6dba-43af-9363-579e00a53c8b
+       */
+      userId: string;
+      /**
+       * @description UUID de la empresa donde se asigna el rol
+       * @example f54e632a-91be-4bcd-8f40-3ae5cdc3b9e2
+       */
+      companyId: string;
+      /**
+       * @description Tipo de rol dentro de la empresa: owner, manager, client, etc.
+       * @example OWNER
+       * @enum {string}
+       */
+      role: 'OWNER' | 'ADMIN' | 'MANAGER' | 'VIEWER';
+    };
+    UserCompanyRole: Record<string, never>;
+    UpdateUserCompanyRoleDto: {
+      /**
+       * @description UUID del usuario que tendrá el rol asignado
+       * @example aa04f32e-6dba-43af-9363-579e00a53c8b
+       */
+      userId?: string;
+      /**
+       * @description UUID de la empresa donde se asigna el rol
+       * @example f54e632a-91be-4bcd-8f40-3ae5cdc3b9e2
+       */
+      companyId?: string;
+      /**
+       * @description Tipo de rol dentro de la empresa: owner, manager, client, etc.
+       * @example OWNER
+       * @enum {string}
+       */
+      role?: 'OWNER' | 'ADMIN' | 'MANAGER' | 'VIEWER';
+    };
+    CreateFacturaePartyDto: {
+      /**
+       * @description Tipo de persona fiscal
+       * @example LEGAL_ENTITY
+       * @enum {string}
+       */
+      personType: 'PERSON' | 'LEGAL_ENTITY';
+      /**
+       * @description Tipo de identificación fiscal
+       * @example CIF
+       * @enum {string}
+       */
+      taxIdType: 'NIF' | 'CIF' | 'NIE' | 'PASSPORT' | 'VAT';
+      /**
+       * @description Identificador fiscal (NIF, CIF, NIE, etc.)
+       * @example B12345678
+       */
+      taxId: string;
+      /**
+       * @description Nombre legal o razón social
+       * @example Industria Soluciones SL
+       */
+      legalName: string;
+      /**
+       * @description Nombre comercial
+       * @example InduSol
+       */
+      tradeName?: string;
+      /**
+       * @description Régimen fiscal
+       * @default GENERAL
+       * @enum {string}
+       */
+      taxRegime: 'GENERAL' | 'SIMPLIFIED' | 'EXEMPT' | 'OTHER';
+      /**
+       * @description Sujeto o exento de impuestos
+       * @default SUBJECT
+       * @enum {string}
+       */
+      subjectType: 'SUBJECT' | 'EXEMPT';
+      /**
+       * @description Residencia fiscal según Facturae
+       * @example R
+       * @enum {string}
+       */
+      residenceType?: 'R' | 'U' | 'E' | 'O';
+    };
+    CreateAddressDto: {
+      /**
+       * @description Tipo de dirección dentro del sistema
+       * @example FISCAL
+       * @enum {string}
+       */
+      type: 'FISCAL' | 'COMMERCIAL' | 'PROPERTY' | 'OTHER';
+      /**
+       * @description Residencia fiscal según Facturae
+       * @example IN_SPAIN
+       * @enum {string}
+       */
+      residenceType: 'IN_SPAIN' | 'OUTSIDE_SPAIN';
+      /**
+       * @description Dirección principal
+       * @example Calle Mayor 12
+       */
+      addressLine1: string;
+      /**
+       * @description Información adicional de la dirección
+       * @example 2º B
+       */
+      addressLine2?: string;
+      /**
+       * @description Código postal
+       * @example 46060
+       */
+      postalCode: string;
+      /**
+       * @description Ciudad / municipio
+       * @example Valencia
+       */
+      city: string;
+      /**
+       * @description Provincia (obligatoria si residenceType = IN_SPAIN)
+       * @example Valencia
+       */
+      province: string;
+      /**
+       * @description Código de país ISO-3166-1 alpha-2
+       * @default ES
+       * @example ES
+       */
+      countryCode: string;
+      /**
+       * @description Indica si es la dirección principal para su tipo
+       * @example true
+       */
+      isDefault?: boolean;
+    };
+    CreateCompanyLegalDto: {
+      /**
+       * @description Usuario que será OWNER de la empresa
+       * @example uuid
+       */
+      ownerUserId: string;
+      /** @description Identidad fiscal (Facturae) */
+      facturaeParty: components['schemas']['CreateFacturaePartyDto'];
+      /** @description Dirección fiscal */
+      fiscalAddress: components['schemas']['CreateAddressDto'];
+      /** @description Email de contacto */
+      email?: string;
+      /** @description Teléfono de contacto */
+      phone?: string;
+    };
+    CreateClientProfileDto: {
+      /**
+       * @description Nombre completo o razón social del cliente
+       * @example Pepe González SL
+       */
+      name: string;
+      /**
+       * @description NIF/CIF del cliente
+       * @example B12345678
+       */
+      nif: string;
+      /**
+       * @description Correo electrónico del cliente (opcional)
+       * @example pepe@email.com
+       */
+      email?: string;
+      /**
+       * @description Teléfono del cliente (opcional)
+       * @example 612345678
+       */
+      phone?: string;
+      /**
+       * @description UUID de la empresa asociada
+       * @example 60eb3add-8fb2-4f82-8233-4ff2b12a156d
+       */
+      companyId: string;
+      /**
+       * @description UUID del usuario asociado (opcional)
+       * @example 70ab3cde-1be2-4f18-b233-5ae2c67b34ef
+       */
+      userId?: string;
+    };
+    UpdateClientProfileDto: {
+      /**
+       * @description Nombre completo o razón social del cliente
+       * @example Pepe González SL
+       */
+      name?: string;
+      /**
+       * @description NIF/CIF del cliente
+       * @example B12345678
+       */
+      nif?: string;
+      /**
+       * @description Correo electrónico del cliente (opcional)
+       * @example pepe@email.com
+       */
+      email?: string;
+      /**
+       * @description Teléfono del cliente (opcional)
+       * @example 612345678
+       */
+      phone?: string;
+      /**
+       * @description UUID de la empresa asociada
+       * @example 60eb3add-8fb2-4f82-8233-4ff2b12a156d
+       */
+      companyId?: string;
+      /**
+       * @description UUID del usuario asociado (opcional)
+       * @example 70ab3cde-1be2-4f18-b233-5ae2c67b34ef
+       */
+      userId?: string;
+    };
+    LoginDto: {
+      /**
+       * @description Correo electrónico del usuario. Debe ser único y registrado previamente.
+       * @example user@example.com
+       */
+      email: string;
+      /**
+       * @description Contraseña del usuario (mínimo 6 caracteres)
+       * @example password123
+       */
+      password: string;
+    };
+    TokensDto: {
+      /**
+       * @description Access token JWT
+       * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+       */
+      accessToken: string;
+      /**
+       * @description Refresh token JWT
+       * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+       */
+      refreshToken: string;
+    };
+    SelectCompanyDto: {
+      /**
+       * @description UUID de la empresa que el usuario quiere activar como compañía actual en sesión
+       * @example 8e2c4cae-5a4f-4264-befe-2a406fa4adcb
+       */
+      companyId: string;
+    };
+    Address: {
+      /**
+       * Format: uuid
+       * @description Empresa propietaria de la dirección
+       */
+      companyId: string;
+      /**
+       * Format: uuid
+       * @description Cliente asociado a la dirección (opcional)
+       */
+      clientProfileId?: string;
+      /**
+       * @description Tipo de dirección según su uso funcional
+       * @example FISCAL
+       * @enum {string}
+       */
+      type: 'FISCAL' | 'COMMERCIAL' | 'PROPERTY' | 'OTHER';
+      /** @example Calle Mayor 12 */
+      addressLine1: string;
+      /** @example 3º izquierda */
+      addressLine2?: string;
+      /** @example 28001 */
+      postalCode: string;
+      /** @example Madrid */
+      city: string;
+      /** @example Madrid */
+      province: string;
+      /**
+       * @description Código de país ISO-3166-1 alpha-2
+       * @example ES
+       */
+      countryCode: string;
+      /**
+       * @description Indica si es la dirección principal para su tipo
+       * @example true
+       */
+      isDefault: boolean;
+    };
+    UpdateAddressDto: {
+      /**
+       * @description Tipo de dirección dentro del sistema
+       * @example FISCAL
+       * @enum {string}
+       */
+      type?: 'FISCAL' | 'COMMERCIAL' | 'PROPERTY' | 'OTHER';
+      /**
+       * @description Residencia fiscal según Facturae
+       * @example IN_SPAIN
+       * @enum {string}
+       */
+      residenceType?: 'IN_SPAIN' | 'OUTSIDE_SPAIN';
+      /**
+       * @description Dirección principal
+       * @example Calle Mayor 12
+       */
+      addressLine1?: string;
+      /**
+       * @description Información adicional de la dirección
+       * @example 2º B
+       */
+      addressLine2?: string;
+      /**
+       * @description Código postal
+       * @example 46060
+       */
+      postalCode?: string;
+      /**
+       * @description Ciudad / municipio
+       * @example Valencia
+       */
+      city?: string;
+      /**
+       * @description Provincia (obligatoria si residenceType = IN_SPAIN)
+       * @example Valencia
+       */
+      province?: string;
+      /**
+       * @description Código de país ISO-3166-1 alpha-2
+       * @default ES
+       * @example ES
+       */
+      countryCode: string;
+      /**
+       * @description Indica si es la dirección principal para su tipo
+       * @example true
+       */
+      isDefault?: boolean;
+    };
+    CreateContactDto: {
+      /**
+       * @description Nombre completo del contacto interno
+       * @example Ana López
+       */
+      nombre: string;
+      /**
+       * @description Tipo de contacto interno
+       * @example DIRECCION
+       * @enum {string}
+       */
+      tipoContacto:
+        | 'DIRECCION'
+        | 'EMERGENCIAS'
+        | 'GESTORIA'
+        | 'ADMINISTRACION'
+        | 'PERSONAL'
+        | 'OTRO'
+        | 'General'
+        | 'Emergencias'
+        | 'Otro';
+      /**
+       * @description Correo electrónico del contacto (opcional)
+       * @example ana.lopez@ejemplo.com
+       */
+      email?: string;
+      /**
+       * @description Teléfono del contacto (opcional)
+       * @example 612345678
+       */
+      telefono?: string;
+      /**
+       * @description Cargo en la empresa (opcional)
+       * @example Directora técnica
+       */
+      cargo?: string;
+      /**
+       * @description Dirección postal del contacto (opcional)
+       * @example Calle Falsa 123
+       */
+      direccion?: string;
+      /**
+       * @description Activo/inactivo (opcional, por defecto activo)
+       * @example true
+       */
+      isActive?: boolean;
+    };
+    Contact: {
+      /**
+       * @description Nombre completo del contacto interno
+       * @example Ana López
+       */
+      nombre: string;
+      /**
+       * @description Tipo de contacto interno
+       * @example General
+       * @enum {string}
+       */
+      tipoContacto:
+        | 'DIRECCION'
+        | 'EMERGENCIAS'
+        | 'GESTORIA'
+        | 'ADMINISTRACION'
+        | 'PERSONAL'
+        | 'OTRO'
+        | 'General'
+        | 'Emergencias'
+        | 'Otro';
+      /**
+       * @description Correo electrónico (opcional)
+       * @example ana.lopez@ejemplo.com
+       */
+      email?: string;
+      /**
+       * @description Teléfono de contacto (opcional)
+       * @example 612345678
+       */
+      telefono?: string;
+      /**
+       * @description Cargo en la empresa (opcional)
+       * @example Directora técnica
+       */
+      cargo?: string;
+      /**
+       * @description Dirección puntual del contacto (opcional)
+       * @example Calle Falsa 123
+       */
+      direccion?: string;
+    };
+    UpdateContactDto: {
+      /**
+       * @description Nombre completo del contacto interno
+       * @example Ana López
+       */
+      nombre?: string;
+      /**
+       * @description Tipo de contacto interno
+       * @example DIRECCION
+       * @enum {string}
+       */
+      tipoContacto?:
+        | 'DIRECCION'
+        | 'EMERGENCIAS'
+        | 'GESTORIA'
+        | 'ADMINISTRACION'
+        | 'PERSONAL'
+        | 'OTRO'
+        | 'General'
+        | 'Emergencias'
+        | 'Otro';
+      /**
+       * @description Correo electrónico del contacto (opcional)
+       * @example ana.lopez@ejemplo.com
+       */
+      email?: string;
+      /**
+       * @description Teléfono del contacto (opcional)
+       * @example 612345678
+       */
+      telefono?: string;
+      /**
+       * @description Cargo en la empresa (opcional)
+       * @example Directora técnica
+       */
+      cargo?: string;
+      /**
+       * @description Dirección postal del contacto (opcional)
+       * @example Calle Falsa 123
+       */
+      direccion?: string;
+      /**
+       * @description Activo/inactivo (opcional, por defecto activo)
+       * @example true
+       */
+      isActive?: boolean;
+    };
+    CreateClientDto: {
+      /**
+       * @description Empresa propietaria del cliente
+       * @example f2a1e0d9-4c6a-4d1e-9b3a-1c2d3e4f5678
+       */
+      companyId: string;
+      /**
+       * @description Identidad fiscal del cliente (FacturaeParty)
+       * @example c1b2a3d4-1111-4aaa-9bbb-ccccdddd0000
+       */
+      facturaePartyId: string;
+      /**
+       * @description Dirección fiscal del cliente
+       * @example d4e5f6a7-2222-4bbb-8ccc-ddddeeeeffff
+       */
+      fiscalAddressId: string;
+    };
+    UpdateClientDto: {
+      /**
+       * @description Empresa propietaria del cliente
+       * @example f2a1e0d9-4c6a-4d1e-9b3a-1c2d3e4f5678
+       */
+      companyId?: string;
+      /**
+       * @description Identidad fiscal del cliente (FacturaeParty)
+       * @example c1b2a3d4-1111-4aaa-9bbb-ccccdddd0000
+       */
+      facturaePartyId?: string;
+      /**
+       * @description Dirección fiscal del cliente
+       * @example d4e5f6a7-2222-4bbb-8ccc-ddddeeeeffff
+       */
+      fiscalAddressId?: string;
+    };
+    CreatePropertyDto: {
+      /**
+       * Format: uuid
+       * @description ID de la dirección (Address type PROPERTY)
+       */
+      addressId: string;
+      /** @example P-VAL-001 */
+      reference?: string;
+      /** @enum {string} */
+      type:
+        | 'VIVIENDA'
+        | 'LOCAL_COMERCIAL'
+        | 'GARAJE'
+        | 'TRASTERO'
+        | 'TERRENO'
+        | 'OTRO';
+      /** @enum {string} */
+      status: 'DISPONIBLE' | 'ALQUILADO' | 'BLOQUEADO' | 'INACTIVO';
+      /** @example 1234567AB1234C0001DE */
+      cadastralReference?: string;
+      /** @example 85 */
+      surfaceM2?: number;
+      /** @example 3 */
+      rooms?: number;
+      /** @example 2 */
+      bathrooms?: number;
+      /** @example 3º */
+      floor?: string;
+      /** @example 39.4699 */
+      latitude?: number;
+      /** @example -0.3763 */
+      longitude?: number;
+    };
+    Property: {
+      /**
+       * Format: uuid
+       * @description Empresa propietaria del inmueble
+       */
+      companyId: string;
+      /**
+       * Format: uuid
+       * @description Dirección asociada al inmueble
+       */
+      addressId: string;
+      /**
+       * @description Referencia interna del inmueble
+       * @example P-VAL-001
+       */
+      reference: string;
+      /**
+       * @description Referencia catastral
+       * @example 1234567AB1234C0001DE
+       */
+      cadastralReference?: string;
+      /**
+       * @description Tipo de inmueble
+       * @enum {string}
+       */
+      type:
+        | 'VIVIENDA'
+        | 'LOCAL_COMERCIAL'
+        | 'GARAJE'
+        | 'TRASTERO'
+        | 'TERRENO'
+        | 'OTRO';
+      /**
+       * @description Estado actual del inmueble
+       * @enum {string}
+       */
+      status: 'DISPONIBLE' | 'ALQUILADO' | 'BLOQUEADO' | 'INACTIVO';
+      /** @example 85 */
+      surfaceM2?: number;
+      /** @example 3 */
+      rooms?: number;
+      /** @example 2 */
+      bathrooms?: number;
+      /** @example 3º */
+      floor?: string;
+      /** @example 39.4699 */
+      latitude?: number;
+      /** @example -0.3763 */
+      longitude?: number;
+    };
+    UpdatePropertyDto: {
+      /**
+       * Format: uuid
+       * @description ID de la dirección (Address type PROPERTY)
+       */
+      addressId?: string;
+      /** @example P-VAL-001 */
+      reference?: string;
+      /** @enum {string} */
+      type?:
+        | 'VIVIENDA'
+        | 'LOCAL_COMERCIAL'
+        | 'GARAJE'
+        | 'TRASTERO'
+        | 'TERRENO'
+        | 'OTRO';
+      /** @enum {string} */
+      status?: 'DISPONIBLE' | 'ALQUILADO' | 'BLOQUEADO' | 'INACTIVO';
+      /** @example 1234567AB1234C0001DE */
+      cadastralReference?: string;
+      /** @example 85 */
+      surfaceM2?: number;
+      /** @example 3 */
+      rooms?: number;
+      /** @example 2 */
+      bathrooms?: number;
+      /** @example 3º */
+      floor?: string;
+      /** @example 39.4699 */
+      latitude?: number;
+      /** @example -0.3763 */
+      longitude?: number;
+    };
+    CreateContractDto: {
+      /**
+       * Format: uuid
+       * @description Cliente asociado al contrato
+       */
+      clientProfileId: string;
+      /**
+       * Format: uuid
+       * @description Inmueble asociado al contrato
+       */
+      propertyId: string;
+      /**
+       * @description Número o referencia interna del contrato
+       * @example CTR-2024-001
+       */
+      numeroContrato: string;
+      /**
+       * @description Tipo de contrato
+       * @enum {string}
+       */
+      tipoContrato: 'ALQUILER' | 'CESION' | 'TEMPORAL' | 'OTRO';
+      /**
+       * @description Estado inicial del contrato
+       * @example ACTIVO
+       * @enum {string}
+       */
+      estadoContrato:
+        | 'BORRADOR'
+        | 'ACTIVO'
+        | 'FINALIZADO'
+        | 'RESCINDIDO'
+        | 'INACTIVO';
+      /**
+       * @description Fecha de firma del contrato
+       * @example 2024-01-15
+       */
+      fechaFirma: string;
+      /**
+       * @description Fecha de inicio del contrato
+       * @example 2024-02-01
+       */
+      fechaInicio: string;
+      /**
+       * @description Duración inicial del contrato en meses
+       * @example 12
+       */
+      duracionMeses: number;
+      /**
+       * @description Fecha de finalización prevista del contrato
+       * @example 2025-01-31
+       */
+      fechaFin: string;
+      /**
+       * @description Importe base del contrato sin impuestos
+       * @example 750
+       */
+      importeBase: number;
+      /**
+       * @description Periodicidad de facturación
+       * @enum {string}
+       */
+      periodicidad: 'MENSUAL' | 'BIMESTRAL' | 'TRIMESTRAL' | 'ANUAL';
+      /**
+       * Format: uuid
+       * @description ID del tipo de IVA aplicable (catálogo VAT)
+       */
+      vatRateId: string;
+      /**
+       * Format: uuid
+       * @description ID del tipo de retención aplicable (catálogo Withholding)
+       */
+      withholdingRateId: string;
+      /**
+       * @description Importe entregado como fianza
+       * @example 1500
+       */
+      fianzaImporte?: number;
+      /**
+       * @description Meses de carencia sin facturación
+       * @example 0
+       */
+      mesesCarencia?: number;
+      /**
+       * @description Avisar antes de la finalización del contrato
+       * @example true
+       */
+      avisarFinContrato?: boolean;
+      /**
+       * @description Indica si el contrato tiene revisión IPC
+       * @example true
+       */
+      revisionIpcActiva?: boolean;
+      /**
+       * @description Fecha prevista de revisión IPC
+       * @example 2025-02-01
+       */
+      fechaRevisionIpc?: string;
+      /**
+       * @description Avisar cuando llegue la revisión IPC
+       * @example true
+       */
+      avisarRevisionIpc?: boolean;
+      /** @description Descripción de gastos adicionales */
+      gastosDescripcion?: string;
+      /** @description Observaciones generales del contrato */
+      observaciones?: string;
+    };
+    Contract: {
+      /**
+       * Format: uuid
+       * @description Empresa propietaria del contrato
+       */
+      companyId: string;
+      /**
+       * Format: uuid
+       * @description Cliente asociado al contrato
+       */
+      clientProfileId: string;
+      /**
+       * Format: uuid
+       * @description Inmueble asociado al contrato
+       */
+      propertyId: string;
+      /**
+       * @description Número o referencia interna del contrato
+       * @example CTR-2024-001
+       */
+      numeroContrato: string;
+      /**
+       * @description Tipo de contrato (alquiler, cesión, etc.)
+       * @enum {string}
+       */
+      tipoContrato: 'ALQUILER' | 'CESION' | 'TEMPORAL' | 'OTRO';
+      /**
+       * @description Estado actual del contrato
+       * @enum {string}
+       */
+      estadoContrato:
+        | 'BORRADOR'
+        | 'ACTIVO'
+        | 'FINALIZADO'
+        | 'RESCINDIDO'
+        | 'INACTIVO';
+      /**
+       * Format: date-time
+       * @description Fecha de firma del contrato
+       * @example 2024-01-15
+       */
+      fechaFirma: string;
+      /**
+       * Format: date-time
+       * @description Fecha de inicio del contrato
+       * @example 2024-02-01
+       */
+      fechaInicio: string;
+      /**
+       * @description Duración inicial del contrato en meses
+       * @example 12
+       */
+      duracionMeses: number;
+      /**
+       * Format: date-time
+       * @description Fecha de finalización prevista del contrato
+       * @example 2025-01-31
+       */
+      fechaFin: string;
+      /**
+       * Format: date-time
+       * @description Fecha de rescisión anticipada, si aplica
+       * @example 2024-10-15
+       */
+      fechaRescision?: string;
+      /**
+       * @description Indica si el contrato se renueva automáticamente
+       * @example true
+       */
+      renovacionAutomatica: boolean;
+      /**
+       * @description Meses de preaviso requeridos
+       * @example 2
+       */
+      preavisoMeses?: number;
+      /**
+       * @description Importe base sin impuestos
+       * @example 750
+       */
+      importeBase: number;
+      /**
+       * @description Moneda del contrato (ISO-4217)
+       * @example EUR
+       */
+      moneda: string;
+      /**
+       * @description Periodicidad de facturación
+       * @enum {string}
+       */
+      periodicidad: 'MENSUAL' | 'BIMESTRAL' | 'TRIMESTRAL' | 'ANUAL';
+      /**
+       * Format: uuid
+       * @description Tipo de IVA aplicado al contrato
+       */
+      vatRateId: string;
+      /**
+       * Format: uuid
+       * @description Tipo de retención aplicado al contrato
+       */
+      withholdingRateId: string;
+      /**
+       * @description Importe entregado como fianza
+       * @example 1500
+       */
+      fianzaImporte?: number;
+      /**
+       * @description Meses de carencia sin facturación
+       * @example 2
+       */
+      mesesCarencia: number;
+      /**
+       * @description Avisar antes de la finalización del contrato
+       * @example true
+       */
+      avisarFinContrato: boolean;
+      /**
+       * @description Indica si el contrato tiene revisión IPC
+       * @example true
+       */
+      revisionIpcActiva: boolean;
+      /**
+       * Format: date-time
+       * @description Fecha prevista de revisión IPC
+       * @example 2025-02-01
+       */
+      fechaRevisionIpc?: string;
+      /**
+       * @description Avisar cuando llegue la revisión IPC
+       * @example true
+       */
+      avisarRevisionIpc: boolean;
+      /** @description Descripción de gastos adicionales */
+      gastosDescripcion?: string;
+      /** @description Observaciones generales del contrato */
+      observaciones?: string;
+    };
+    UpdateContractDto: {
+      /**
+       * Format: uuid
+       * @description Cliente asociado al contrato
+       */
+      clientProfileId?: string;
+      /**
+       * Format: uuid
+       * @description Inmueble asociado al contrato
+       */
+      propertyId?: string;
+      /**
+       * @description Número o referencia interna del contrato
+       * @example CTR-2024-001
+       */
+      numeroContrato?: string;
+      /**
+       * @description Tipo de contrato
+       * @enum {string}
+       */
+      tipoContrato?: 'ALQUILER' | 'CESION' | 'TEMPORAL' | 'OTRO';
+      /**
+       * @description Estado inicial del contrato
+       * @example ACTIVO
+       * @enum {string}
+       */
+      estadoContrato?:
+        | 'BORRADOR'
+        | 'ACTIVO'
+        | 'FINALIZADO'
+        | 'RESCINDIDO'
+        | 'INACTIVO';
+      /**
+       * @description Fecha de firma del contrato
+       * @example 2024-01-15
+       */
+      fechaFirma?: string;
+      /**
+       * @description Fecha de inicio del contrato
+       * @example 2024-02-01
+       */
+      fechaInicio?: string;
+      /**
+       * @description Duración inicial del contrato en meses
+       * @example 12
+       */
+      duracionMeses?: number;
+      /**
+       * @description Fecha de finalización prevista del contrato
+       * @example 2025-01-31
+       */
+      fechaFin?: string;
+      /**
+       * @description Importe base del contrato sin impuestos
+       * @example 750
+       */
+      importeBase?: number;
+      /**
+       * @description Periodicidad de facturación
+       * @enum {string}
+       */
+      periodicidad?: 'MENSUAL' | 'BIMESTRAL' | 'TRIMESTRAL' | 'ANUAL';
+      /**
+       * Format: uuid
+       * @description ID del tipo de IVA aplicable (catálogo VAT)
+       */
+      vatRateId?: string;
+      /**
+       * Format: uuid
+       * @description ID del tipo de retención aplicable (catálogo Withholding)
+       */
+      withholdingRateId?: string;
+      /**
+       * @description Importe entregado como fianza
+       * @example 1500
+       */
+      fianzaImporte?: number;
+      /**
+       * @description Meses de carencia sin facturación
+       * @example 0
+       */
+      mesesCarencia?: number;
+      /**
+       * @description Avisar antes de la finalización del contrato
+       * @example true
+       */
+      avisarFinContrato?: boolean;
+      /**
+       * @description Indica si el contrato tiene revisión IPC
+       * @example true
+       */
+      revisionIpcActiva?: boolean;
+      /**
+       * @description Fecha prevista de revisión IPC
+       * @example 2025-02-01
+       */
+      fechaRevisionIpc?: string;
+      /**
+       * @description Avisar cuando llegue la revisión IPC
+       * @example true
+       */
+      avisarRevisionIpc?: boolean;
+      /** @description Descripción de gastos adicionales */
+      gastosDescripcion?: string;
+      /** @description Observaciones generales del contrato */
+      observaciones?: string;
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    HealthController_check: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Simple liveness check */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  HealthController_check: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    HealthController_db: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Simple liveness check */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Database connectivity check */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+        content?: never;
+      };
     };
-    HealthController_ready: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Readiness check (aggregates required deps) */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  HealthController_db: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    UserController_findAll: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Database connectivity check */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserDto"][];
-                };
-            };
-        };
+        content?: never;
+      };
     };
-    UserController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateUserDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserDto"];
-                };
-            };
-        };
+  };
+  HealthController_ready: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    UserController_getMe: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Readiness check (aggregates required deps) */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MeDto"];
-                };
-            };
-        };
+        content?: never;
+      };
     };
-    UserController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserDto"];
-                };
-            };
-        };
+  };
+  UserController_findAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    UserController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
+        content: {
+          'application/json': components['schemas']['UserDto'][];
         };
+      };
     };
-    UserController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateUserDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserDto"];
-                };
-            };
-        };
+  };
+  UserController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    UserCompanyRoleController_findAll: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Lista de vínculos */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserCompanyRole"][];
-                };
-            };
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateUserDto'];
+      };
     };
-    UserCompanyRoleController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateUserCompanyRoleDto"];
-            };
+        content: {
+          'application/json': components['schemas']['UserDto'];
         };
-        responses: {
-            /** @description Vínculo creado */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserCompanyRole"];
-                };
-            };
-        };
+      };
     };
-    UserCompanyRoleController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID del vínculo */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Vínculo encontrado */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserCompanyRole"];
-                };
-            };
-            /** @description No encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  UserController_getMe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    UserCompanyRoleController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID del vínculo */
-                id: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Vínculo eliminado */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserCompanyRole"];
-                };
-            };
-            /** @description No encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+        content: {
+          'application/json': components['schemas']['MeDto'];
         };
+      };
     };
-    UserCompanyRoleController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID del vínculo */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateUserCompanyRoleDto"];
-            };
-        };
-        responses: {
-            /** @description Vínculo actualizado */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserCompanyRole"];
-                };
-            };
-            /** @description No encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  UserController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
     };
-    CompanyController_createLegalCompany: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateCompanyLegalDto"];
-            };
+        content: {
+          'application/json': components['schemas']['UserDto'];
         };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+      };
     };
-    CompanyController_getMyCompanies: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  UserController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
     };
-    CompanyController_findAll: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+        content: {
+          'application/json': unknown;
         };
+      };
     };
-    ClientProfileController_findAll: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                companyId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  UserController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
     };
-    ClientProfileController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateClientProfileDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateUserDto'];
+      };
     };
-    ClientProfileController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+        content: {
+          'application/json': components['schemas']['UserDto'];
         };
+      };
     };
-    ClientProfileController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  UserCompanyRoleController_findAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    ClientProfileController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Lista de vínculos */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateClientProfileDto"];
-            };
+        content: {
+          'application/json': components['schemas']['UserCompanyRole'][];
         };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+      };
     };
-    AuthController_login: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginDto"];
-            };
-        };
-        responses: {
-            /** @description Login correcto */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TokensDto"];
-                };
-            };
-        };
+  };
+  UserCompanyRoleController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    AuthController_refresh: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Tokens renovados */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TokensDto"];
-                };
-            };
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateUserCompanyRoleDto'];
+      };
     };
-    AuthController_logout: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Vínculo creado */
+      201: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Logout correcto */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+        content: {
+          'application/json': components['schemas']['UserCompanyRole'];
         };
+      };
     };
-    CompanyContextController_selectCompany: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SelectCompanyDto"];
-            };
-        };
-        responses: {
-            /** @description Nuevo accessToken con empresa seleccionada */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  UserCompanyRoleController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID del vínculo */
+        id: string;
+      };
+      cookie?: never;
     };
-    AddressController_findAllForCompany: {
-        parameters: {
-            query?: {
-                /** @description Incluye direcciones inactivas */
-                showInactive?: boolean;
-            };
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Vínculo encontrado */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Listado de direcciones */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Address"][];
-                };
-            };
+        content: {
+          'application/json': components['schemas']['UserCompanyRole'];
         };
+      };
+      /** @description No encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
     };
-    AddressController_createForCompany: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateAddressDto"];
-            };
-        };
-        responses: {
-            /** @description Dirección creada correctamente */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Address"];
-                };
-            };
-        };
+  };
+  UserCompanyRoleController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID del vínculo */
+        id: string;
+      };
+      cookie?: never;
     };
-    AddressController_findOneForCompany: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-                /** @description UUID de la dirección */
-                addressId: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Vínculo eliminado */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Dirección encontrada */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Address"];
-                };
-            };
+        content: {
+          'application/json': components['schemas']['UserCompanyRole'];
         };
+      };
+      /** @description No encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
     };
-    AddressController_removeForCompany: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-                /** @description UUID de la dirección */
-                addressId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Dirección desactivada correctamente */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  UserCompanyRoleController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID del vínculo */
+        id: string;
+      };
+      cookie?: never;
     };
-    AddressController_updateForCompany: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-                /** @description UUID de la dirección */
-                addressId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateAddressDto"];
-            };
-        };
-        responses: {
-            /** @description Dirección actualizada */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Address"];
-                };
-            };
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateUserCompanyRoleDto'];
+      };
     };
-    ContactController_findAll: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Vínculo actualizado */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Lista de contactos activos */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contact"][];
-                };
-            };
+        content: {
+          'application/json': components['schemas']['UserCompanyRole'];
         };
+      };
+      /** @description No encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
     };
-    ContactController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateContactDto"];
-            };
-        };
-        responses: {
-            /** @description Contacto creado correctamente */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contact"];
-                };
-            };
-        };
+  };
+  CompanyController_createLegalCompany: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    ContactController_findInactive: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Lista de contactos inactivos */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contact"][];
-                };
-            };
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateCompanyLegalDto'];
+      };
     };
-    ContactController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Contacto encontrado */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contact"];
-                };
-            };
-            /** @description No encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+        content?: never;
+      };
     };
-    ContactController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Contacto eliminado */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contact"];
-                };
-            };
-            /** @description No encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  CompanyController_getMyCompanies: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    ContactController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateContactDto"];
-            };
-        };
-        responses: {
-            /** @description Contacto actualizado */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contact"];
-                };
-            };
-            /** @description No encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+        content?: never;
+      };
     };
-    ClientController_findAll: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  CompanyController_findAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    ClientController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateClientDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+        content?: never;
+      };
     };
-    ClientController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  ClientProfileController_findAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        companyId: string;
+      };
+      cookie?: never;
     };
-    ClientController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+        content?: never;
+      };
     };
-    ClientController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateClientDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  ClientProfileController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+      };
+      cookie?: never;
     };
-    PropertyController_findAll: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                companyId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateClientProfileDto'];
+      };
     };
-    PropertyController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                companyId: string;
-            };
-            cookie?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreatePropertyDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Property"];
-                };
-            };
-        };
+        content?: never;
+      };
     };
-    PropertyController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                companyId: string;
-                propertyId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  ClientProfileController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
     };
-    PropertyController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                companyId: string;
-                propertyId: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+        content?: never;
+      };
     };
-    PropertyController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                companyId: string;
-                propertyId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdatePropertyDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  ClientProfileController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
     };
-    ContractController_findAllForCompany: {
-        parameters: {
-            query?: {
-                /** @description Incluye contratos inactivos */
-                showInactive?: boolean;
-            };
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Listado de contratos */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contract"][];
-                };
-            };
-        };
+        content?: never;
+      };
     };
-    ContractController_createForCompany: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateContractDto"];
-            };
-        };
-        responses: {
-            /** @description Contrato creado correctamente */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contract"];
-                };
-            };
-        };
+  };
+  ClientProfileController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
     };
-    ContractController_findOneForCompany: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-                /** @description UUID del contrato */
-                contractId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Contrato encontrado */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contract"];
-                };
-            };
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateClientProfileDto'];
+      };
     };
-    ContractController_removeForCompany: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-                /** @description UUID del contrato */
-                contractId: string;
-            };
-            cookie?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Contrato desactivado correctamente */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+        content?: never;
+      };
     };
-    ContractController_updateForCompany: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description UUID de la empresa */
-                companyId: string;
-                /** @description UUID del contrato */
-                contractId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateContractDto"];
-            };
-        };
-        responses: {
-            /** @description Contrato actualizado */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Contract"];
-                };
-            };
-        };
+  };
+  AuthController_login: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LoginDto'];
+      };
+    };
+    responses: {
+      /** @description Login correcto */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TokensDto'];
+        };
+      };
+    };
+  };
+  AuthController_refresh: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Tokens renovados */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TokensDto'];
+        };
+      };
+    };
+  };
+  AuthController_logout: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Logout correcto */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  CompanyContextController_selectCompany: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SelectCompanyDto'];
+      };
+    };
+    responses: {
+      /** @description Nuevo accessToken con empresa seleccionada */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AddressController_findAllForCompany: {
+    parameters: {
+      query?: {
+        /** @description Incluye direcciones inactivas */
+        showInactive?: boolean;
+      };
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Listado de direcciones */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Address'][];
+        };
+      };
+    };
+  };
+  AddressController_createForCompany: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateAddressDto'];
+      };
+    };
+    responses: {
+      /** @description Dirección creada correctamente */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Address'];
+        };
+      };
+    };
+  };
+  AddressController_findOneForCompany: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+        /** @description UUID de la dirección */
+        addressId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Dirección encontrada */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Address'];
+        };
+      };
+    };
+  };
+  AddressController_removeForCompany: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+        /** @description UUID de la dirección */
+        addressId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Dirección desactivada correctamente */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AddressController_updateForCompany: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+        /** @description UUID de la dirección */
+        addressId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateAddressDto'];
+      };
+    };
+    responses: {
+      /** @description Dirección actualizada */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Address'];
+        };
+      };
+    };
+  };
+  ContactController_findAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Lista de contactos activos */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Contact'][];
+        };
+      };
+    };
+  };
+  ContactController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateContactDto'];
+      };
+    };
+    responses: {
+      /** @description Contacto creado correctamente */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Contact'];
+        };
+      };
+    };
+  };
+  ContactController_findInactive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Lista de contactos inactivos */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Contact'][];
+        };
+      };
+    };
+  };
+  ContactController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Contacto encontrado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Contact'];
+        };
+      };
+      /** @description No encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ContactController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Contacto eliminado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Contact'];
+        };
+      };
+      /** @description No encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ContactController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateContactDto'];
+      };
+    };
+    responses: {
+      /** @description Contacto actualizado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Contact'];
+        };
+      };
+      /** @description No encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ClientController_findAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ClientController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateClientDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ClientController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ClientController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ClientController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateClientDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PropertyController_findAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        companyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PropertyController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        companyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreatePropertyDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Property'];
+        };
+      };
+    };
+  };
+  PropertyController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        companyId: string;
+        propertyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PropertyController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        companyId: string;
+        propertyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PropertyController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        companyId: string;
+        propertyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdatePropertyDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ContractController_findAllForCompany: {
+    parameters: {
+      query?: {
+        /** @description Incluye contratos inactivos */
+        showInactive?: boolean;
+      };
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Listado de contratos */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Contract'][];
+        };
+      };
+    };
+  };
+  ContractController_createForCompany: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateContractDto'];
+      };
+    };
+    responses: {
+      /** @description Contrato creado correctamente */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Contract'];
+        };
+      };
+    };
+  };
+  ContractController_findOneForCompany: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+        /** @description UUID del contrato */
+        contractId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Contrato encontrado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Contract'];
+        };
+      };
+    };
+  };
+  ContractController_removeForCompany: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+        /** @description UUID del contrato */
+        contractId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Contrato desactivado correctamente */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ContractController_updateForCompany: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID de la empresa */
+        companyId: string;
+        /** @description UUID del contrato */
+        contractId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateContractDto'];
+      };
+    };
+    responses: {
+      /** @description Contrato actualizado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Contract'];
+        };
+      };
+    };
+  };
 }

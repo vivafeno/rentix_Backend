@@ -1,10 +1,10 @@
-import { 
-  Injectable, 
-  NotFoundException, 
-  ForbiddenException, 
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
   BadRequestException,
   InternalServerErrorException,
-  ConflictException
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
@@ -19,8 +19,10 @@ import { Tax } from 'src/tax/entities/tax.entity';
 
 /**
  * @class ContractService
- * @description Gestión de arrendamientos. Implementa creación atómica y blindaje total.
- * @version 1.0.2
+ * @description Gestión del ciclo de vida de arrendamientos.
+ * Implementa validación cruzada entre Inmuebles, Inquilinos e Impuestos.
+ * @version 2026.1.18
+ * @author Rentix
  */
 @Injectable()
 export class ContractService {
@@ -37,62 +39,81 @@ export class ContractService {
 
   /**
    * @method create
-   * @description Resuelve errores 2322 y 2769 mediante asignación condicional limpia.
+   * @description Crea un contrato validando que todas las entidades relacionadas pertenezcan a la misma empresa.
    */
-  async create(companyId: string, dto: CreateContractDto, role: CompanyRole): Promise<Contract> {
+  async create(
+    companyId: string,
+    dto: CreateContractDto,
+    role: CompanyRole,
+  ): Promise<Contract> {
     this.checkWriteAccess(role);
 
-    const inmueble = await this.propertyRepo.findOneBy({ id: dto.propertyId, companyId });
+    // 1. Validación de Inmueble
+    const inmueble = await this.propertyRepo.findOneBy({
+      id: dto.propertyId,
+      companyId,
+    });
     if (!inmueble) throw new NotFoundException('Inmueble no localizado.');
 
-    const inquilinos = await this.tenantRepo.findBy({ 
-      id: In(dto.inquilinosIds), 
-      companyId 
+    // 2. Validación de Inquilinos
+    const inquilinos = await this.tenantRepo.findBy({
+      id: In(dto.inquilinosIds),
+      companyId,
     });
     if (inquilinos.length !== dto.inquilinosIds.length) {
       throw new BadRequestException('Inquilinos no válidos o de otra empresa.');
     }
 
-    const taxIva = await this.taxRepo.findOneBy({ id: dto.taxIvaId, companyId });
+    // 3. Validación de IVA
+    const taxIva = await this.taxRepo.findOneBy({
+      id: dto.taxIvaId,
+      companyId,
+    });
     if (!taxIva) throw new NotFoundException('IVA no localizado.');
 
-    // Corrección error 2322: No inicializar a null si la entidad espera Tax | undefined
+    // 4. Validación opcional de IRPF (Retención)
     let taxIrpf: Tax | undefined;
     if (dto.taxIrpfId) {
-      const foundIrpf = await this.taxRepo.findOneBy({ id: dto.taxIrpfId, companyId });
+      const foundIrpf = await this.taxRepo.findOneBy({
+        id: dto.taxIrpfId,
+        companyId,
+      });
       if (!foundIrpf) throw new NotFoundException('IRPF no localizado.');
       taxIrpf = foundIrpf;
     }
 
-    // Corrección error 2769: DeepPartial requiere objetos definidos
     const contract = this.contractRepo.create({
       ...dto,
       companyId,
       inmueble,
       inquilinos,
       iva: taxIva,
-      retencion: taxIrpf, // Ahora es Tax o undefined, no null
+      retencion: taxIrpf,
     });
 
     try {
       return await this.contractRepo.save(contract);
-    } catch (error) {
-      this.handleDBExceptions(error);
+    } catch (error: unknown) {
+      return this.handleDBExceptions(error);
     }
   }
 
   /**
    * @method findAll
-   * @description Asegura el retorno de Array para evitar error 2740.
+   * @description Lista contratos activos con sus relaciones hidratadas.
    */
   async findAll(companyId: string): Promise<Contract[]> {
     return await this.contractRepo.find({
       where: { companyId, isActive: true },
       relations: ['inmueble', 'inquilinos', 'iva', 'retencion'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
+  /**
+   * @method findOne
+   * @description Recupera un contrato específico validando aislamiento por empresa.
+   */
   async findOne(id: string, companyId: string): Promise<Contract> {
     const contract = await this.contractRepo.findOne({
       where: { id, companyId },
@@ -103,25 +124,44 @@ export class ContractService {
     return contract;
   }
 
-  async update(id: string, companyId: string, dto: UpdateContractDto, role: CompanyRole): Promise<Contract> {
+  /**
+   * @method update
+   * @description Actualización parcial de contratos.
+   */
+  async update(
+    id: string,
+    companyId: string,
+    dto: UpdateContractDto,
+    role: CompanyRole,
+  ): Promise<Contract> {
     this.checkWriteAccess(role);
     const contract = await this.findOne(id, companyId);
 
-    // Mapeo manual de relaciones si vienen en el DTO para evitar errores de DeepPartial
     if (dto.taxIvaId) {
-      contract.iva = await this.taxRepo.findOneByOrFail({ id: dto.taxIvaId, companyId });
+      contract.iva = await this.taxRepo.findOneByOrFail({
+        id: dto.taxIvaId,
+        companyId,
+      });
     }
 
     const updated = this.contractRepo.merge(contract, dto);
 
     try {
       return await this.contractRepo.save(updated);
-    } catch (error) {
-      this.handleDBExceptions(error);
+    } catch (error: unknown) {
+      return this.handleDBExceptions(error);
     }
   }
 
-  async remove(id: string, companyId: string, role: CompanyRole): Promise<void> {
+  /**
+   * @method remove
+   * @description Borrado lógico de contrato.
+   */
+  async remove(
+    id: string,
+    companyId: string,
+    role: CompanyRole,
+  ): Promise<void> {
     this.checkWriteAccess(role);
     const contract = await this.findOne(id, companyId);
 
@@ -131,14 +171,36 @@ export class ContractService {
     await this.contractRepo.save(contract);
   }
 
+  /**
+   * @private
+   * @method checkWriteAccess
+   * @description Centraliza la validación de privilegios para mutaciones.
+   */
   private checkWriteAccess(role: CompanyRole): void {
     if (role !== CompanyRole.OWNER) {
-      throw new ForbiddenException('Solo el OWNER puede gestionar contratos.');
+      throw new ForbiddenException(
+        'Privilegios insuficientes: Solo el OWNER puede gestionar contratos.',
+      );
     }
   }
 
-  private handleDBExceptions(error: any): never {
-    if (error.code === '23505') throw new ConflictException('Contrato duplicado.');
-    throw new InternalServerErrorException('Error en la operación del contrato.');
+  /**
+   * @private
+   * @method handleDBExceptions
+   * @description Procesa errores de Postgres (vía TypeORM) con tipado seguro.
+   * Resuelve el error de linter en la propiedad .code.
+   */
+  private handleDBExceptions(error: unknown): never {
+    const dbError = error as { code?: string };
+
+    if (dbError.code === '23505') {
+      throw new ConflictException(
+        'Conflicto: Ya existe un contrato con estos parámetros únicos.',
+      );
+    }
+
+    throw new InternalServerErrorException(
+      'Error de infraestructura al procesar el contrato.',
+    );
   }
 }
