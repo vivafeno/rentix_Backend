@@ -41,14 +41,14 @@ export class JwtRefreshStrategy extends PassportStrategy(
    * @returns {ActiveUserData} Datos del usuario activo
    */
   validate(_req: unknown, payload: ActiveUserData | undefined): ActiveUserData {
-    if (!payload || !payload.sub) {
+    if (!payload || !payload.id) {
       throw new UnauthorizedException('Refresh Token malformado o inválido.');
     }
 
     // 🚩 Solución linter: Retornamos el objeto tipado directamente.
     // Se elimina el 'async' ya que no hay operaciones de E/S (I/O).
     return {
-      sub: payload.sub,
+      id: payload.id,
       email: payload.email,
       appRole: payload.appRole,
       companyId: payload.companyId || '',

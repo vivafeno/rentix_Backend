@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { FiscalIdentityController } from './fiscal.controller';
-import { FiscalIdentityService } from './fiscal.service';
+import { FiscalService } from './fiscal.service';
 import { FiscalEntity } from './entities/fiscalEntity';
 
 /**
@@ -20,7 +20,7 @@ import { FiscalEntity } from './entities/fiscalEntity';
 @Module({
   imports: [TypeOrmModule.forFeature([FiscalEntity])],
   controllers: [FiscalIdentityController],
-  providers: [FiscalIdentityService],
-  exports: [TypeOrmModule, FiscalIdentityService],
+  providers: [FiscalService],
+  exports: [TypeOrmModule, FiscalService],
 })
 export class FacturaeModule {}

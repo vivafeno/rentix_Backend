@@ -32,7 +32,7 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
  * Gestiona el ciclo de vida de las empresas y sus entidades legales bajo
  * estándares Veri*factu para garantizar la trazabilidad fiscal.
  * @author Rentix 2026
- * @version 2.3.0
+ * @version 2.3.1
  */
 @ApiTags('Companies')
 @ApiBearerAuth()
@@ -66,7 +66,7 @@ export class CompanyController {
     type: Company,
   })
   async createOwner(@Body() dto: CreateCompanyLegalDto): Promise<Company> {
-    return this.companyService.createOwner(dto);
+    return await this.companyService.createOwner(dto);
   }
 
   /**
@@ -78,15 +78,15 @@ export class CompanyController {
   @Auth()
   @ApiOperation({ summary: 'Alta atómica de Arrendatario (Tenant)' })
   async createTenant(@Body() dto: CreateCompanyLegalDto): Promise<Company> {
-    return this.companyService.createTenant(dto);
+    return await this.companyService.createTenant(dto);
   }
 
   /**
    * @method getMyCompanies
    * @description Punto de entrada para el Dashboard.
-   * Recupera el inventario de empresas accesibles. El SUPERADMIN recibe bypass total.
+   * Recupera el inventario de empresas accesibles con validación de tipos estricta.
    * @param {string} userId - ID del usuario extraído del JWT.
-   * @param {string} appRole - Rol global para determinar visibilidad.
+   * @param {AppRole} appRole - Rol global para determinar visibilidad.
    */
   @Get('me')
   @Auth()
@@ -102,9 +102,10 @@ export class CompanyController {
   })
   async getMyCompanies(
     @GetUser('id') userId: string,
-    @GetUser('appRole') appRole: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<Company[]> {
-    return this.companyService.findAllByUser(userId, appRole);
+    // 🛡️ Casting explícito a AppRole para satisfacer TS2345
+    return await this.companyService.findAllByUser(userId, appRole);
   }
 
   /**
@@ -119,9 +120,9 @@ export class CompanyController {
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('id') userId: string,
-    @GetUser('appRole') appRole: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<Company> {
-    return this.companyService.findOne(id, userId, appRole);
+    return await this.companyService.findOne(id, userId, appRole);
   }
 
   /**
@@ -135,15 +136,15 @@ export class CompanyController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: UpdateCompanyDto,
     @GetUser('id') userId: string,
-    @GetUser('appRole') appRole: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<Company> {
-    return this.companyService.update(id, updateDto, userId, appRole);
+    return await this.companyService.update(id, updateDto, userId, appRole);
   }
 
   /**
    * @method remove
    * @description Baja lógica de la empresa (Soft Delete).
-   * Restringido a SUPERADMIN por impacto en trazabilidad fiscal de facturas generadas.
+   * Restringido a SUPERADMIN por impacto en trazabilidad fiscal.
    */
   @Delete(':id')
   @Auth(AppRole.SUPERADMIN)
@@ -155,8 +156,8 @@ export class CompanyController {
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('id') userId: string,
-    @GetUser('appRole') appRole: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<void> {
-    return this.companyService.remove(id, userId, appRole);
+    return await this.companyService.remove(id, userId, appRole);
   }
 }

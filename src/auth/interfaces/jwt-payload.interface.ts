@@ -6,7 +6,7 @@ import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
  * @description Estructura tipada del usuario en la request tras pasar el JWT Guard.
  */
 export interface ActiveUserData {
-  sub: string;
+  id: string;
   email: string;
   appRole: AppRole;
   companyId: string;

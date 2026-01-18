@@ -1,0 +1,7 @@
+export enum ContractStatus {
+  BORRADOR = 'BORRADOR',
+  ACTIVO = 'ACTIVO',
+  FINALIZADO = 'FINALIZADO',
+  RESCINDIDO = 'RESCINDIDO',
+  INACTIVO = 'INACTIVO',
+}

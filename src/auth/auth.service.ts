@@ -58,7 +58,7 @@ export class AuthService {
   ): Promise<TokensDto> {
     // 🛡️ Blindaje de Payload: Evitamos 'any' y aseguramos consistencia con la interfaz
     const payload: ActiveUserData = {
-      sub: user.id,
+      id: user.id,
       email: user.email,
       appRole: user.appRole,
       companyId: companyContext?.id || '',
@@ -125,7 +125,7 @@ export class AuthService {
         },
       );
 
-      const user = await this.usersService.findById(payload.sub);
+      const user = await this.usersService.findById(payload.id);
 
       if (!user?.refreshTokenHash) {
         throw new UnauthorizedException('Sesión expirada.');

@@ -10,7 +10,7 @@ import {
 import * as path from 'path';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
-// --- INFRAESTRUCTURA ---
+// --- INFRAESTRUCTURA Y SISTEMA ---
 import { HealthModule } from './health/health.module';
 import { SeederModule } from './config/seeder.module';
 
@@ -18,9 +18,9 @@ import { SeederModule } from './config/seeder.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { UserCompanyRoleModule } from './user-company-role/companyRole.module';
-import { CompanyContextModule } from './company-context/company-context.module';
+// 🛡️ Eliminado CompanyContextModule por error TS2307 (Módulo inexistente o refactorizado)
 
-// --- DOMINIO / NEGOCIO ---
+// --- DOMINIO / NEGOCIO (Rentix 2026) ---
 import { CompanyModule } from './company/company.module';
 import { AddressModule } from './address/address.module';
 import { ContactModule } from './contact/contact.module';
@@ -32,12 +32,19 @@ import { TaxModule } from './tax/tax.module';
 import { BillingConceptModule } from './billing-concept/billing-concept.module';
 import { FacturaeModule } from './fiscal/fiscal.module';
 
+/**
+ * @class AppModule
+ * @description Módulo raíz de Rentix 2026. Orquesta la infraestructura,
+ * seguridad multi-tenant y los dominios de negocio patrimonial.
+ * @author Rentix 2026
+ * @version 2026.1.18
+ */
 @Module({
   imports: [
-    // 1. VARIABLES DE ENTORNO
+    // 1. VARIABLES DE ENTORNO (Global)
     ConfigModule.forRoot({ isGlobal: true }),
 
-    // 2. PERSISTENCIA (Optimización Rentix 2026)
+    // 2. PERSISTENCIA: PostgreSQL + TypeORM con SnakeNaming para Veri*factu
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
@@ -51,9 +58,9 @@ import { FacturaeModule } from './fiscal/fiscal.module';
           database: config.get<string>('DB_NAME'),
           schema: 'public',
           autoLoadEntities: true,
-          // 🚨 CONFIGURACIÓN DE DESARROLLO SEGURO
-          synchronize: !isProd, // Crea columnas nuevas sin borrar datos
-          dropSchema: false, // 🛡️ PROTECCIÓN: Evita el borrado de datos al reiniciar
+          // 🛡️ Desarrollo Seguro: Sincronización solo fuera de producción
+          synchronize: !isProd,
+          dropSchema: false,
           logging: !isProd ? ['query', 'error'] : false,
           namingStrategy: new SnakeNamingStrategy(),
           ssl: isProd ? { rejectUnauthorized: false } : false,
@@ -61,7 +68,7 @@ import { FacturaeModule } from './fiscal/fiscal.module';
       },
     }),
 
-    // 3. INTERNACIONALIZACIÓN
+    // 3. INTERNACIONALIZACIÓN (i18n)
     NestI18nModule.forRoot({
       fallbackLanguage: 'es',
       loaderOptions: {
@@ -79,13 +86,16 @@ import { FacturaeModule } from './fiscal/fiscal.module';
       ),
     }),
 
-    // 4. MÓDULOS DE SISTEMA Y NEGOCIO
+    // 4. MÓDULOS DE SISTEMA
     SeederModule,
     HealthModule,
+
+    // 5. MÓDULOS DE SEGURIDAD
     AuthModule,
     UserModule,
     UserCompanyRoleModule,
-    CompanyContextModule,
+
+    // 6. MÓDULOS DE DOMINIO OPERATIVO
     CompanyModule,
     AddressModule,
     ContactModule,

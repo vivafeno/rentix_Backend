@@ -1,12 +1,17 @@
-import { Controller, Post, Get, Patch, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Param,
+  Body,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
-  ApiCreatedResponse,
-  ApiOkResponse,
   ApiParam,
-  ApiBody,
 } from '@nestjs/swagger';
 
 import { AddressDraftService } from './address-draft.service';
@@ -21,9 +26,8 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 /**
  * @class AddressDraftController
  * @description Gestión de direcciones temporales para flujos de Wizard (Hydrated Drafts).
- * Permite la persistencia de datos antes de la formalización del vínculo patrimonial.
+ * @version 2026.2.3
  * @author Rentix 2026
- * @version 2026.2.0
  */
 @ApiTags('Addresses Drafts')
 @ApiBearerAuth()
@@ -33,84 +37,76 @@ export class AddressDraftController {
 
   /**
    * @method createDraft
-   * @description Crea una dirección en estado DRAFT vinculada al creador.
-   * Campo 'direccion' unificado según estándar Veri*factu.
+   * @description Inicia la persistencia de una dirección en estado DRAFT.
    */
   @Post()
   @Auth()
-  @ApiOperation({
-    summary: 'Crear dirección en borrador',
-    description:
-      'Crea una dirección sin asociación empresarial (estado DRAFT) para Wizards.',
-  })
-  @ApiBody({ type: CreateAddressDto })
-  @ApiCreatedResponse({
-    description: 'Dirección persistida en estado borrador.',
-    type: Address,
-  })
+  @ApiOperation({ summary: 'Crear dirección en borrador' })
   async createDraft(
     @Body() dto: CreateAddressDto,
     @GetUser('id') userId: string,
   ): Promise<Address> {
-    return this.addressDraftService.createDraft(dto, userId);
+    return await this.addressDraftService.createDraft(dto, userId);
   }
 
   /**
    * @method findDraft
-   * @description Recupera el borrador específico validando la propiedad del usuario.
+   * @description Recupera un borrador activo validando jerarquía de acceso.
    */
   @Get(':addressId')
   @Auth()
   @ApiOperation({ summary: 'Obtener una dirección en borrador' })
   @ApiParam({ name: 'addressId', description: 'UUID de la dirección DRAFT.' })
-  @ApiOkResponse({ type: Address })
   async findDraft(
-    @Param('addressId') addressId: string,
+    @Param('addressId', ParseUUIDPipe) addressId: string,
     @GetUser('id') userId: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<Address> {
-    return this.addressDraftService.findDraftById(addressId, userId);
+    return await this.addressDraftService.findDraftById(
+      addressId,
+      userId,
+      appRole,
+    );
   }
 
   /**
    * @method updateDraft
-   * @description Permite la edición parcial del borrador durante los pasos del Wizard.
+   * @description Actualización incremental de datos del borrador.
    */
   @Patch(':addressId')
   @Auth()
   @ApiOperation({ summary: 'Actualizar dirección en borrador' })
   @ApiParam({ name: 'addressId', description: 'UUID de la dirección.' })
-  @ApiBody({ type: UpdateAddressDto })
-  @ApiOkResponse({ type: Address })
   async updateDraft(
-    @Param('addressId') addressId: string,
+    @Param('addressId', ParseUUIDPipe) addressId: string,
     @Body() dto: UpdateAddressDto,
     @GetUser('id') userId: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<Address> {
-    return this.addressDraftService.updateDraft(addressId, dto, userId);
+    return await this.addressDraftService.updateDraft(
+      addressId,
+      dto,
+      userId,
+      appRole,
+    );
   }
 
   /**
    * @method attachToCompany
-   * @description Finaliza el Wizard: vincula la dirección a la empresa y activa el estado.
-   * Crucial para el cumplimiento Veri*factu al fijar la dirección fiscal.
+   * @description Vincula el borrador a una empresa y lo activa (Cierre de Wizard).
    */
   @Post(':addressId/attach/company/:companyId')
   @Auth()
-  @ApiOperation({
-    summary: 'Asociar dirección en borrador a una empresa',
-    description:
-      'Transiciona el estado de DRAFT a ACTIVE y establece el vínculo patrimonial.',
-  })
+  @ApiOperation({ summary: 'Asociar dirección en borrador a una empresa' })
   @ApiParam({ name: 'addressId', description: 'UUID de la dirección.' })
   @ApiParam({ name: 'companyId', description: 'UUID de la empresa destino.' })
-  @ApiOkResponse({ type: Address })
   async attachToCompany(
-    @Param('addressId') addressId: string,
-    @Param('companyId') companyId: string,
+    @Param('addressId', ParseUUIDPipe) addressId: string,
+    @Param('companyId', ParseUUIDPipe) companyId: string,
     @GetUser('id') userId: string,
     @GetUser('appRole') appRole: AppRole,
   ): Promise<Address> {
-    return this.addressDraftService.attachToCompany(
+    return await this.addressDraftService.attachToCompany(
       addressId,
       companyId,
       userId,

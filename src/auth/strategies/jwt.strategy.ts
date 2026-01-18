@@ -43,7 +43,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
    * @returns {Promise<ActiveUserData>} Datos para inyectar en request.user
    */
   async validate(payload: ActiveUserData): Promise<ActiveUserData> {
-    const { sub: id, companyId, companyRole } = payload;
+    const { id: id, companyId, companyRole } = payload;
 
     const user = await this.userRepository.findOne({
       where: { id },
@@ -61,7 +61,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
      * con los decoradores de seguridad y la lógica multi-tenant.
      */
     return {
-      sub: user.id,
+      id: user.id,
       email: user.email,
       appRole: user.appRole,
       companyId: companyId || '',

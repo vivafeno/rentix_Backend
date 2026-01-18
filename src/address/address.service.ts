@@ -7,19 +7,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Address } from './entities/address.entity';
-import { CreateAddressDto } from './dto/create-address.dto';
-import { UpdateAddressDto } from './dto/update-address.dto';
 import { AddressStatus } from './enums/addressStatus.enum';
-
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
 import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
 import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
 
 /**
- * @description Servicio de gestión de direcciones postales y fiscales.
- * Implementa el patrón Hydrated Drafts y aislamiento por contexto patrimonial.
+ * @class AddressService
+ * @description Gestión operativa de direcciones consolidadas.
+ * Implementa aislamiento multi-tenant y trazabilidad según Veri*factu.
+ * @version 2026.2.1
  * @author Rentix 2026
- * @version 2.3.0
  */
 @Injectable()
 export class AddressService {
@@ -31,53 +29,9 @@ export class AddressService {
     private readonly userCompanyRoleRepo: Repository<CompanyRoleEntity>,
   ) {}
 
-  /* ------------------------------------------------------------------
-   * LÓGICA DRAFT (WIZARD - HYDRATED DRAFTS)
-   * ------------------------------------------------------------------ */
-
   /**
-   * @description Crea un borrador de dirección para persistencia temporal en Wizards.
-   */
-  async createDraft(dto: CreateAddressDto, userId: string): Promise<Address> {
-    const address = this.addressRepo.create({
-      ...dto,
-      status: AddressStatus.DRAFT,
-      createdByUserId: userId,
-    });
-    return this.addressRepo.save(address);
-  }
-
-  /**
-   * @description Recupera un borrador validando la propiedad del creador.
-   */
-  async findDraft(id: string, userId: string): Promise<Address> {
-    const address = await this.addressRepo.findOne({
-      where: { id, status: AddressStatus.DRAFT, createdByUserId: userId },
-    });
-    if (!address)
-      throw new NotFoundException('Borrador no encontrado o acceso denegado');
-    return address;
-  }
-
-  /**
-   * @description Actualiza el borrador durante los pasos del Wizard.
-   */
-  async updateDraft(
-    id: string,
-    dto: UpdateAddressDto,
-    userId: string,
-  ): Promise<Address> {
-    const address = await this.findDraft(id, userId);
-    Object.assign(address, dto);
-    return this.addressRepo.save(address);
-  }
-
-  /* ------------------------------------------------------------------
-   * LÓGICA DE GESTIÓN PATRIMONIAL (TENANT ISOLATION)
-   * ------------------------------------------------------------------ */
-
-  /**
-   * @description Lista direcciones vinculadas a una empresa con seguridad por rol.
+   * @method findAllForCompany
+   * @description Recupera el inventario de direcciones de una empresa con validación de rol.
    */
   async findAllForCompany(
     companyId: string,
@@ -87,7 +41,7 @@ export class AddressService {
   ): Promise<Address[]> {
     await this.validateCompanyAccess(companyId, userId, appRole);
 
-    return this.addressRepo.find({
+    return await this.addressRepo.find({
       where: {
         companyId,
         ...(options.includeInactive ? {} : { status: AddressStatus.ACTIVE }),
@@ -97,7 +51,8 @@ export class AddressService {
   }
 
   /**
-   * @description Baja lógica de dirección. Veri*factu prohíbe el borrado físico si hay trazabilidad.
+   * @method softDeleteForCompany
+   * @description Baja lógica de dirección para mantener integridad fiscal.
    */
   async softDeleteForCompany(
     companyId: string,
@@ -110,21 +65,26 @@ export class AddressService {
     const address = await this.addressRepo.findOne({
       where: { id: addressId, companyId },
     });
-    if (!address)
-      throw new NotFoundException('Dirección no encontrada en este patrimonio');
 
-    address.status = AddressStatus.ARCHIVED; // 🚩 Cambio de estado según Enum
+    if (!address) {
+      throw new NotFoundException(
+        'Dirección no encontrada en este patrimonio.',
+      );
+    }
+
+    address.status = AddressStatus.ARCHIVED;
     await this.addressRepo.save(address);
     return true;
   }
 
   /* ------------------------------------------------------------------
-   * HELPERS DE SEGURIDAD (CONTEXT OVERRIDING)
+   * HELPERS DE SEGURIDAD (BLINDAJE TOTAL RENTIX)
    * ------------------------------------------------------------------ */
 
   /**
-   * @description Valida si el usuario tiene permiso sobre la empresa solicitada.
-   * @throws {ForbiddenException} Si no hay vínculo o el rol es insuficiente.
+   * @method validateCompanyAccess
+   * @description Verifica el vínculo jerárquico entre usuario y empresa.
+   * @private
    */
   private async validateCompanyAccess(
     companyId: string,
@@ -132,25 +92,26 @@ export class AddressService {
     appRole: AppRole,
     requiresAdmin = false,
   ): Promise<void> {
-    // 🛡️ Bypass para el Administrador de la Plataforma
+    // 🛡️ Bypass para SUPERADMIN (Control Total)
     if (appRole === AppRole.SUPERADMIN) return;
 
     const userRole = await this.userCompanyRoleRepo.findOne({
       where: {
-        userId: userId, // 🚩 Simplificado: usa userId directamente si la entidad lo permite
-        companyId: companyId,
+        userId,
+        companyId,
         isActive: true,
       },
     });
 
-    if (!userRole)
+    if (!userRole) {
       throw new ForbiddenException(
-        'No tienes acceso a este contexto patrimonial',
+        'No tienes acceso a este contexto patrimonial.',
       );
+    }
 
     if (requiresAdmin && userRole.role !== CompanyRole.OWNER) {
       throw new ForbiddenException(
-        'Acción restringida al Propietario del patrimonio',
+        'Acción restringida al Propietario del patrimonio.',
       );
     }
   }
