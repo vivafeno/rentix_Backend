@@ -20,12 +20,12 @@ import { CompanyModule } from './company/company.module';
 import { AddressModule } from './address/address.module';
 import { ContactModule } from './contact/contact.module';
 import { PropertyModule } from './property/property.module';
-import { ClientModule } from './client/client.module';
-import { ClientProfileModule } from './client-profile/client-profile.module';
+import { TenantModule } from './tenant/tenant.module';
+import { TenantProfileModule } from './tenant-profile/tenant-profile.module';
 import { ContractModule } from './contract/contract.module';
 import { TaxModule } from './tax/tax.module';
 import { BillingConceptModule } from './billing-concept/billing-concept.module';
-import { FacturaeModule } from './facturae/fiscalIdentity.module';
+import { FacturaeModule } from './fiscal/fiscal.module';
 
 @Module({
   imports: [
@@ -82,8 +82,8 @@ import { FacturaeModule } from './facturae/fiscalIdentity.module';
     AddressModule,
     ContactModule,
     PropertyModule,
-    ClientModule,
-    ClientProfileModule,
+    TenantModule,
+    TenantProfileModule,
     ContractModule,
     TaxModule,
     BillingConceptModule,

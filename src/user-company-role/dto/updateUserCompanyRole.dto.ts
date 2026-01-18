@@ -17,7 +17,7 @@ export class UpdateUserCompanyRoleDto {
   @ApiPropertyOptional({
     description: 'Nuevo rol del usuario dentro de la empresa',
     enum: CompanyRole,
-    example: CompanyRole.MANAGER,
+    example: CompanyRole.TENANT,
   })
   @IsEnum(CompanyRole)
   role?: CompanyRole;

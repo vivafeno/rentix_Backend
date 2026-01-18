@@ -9,13 +9,18 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { BaseEntity } from 'src/common/base/base.entity';
-import { FiscalIdentity } from 'src/facturae/entities/fiscalIdentity.entity';
+import { FiscalEntity } from 'src/fiscal/entities/fiscalEntity';
 import { Address } from 'src/address/entities/address.entity';
 import { User } from 'src/user/entities/user.entity';
 import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
-import { ClientProfile } from 'src/client-profile/entities/client-profile.entity';
+import { TenantProfile } from 'src/tenant-profile/entities/tenant-profile.entity';
 import { Property } from 'src/property/entities/property.entity';
 
+/**
+ * @description Entidad que representa el Patrimonio (Empresa) del OWNER.
+ * Centraliza la identidad fiscal, dirección y la propiedad de activos (inmuebles).
+ * @version 2026.1.17
+ */
 @Entity('companies')
 export class Company extends BaseEntity {
 
@@ -23,6 +28,9 @@ export class Company extends BaseEntity {
    * IDENTIDAD FISCAL (CIF, Razón Social)
    * ------------------------------------------------------------------ */
 
+  /**
+   * @description UUID de referencia a la identidad fiscal (Facturae).
+   */
   @ApiProperty({
     description: 'UUID de la identidad fiscal (Referencia a FacturaeParty)',
     format: 'uuid',
@@ -31,26 +39,32 @@ export class Company extends BaseEntity {
   @Column({ name: 'facturae_party_id', type: 'uuid' })
   facturaePartyId: string;
 
+  /**
+   * @description Relación con los datos fiscales. Blueprint: Cascade permite crear
+   * la identidad fiscal simultáneamente al crear la compañía.
+   */
   @ApiProperty({
     description: 'Objeto completo de la identidad fiscal (Razón social, CIF...)',
-    type: () => FiscalIdentity,
+    type: () => FiscalEntity,
   })
-  @OneToOne(() => FiscalIdentity, { 
-    eager: true,                 // ⚡ Se carga siempre automáticamente
-    cascade: ['insert', 'update'], // 🚨 CRÍTICO: Permite crear/editar la identidad desde el endpoint de Company
-    onDelete: 'RESTRICT'         // No borrar la identidad si se borra la empresa (o CASCADE según tu lógica de negocio)
+  @OneToOne(() => FiscalEntity, { 
+    eager: true,
+    cascade: ['insert', 'update'],
+    onDelete: 'RESTRICT' // Seguridad: No permitimos borrar datos fiscales si hay empresa activa
   })
   @JoinColumn({ name: 'facturae_party_id' })
-  facturaeParty: FiscalIdentity;
+  facturaeParty: FiscalEntity;
 
   /* ------------------------------------------------------------------
    * DIRECCIÓN FISCAL
    * ------------------------------------------------------------------ */
 
+  /**
+   * @description UUID de la dirección física/fiscal.
+   */
   @ApiPropertyOptional({
     description: 'UUID de la dirección fiscal asociada',
     format: 'uuid',
-    example: '1a2b3c4d-aaaa-bbbb-cccc-123456789abc',
   })
   @Column({
     name: 'fiscal_address_id',
@@ -59,14 +73,17 @@ export class Company extends BaseEntity {
   })
   fiscalAddressId?: string;
 
+  /**
+   * @description Relación con la dirección física.
+   */
   @ApiPropertyOptional({
     description: 'Objeto completo de la dirección fiscal',
     type: () => Address,
   })
   @OneToOne(() => Address, { 
     nullable: true,
-    eager: true,                 // ⚡ Recomendado: Al cargar empresa, solemos querer la dirección
-    cascade: ['insert', 'update']  // 🚨 CRÍTICO: Permite editar la dirección desde el endpoint de Company
+    eager: true,
+    cascade: ['insert', 'update']
   })
   @JoinColumn({ name: 'fiscal_address_id' })
   fiscalAddress?: Address;
@@ -75,6 +92,9 @@ export class Company extends BaseEntity {
    * AUDITORÍA (Creador)
    * ------------------------------------------------------------------ */
 
+  /**
+   * @description ID del OWNER que dio de alta el patrimonio.
+   */
   @ApiPropertyOptional({
     description: 'ID del usuario que creó el registro (Auditoría)',
     format: 'uuid',
@@ -86,8 +106,11 @@ export class Company extends BaseEntity {
   })
   createdByUserId?: string;
 
+  /**
+   * @description Entidad del creador. No se carga por defecto para evitar ciclos.
+   */
   @ApiPropertyOptional({
-    description: 'Entidad del usuario creador (No se carga por defecto)',
+    description: 'Entidad del usuario creador',
     type: () => User,
   })
   @ManyToOne(() => User, { nullable: true })
@@ -96,9 +119,11 @@ export class Company extends BaseEntity {
 
   /* ------------------------------------------------------------------
    * RELACIONES 1:N (Roles, Propiedades, Clientes)
-   * Nota: Estas relaciones suelen ser Lazy (eager: false) por rendimiento
    * ------------------------------------------------------------------ */
 
+  /**
+   * @description Vínculos de autoridad (OWNER, TENANT, VIEWER).
+   */
   @ApiPropertyOptional({
     description: 'Lista de usuarios y sus roles en esta empresa',
     type: () => [CompanyRoleEntity],
@@ -106,21 +131,28 @@ export class Company extends BaseEntity {
   @OneToMany(() => CompanyRoleEntity, (ucr) => ucr.company)
   companyRoles: CompanyRoleEntity[];
 
+  /**
+   * @description Lista de inmuebles vinculados a este patrimonio.
+   */
   @ApiPropertyOptional({ 
     description: 'Inventario de propiedades (inmuebles) de la empresa',
     type: () => [Property]
   })
   @OneToMany(() => Property, (property) => property.company, {
-    eager: false, // ⚡ Performance: No cargar cientos de propiedades en el login
+    eager: false,
   })
   properties: Property[];
 
+  /**
+   * @description Perfiles de arrendatarios registrados por el OWNER.
+   * Blueprint 2026: Consistencia con el término TENANT.
+   */
   @ApiPropertyOptional({
-    description: 'Cartera de clientes (CRM) asociados a la empresa',
-    type: () => [ClientProfile],
+    description: 'Cartera de arrendatarios asociados al patrimonio',
+    type: () => [TenantProfile],
   })
-  @OneToMany(() => ClientProfile, (client) => client.company, {
-    eager: false, // ⚡ Performance
+  @OneToMany(() => TenantProfile, (tenant) => tenant.company, {
+    eager: false,
   })
-  clientProfiles: ClientProfile[];
+  tenantProfiles: TenantProfile[]; // Renombrado de clientProfiles a tenantProfiles
 }

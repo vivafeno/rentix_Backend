@@ -13,15 +13,10 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 @ApiBearerAuth()
 @Controller('billing-concept')
 export class BillingConceptController {
-  constructor(private readonly service: BillingConceptService) {}
+  constructor(private readonly service: BillingConceptService) { }
 
   @Post()
-  @Roles(AppRole.SUPERADMIN, AppRole.ADMIN, 
-    
-    
-    
-    
-    CompanyRole.ADMIN)
+  @Roles(AppRole.SUPERADMIN, AppRole.ADMIN, CompanyRole.OWNER)
   @ApiOperation({ summary: 'Crear concepto en el catálogo maestro' })
   @ApiResponse({ status: 201, type: BillingConcept })
   create(@Body() createDto: CreateBillingConceptDto) {
@@ -29,18 +24,15 @@ export class BillingConceptController {
   }
 
   @Get()
-  @Roles(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER, CompanyRole.OWNER, CompanyRole.ADMIN, CompanyRole.MANAGER, CompanyRole.VIEWER)
+  @Roles(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER, CompanyRole.OWNER, CompanyRole.VIEWER)
   @ApiOperation({ summary: 'Listar catálogo (Accesible para todos los roles de lectura)' })
   @ApiResponse({ status: 200, type: [BillingConcept] })
   findAll() {
     return this.service.findAll();
-
-
-    
   }
 
   @Patch(':id')
-  @Roles(AppRole.SUPERADMIN, AppRole.ADMIN, CompanyRole.OWNER, CompanyRole.ADMIN)
+  @Roles(AppRole.SUPERADMIN, AppRole.ADMIN, CompanyRole.OWNER)
   @ApiOperation({ summary: 'Actualizar plantilla de concepto' })
   @ApiResponse({ status: 200, type: BillingConcept })
   update(@Param('id', ParseUUIDPipe) id: string, @Body() updateDto: UpdateBillingConceptDto) {

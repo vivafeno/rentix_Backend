@@ -6,7 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull, Not } from 'typeorm';
 
 import { Property } from './entities/property.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -17,65 +17,79 @@ import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
 
 /**
  * Servicio de gestión de activos inmobiliarios (Properties).
- * Implementa lógica de aislamiento por empresa (Multitenancy) y persistencia en cascada.
- * @version 2026.1.4
+ * * Estándares Blueprint 2026:
+ * - Aislamiento Multi-tenant mediante companyId directo.
+ * - Gestión de Soft-Delete nativo sincronizado con BaseEntity.
+ * - Persistencia en cascada para la entidad Address.
+ * * @version 1.2.0
+ * @author Rentix
  */
 @Injectable()
 export class PropertyService {
   constructor(
     @InjectRepository(Property)
     private readonly propertyRepo: Repository<Property>,
-  ) {}
-
-  // --- MÉTODOS DE LECTURA ---
+  ) { }
 
   /**
-   * Recupera el listado de inmuebles activos para una organización específica.
+   * Recupera el listado de inmuebles operativos para una organización.
+   * @param companyId Identificador de la empresa.
    */
   async findAll(companyId: string): Promise<Property[]> {
     return await this.propertyRepo.find({
-      where: { company: { id: companyId }, isActive: true },
+      where: { companyId, deletedAt: IsNull() },
       relations: ['address'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
   /**
-   * Obtiene los activos marcados como inactivos (Papelera).
-   * Requiere 'withDeleted' para omitir el filtro global de TypeORM.
+   * Obtiene los activos alojados en la papelera de reciclaje.
+   * @param companyId Identificador de la empresa.
    */
   async findTrash(companyId: string): Promise<Property[]> {
     return await this.propertyRepo.find({
-      where: { 
-        company: { id: companyId }, 
-        isActive: false 
+      where: {
+        companyId,
+        deletedAt: Not(IsNull())
       },
       withDeleted: true,
       relations: ['address'],
-      order: { deletedAt: 'DESC' }
+      order: { deletedAt: 'DESC' },
     });
   }
 
   /**
-   * Busca un activo único validando la propiedad de la empresa.
+   * Localiza un activo único validando pertenencia y permitiendo acceso a eliminados.
+   * @param id UUID de la propiedad.
+   * @param companyId Identificador de la empresa.
    */
   async findOne(id: string, companyId: string): Promise<Property> {
     const property = await this.propertyRepo.findOne({
-      where: { id, company: { id: companyId } },
+      where: { id, companyId },
       relations: ['address'],
+      withDeleted: true,
     });
 
-    if (!property) throw new NotFoundException('Recurso inmobiliario no localizado');
+    if (!property) {
+      throw new NotFoundException(`Activo inmobiliario con ID ${id} no localizado`);
+    }
     return property;
   }
 
-  // --- MÉTODOS DE ESCRITURA ---
-
   /**
-   * Registra un nuevo inmueble y genera su entidad Address asociada en cascada.
+   * Registra un nuevo inmueble con dirección vinculada en cascada.
+   * @param companyId Identificador de la empresa propietaria.
+   * @param createDto DTO de creación de propiedad.
    */
   async create(companyId: string, createDto: CreatePropertyDto): Promise<Property> {
     const { address, ...propertyData } = createDto;
+
+    // Blueprint 2026: Validación de integridad lógica antes de persistencia
+    // Esto compensa el 'nullable: true' temporal de la base de datos.
+    if (!propertyData.surfaceTotal || !propertyData.surfaceUseful) {
+      throw new ConflictException('Las métricas de superficie (Total y Útil) son obligatorias.');
+    }
 
     const property = this.propertyRepo.create({
       ...propertyData,
@@ -98,26 +112,25 @@ export class PropertyService {
   }
 
   /**
-   * Actualiza el activo inmobiliario.
-   * Garantiza la persistencia de la dirección mediante fusión de entidad cargada.
+   * Actualiza los atributos de un activo y su dirección asociada.
+   * @param id UUID de la propiedad.
+   * @param companyId Identificador de la empresa.
+   * @param updateDto DTO con cambios parciales.
    */
   async update(id: string, companyId: string, updateDto: UpdatePropertyDto): Promise<Property> {
-    // 1. Cargamos la entidad con sus relaciones para mantener los IDs de relación
     const property = await this.findOne(id, companyId);
-    const { address, ...data } = updateDto;
 
-    // 2. Actualizamos datos básicos del Property
+    if (property.deletedAt) {
+      throw new ConflictException('No se puede modificar un activo que reside en la papelera');
+    }
+
+    const { address, ...data } = updateDto;
     Object.assign(property, data);
 
-    // 3. Gestión de la relación Address (Evita pérdida de referencia)
     if (address) {
-      if (property.address) {
-        // Fusionamos sobre la entidad cargada para que TypeORM ejecute un UPDATE y no un INSERT
-        Object.assign(property.address, address);
-      } else {
-        // Fallback en caso de que el inmueble no tuviera dirección previa
-        property.address = address as any;
-      }
+      property.address = property.address
+        ? Object.assign(property.address, address)
+        : (address as any);
     }
 
     try {
@@ -128,14 +141,20 @@ export class PropertyService {
   }
 
   /**
-   * Desactiva el inmueble (Borrado lógico). 
-   * Restringido a perfiles OWNER.
+   * Mueve el activo a la papelera (Borrado lógico).
+   * @param id UUID de la propiedad.
+   * @param companyId Identificador de la empresa.
+   * @param companyRole Rol del usuario solicitante.
    */
   async remove(id: string, companyId: string, companyRole: CompanyRole): Promise<Property> {
     const property = await this.findOne(id, companyId);
 
     if (companyRole !== CompanyRole.OWNER) {
       throw new ForbiddenException('Privilegios insuficientes: Se requiere rol OWNER');
+    }
+
+    if (property.deletedAt) {
+      throw new ConflictException('El activo ya se encuentra en la papelera');
     }
 
     property.isActive = false;
@@ -146,22 +165,19 @@ export class PropertyService {
 
   /**
    * Restaura un activo de la papelera al estado operativo.
+   * @param id UUID de la propiedad.
+   * @param companyId Identificador de la empresa.
+   * @param companyRole Rol del usuario solicitante.
    */
   async restore(id: string, companyId: string, companyRole: CompanyRole): Promise<Property> {
-    const property = await this.propertyRepo.findOne({
-      where: { 
-        id, 
-        company: { id: companyId }, 
-        isActive: false 
-      },
-      withDeleted: true,
-      relations: ['address']
-    });
+    const property = await this.findOne(id, companyId);
 
-    if (!property) throw new NotFoundException('El activo no se encuentra en el repositorio de eliminados');
-    
+    if (!property.deletedAt) {
+      throw new ConflictException('El activo ya se encuentra operativo');
+    }
+
     if (companyRole !== CompanyRole.OWNER) {
-      throw new ForbiddenException('Operación restringida a administradores de la propiedad');
+      throw new ForbiddenException('Operación restringida a administradores (OWNER)');
     }
 
     property.isActive = true;
@@ -170,19 +186,18 @@ export class PropertyService {
     return await this.propertyRepo.save(property);
   }
 
-  // --- TRATAMIENTO DE EXCEPCIONES ---
-
   /**
-   * Traduce errores de motor de base de datos a excepciones HTTP semánticas.
+   * Gestiona excepciones de motor de base de datos para devolver errores semánticos.
+   * @param error Objeto de error capturado.
    */
   private handleDBExceptions(error: any): never {
     if (error.code === '23505') {
       const detail = error.detail?.toLowerCase();
-      if (detail?.includes('internal_code')) throw new ConflictException('Código interno ya registrado');
-      if (detail?.includes('cadastral_reference')) throw new ConflictException('Referencia catastral ya registrada');
+      if (detail?.includes('internal_code')) throw new ConflictException('El código interno ya está registrado en esta empresa');
+      if (detail?.includes('cadastral_reference')) throw new ConflictException('La referencia catastral ya existe en el sistema');
     }
-    
+
     console.error('Core Persistence Error:', error);
-    throw new InternalServerErrorException('Error en el procesamiento del activo inmobiliario');
+    throw new InternalServerErrorException('Error crítico en el procesamiento del activo inmobiliario');
   }
 }

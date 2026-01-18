@@ -1,6 +1,0 @@
-export enum ClientStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  POTENTIAL = 'POTENTIAL',
-  BLACKLISTED = 'BLACKLISTED'
-}

@@ -2,7 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from '../../common/base/base.entity';
 import { Company } from '../../company/entities/company.entity';
-import { Client } from '../../client/entities/client.entity';
+import { Tenant } from '../../tenant/entities/tenant.entity';
 import { Property } from '../../property/entities/property.entity';
 import { Tax } from '../../tax/entities/tax.entity';
 import { 
@@ -49,9 +49,9 @@ export class Contract extends BaseEntity {
   @Column({ name: 'client_id', type: 'uuid' })
   clientId: string;
 
-  @ManyToOne(() => Client)
+  @ManyToOne(() => Tenant)
   @JoinColumn({ name: 'client_id' })
-  client: Client;
+  client: Tenant;
 
   @ApiProperty({ description: 'ID del Inmueble/Propiedad objeto del contrato' })
   @Column({ name: 'property_id', type: 'uuid' })

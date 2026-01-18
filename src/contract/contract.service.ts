@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { Contract } from './entities/contract.entity';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { Property } from 'src/property/entities/property.entity';
-import { Client } from 'src/client/entities/client.entity';
+import { Tenant } from 'src/tenant/entities/tenant.entity';
 import { Tax } from 'src/tax/entities/tax.entity';
 
 @Injectable()
@@ -18,8 +18,8 @@ export class ContractService {
     private readonly contractRepository: Repository<Contract>,
     @InjectRepository(Property)
     private readonly propertyRepository: Repository<Property>,
-    @InjectRepository(Client)
-    private readonly clientRepository: Repository<Client>,
+    @InjectRepository(Tenant)
+    private readonly clientRepository: Repository<Tenant>,
     @InjectRepository(Tax)
     private readonly taxRepository: Repository<Tax>,
   ) { }

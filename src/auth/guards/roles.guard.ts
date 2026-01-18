@@ -3,52 +3,72 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-// Importamos la clave y el tipo de unión desde el decorador (misma carpeta superior)
 import { ROLES_KEY, AllowedRoles } from '../decorators/roles.decorator';
 
+/**
+ * @description Guard de Autorización Jerárquica (Blueprint 2026).
+ * Valida el acceso basado en una doble comprobación: 
+ * 1. Roles de Aplicación (SUPERADMIN, ADMIN) - Alcance Global.
+ * 2. Roles de Empresa (OWNER, TENANT, VIEWER) - Alcance de Contexto.
+ * * @author Rentix
+ * @version 2026.1.18
+ */
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector) {}
 
+  /**
+   * @description Determina si la petición actual cumple con los requisitos de rol.
+   * @param context Contexto de ejecución de NestJS
+   * @returns {boolean} True si el acceso es concedido
+   * @throws {UnauthorizedException} Si el usuario no existe en la request
+   * @throws {ForbiddenException} Si los roles no coinciden con los requeridos
+   */
   canActivate(context: ExecutionContext): boolean {
-    // 1. Obtenemos los roles permitidos (ahora tipado con AllowedRoles)
+    // 1. Extracción de Metadatos (Roles definidos en el decorador @Roles)
     const requiredRoles = this.reflector.getAllAndOverride<AllowedRoles[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (!requiredRoles) {
+    // Si no hay roles definidos, el endpoint es de libre acceso para usuarios autenticados
+    if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
 
-    const rolesArray = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-
-    if (rolesArray.length === 0) {
-      return true;
-    }
-
+    // 2. Extracción de Usuario desde la Request (Inyectado por JwtAuthGuard)
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    
-    // Validación: El usuario debe estar autenticado (inyectado por JwtStrategy)
+
     if (!user) {
-      throw new ForbiddenException('Usuario no autenticado');
+      throw new UnauthorizedException('Identidad de usuario no verificada en el contexto');
     }
 
     /**
-     * Comprobación Maestra:
-     * El usuario accede si su appRole O su companyRole coincide con lo requerido
+     * @description COMPROBACIÓN MAESTRA DE ROLES (Blueprint 2026)
+     * Un usuario tiene acceso si:
+     * - Su rol global (appRole) está en la lista permitida.
+     * - O su rol de contexto (companyRole) está en la lista permitida.
      */
-    const hasRole = rolesArray.some((role) => 
-      role === user.appRole || role === user.companyRole
-    );
+    const hasAccess = requiredRoles.some((role) => {
+      const isAppRole = user.appRole === role;
+      const isCompanyRole = user.companyRole === role;
+      
+      return isAppRole || isCompanyRole;
+    });
 
-    if (!hasRole) {
-      throw new ForbiddenException(
-        `Acceso insuficiente. Perfil actual: [App: ${user.appRole}, Company: ${user.companyRole}]`
-      );
+    if (!hasAccess) {
+      throw new ForbiddenException({
+        message: 'Blindaje Total: Acceso denegado por jerarquía insuficiente.',
+        required: requiredRoles,
+        current: {
+          app: user.appRole,
+          company: user.companyRole || 'NONE'
+        }
+      });
     }
 
     return true;

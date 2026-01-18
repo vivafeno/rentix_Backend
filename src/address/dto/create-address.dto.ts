@@ -1,113 +1,109 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean,
   IsEnum,
-  IsISO31661Alpha2,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  IsBoolean,
+  Length,
+  IsUUID
 } from 'class-validator';
-
+import { Transform } from 'class-transformer';
 import { AddressType } from '../enums/addressType.enum';
 import { AddressStatus } from '../enums/addressStatus.enum';
 
 /**
- * DTO para la creación de una dirección.
- *
- * Pensado para flujos multi-step:
- * - creación en estado DRAFT
- * - asociación posterior a Company o ClientProfile
+ * @description DTO para la creación de direcciones postales y fiscales.
+ * Incluye metadatos de Swagger para generación de tipos en Angular.
+ * @version 2026.1.17
  */
 export class CreateAddressDto {
 
-  /* ------------------------------------------------------------------
-   * ESTADO
-   * ------------------------------------------------------------------ */
-
-  @ApiProperty({
-    description: 'Estado inicial de la dirección',
-    enum: AddressStatus,
-    example: AddressStatus.DRAFT,
-    default: AddressStatus.DRAFT,
-    required: false,
+  @ApiPropertyOptional({
+    description: 'ID de la empresa (Tenant Isolation)',
+    format: 'uuid',
+    example: '550e8400-e29b-41d4-a716-446655440000'
   })
   @IsOptional()
-  @IsEnum(AddressStatus)
-  status?: AddressStatus;
-
-  /* ------------------------------------------------------------------
-   * TIPO DE DIRECCIÓN
-   * ------------------------------------------------------------------ */
+  @IsUUID()
+  companyId?: string;
 
   @ApiProperty({
-    description: 'Tipo de dirección dentro del sistema',
+    description: 'Propósito legal o físico de la dirección',
     enum: AddressType,
+    enumName: 'AddressType',
     example: AddressType.FISCAL,
   })
   @IsEnum(AddressType)
+  @IsNotEmpty()
   type: AddressType;
 
-  /* ------------------------------------------------------------------
-   * DATOS POSTALES
-   * ------------------------------------------------------------------ */
-
-  @ApiProperty({
-    description: 'Dirección principal',
-    example: 'Calle Mayor 12',
-  })
-  @IsString()
-  addressLine1: string;
-
-  @ApiProperty({
-    description: 'Información adicional de la dirección',
-    example: '2º B',
-    required: false,
+  @ApiPropertyOptional({
+    description: 'Estado administrativo del registro',
+    enum: AddressStatus,
+    enumName: 'AddressStatus',
+    default: AddressStatus.ACTIVE
   })
   @IsOptional()
-  @IsString()
-  addressLine2?: string;
-
-  @ApiProperty({
-    description: 'Código postal',
-    example: '46060',
-  })
-  @IsString()
-  postalCode: string;
-
-  @ApiProperty({
-    description: 'Ciudad / municipio',
-    example: 'Valencia',
-  })
-  @IsString()
-  city: string;
+  @IsEnum(AddressStatus)
+  status?: AddressStatus = AddressStatus.ACTIVE;
 
   @ApiPropertyOptional({
-    description: 'Provincia (opcional fuera de España)',
-    example: 'Valencia',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  province?: string;
-
-  @ApiProperty({
-    description: 'Código de país ISO-3166-1 alpha-2',
-    example: 'ES',
-    default: 'ES',
-  })
-  @IsISO31661Alpha2()
-  countryCode: string;
-
-  /* ------------------------------------------------------------------
-   * CONTROL
-   * ------------------------------------------------------------------ */
-
-  @ApiProperty({
-    description: 'Indica si es la dirección principal para su tipo',
-    example: true,
-    required: false,
-    default: false,
+    description: 'Marca esta dirección como la principal para el sujeto',
+    default: false
   })
   @IsOptional()
   @IsBoolean()
-  isDefault?: boolean;
+  isDefault?: boolean = false;
+
+  @ApiProperty({
+    description: 'Vía pública y número (Nodo <Address> en FacturaE)',
+    example: 'Calle de Alcalá 1'
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Transform(({ value }) => value?.trim())
+  addressLine1: string;
+
+  @ApiPropertyOptional({
+    description: 'Información adicional (Piso, puerta, bloque...)',
+    example: 'Piso 2º Derecha'
+  })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value?.trim())
+  addressLine2?: string;
+
+  @ApiProperty({
+    description: 'Código Postal (Validación FacturaE)',
+    example: '28014'
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Length(3, 16)
+  @Transform(({ value }) => value?.trim())
+  postalCode: string;
+
+  @ApiProperty({ description: 'Ciudad o Localidad', example: 'Madrid' })
+  @IsString()
+  @IsNotEmpty()
+  @Transform(({ value }) => value?.trim())
+  city: string;
+
+  @ApiPropertyOptional({ description: 'Provincia o Región', example: 'Madrid' })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value?.trim())
+  province?: string;
+
+  @ApiProperty({
+    description: 'Código de país ISO 3166-1 alpha-3',
+    example: 'ESP',
+    default: 'ESP'
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Length(3, 3, { message: 'El código de país debe tener exactamente 3 caracteres (ISO Alpha-3)' })
+  @Transform(({ value }) => value?.toUpperCase().trim())
+  countryCode: string = 'ESP';
 }
