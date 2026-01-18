@@ -1,54 +1,57 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsOptional, IsString, IsEnum } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsUUID, IsString, IsOptional, IsEmail, IsIBAN, IsEnum, MaxLength } from 'class-validator';
 import { TenantStatus } from '../enums/tenant-status.enum';
 
 /**
- * Data Transfer Object para la creación de un Arrendatario.
- * Basado en la vinculación de identidades fiscales y direcciones existentes.
- * * @author Gemini Blueprint 2026
+ * @class CreateTenantDto
+ * @description DTO para la vinculación de arrendatarios. 
+ * Sincronizado con la lógica de Veri*factu y FacturaE.
+ * @version 2026.2.0
  */
 export class CreateTenantDto {
 
-  /** ID de la empresa que gestiona y es propietaria del registro */
-  @ApiProperty({
-    description: 'ID de la empresa propietaria (Tenant Isolation)',
-    example: 'f2a1e0d9-4c6a-4d1e-9b3a-1c2d3e4f5678',
-    format: 'uuid'
-  })
+  @ApiProperty({ description: 'ID de la Identidad Fiscal (NIF/CIF)', example: 'uuid' })
   @IsUUID()
-  companyId: string;
+  fiscalIdentityId: string; // 🚩 Sincronizado con Entity: facturaePartyId -> fiscalIdentityId
 
-  /** ID de la Identidad Fiscal (Facturae) ya creada */
-  @ApiProperty({
-    description: 'ID de la Identidad Fiscal legal asociada (Módulo Facturae)',
-    example: 'c1b2a3d4-1111-4aaa-9bbb-ccccdddd0000',
-    format: 'uuid'
-  })
+  @ApiProperty({ description: 'ID de la Dirección Fiscal', example: 'uuid' })
   @IsUUID()
-  fiscalIdentityId: string;
+  direccionFiscalId: string; // 🚩 Sincronizado: fiscalAddressId -> direccionFiscalId
 
-  /** Código interno administrativo */
-  @ApiProperty({ 
-    example: 'TEN-2026-001', 
-    required: false,
-    description: 'Código de referencia interno para el ERP'
-  })
-  @IsString()
+  /* --- ATRIBUTOS OPERATIVOS --- */
+
+  @ApiPropertyOptional({ example: 'TEN-2026-001', description: 'Código interno ERP' })
   @IsOptional()
-  internalCode?: string;
+  @IsString()
+  @MaxLength(50)
+  codigoInterno?: string;
 
-  /** Estado inicial del arrendatario */
-  @ApiProperty({ 
-    enum: TenantStatus, 
-    default: TenantStatus.ACTIVE 
-  })
+  @ApiPropertyOptional({ enum: TenantStatus, default: TenantStatus.ACTIVE })
+  @IsOptional()
   @IsEnum(TenantStatus)
-  @IsOptional()
-  status?: TenantStatus = TenantStatus.ACTIVE;
+  estado?: TenantStatus;
 
-  /** Email de contacto para el módulo de notificaciones */
-  @ApiProperty({ example: 'arrendatario@email.com' })
-  @IsString()
+  /* --- CONTACTO & PAGOS --- */
+
+  @ApiPropertyOptional({ example: 'inquilino@email.com' })
   @IsOptional()
+  @IsEmail()
   email?: string;
+
+  @ApiPropertyOptional({ example: '+34600000000' })
+  @IsOptional()
+  @IsString()
+  telefono?: string;
+
+  @ApiPropertyOptional({ description: 'IBAN para domiciliaciones SEPA', example: 'ES21...' })
+  @IsOptional()
+  @IsString() // Nota: Puedes usar @IsIBAN() si tienes class-validator-jsonschema
+  @MaxLength(34)
+  ibanBancario?: string;
+
+  @ApiPropertyOptional({ description: 'Código residencia AEAT (1: Es, 2: UE, 3: Ext)', default: '1' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1)
+  codigoResidencia?: string;
 }

@@ -7,66 +7,51 @@ import { Address } from 'src/address/entities/address.entity';
 import { TenantStatus } from '../enums/tenant-status.enum';
 
 /**
- * Entidad Arrendatario (Tenant).
- * Gestiona la relación contractual y fiscal bajo el estándar Facturae 3.2.x.
- * Permite que una misma identidad fiscal pertenezca a diferentes empresas.
- * * @author Gemini Blueprint 2026
- * @inheritdoc BaseEntity
+ * @class Tenant
+ * @description Entidad Arrendatario. Gestiona el perfil receptor de facturas.
+ * Alineado con FacturaE 3.2.x y Veri*factu.
+ * @version 2026.2.0
  */
 @Entity('tenants')
-@Index(['companyId', 'fiscalIdentityId'], { unique: true }) // 👈 Garantiza unicidad solo por ámbito de empresa
+@Index(['companyId', 'fiscalIdentityId'], { unique: true })
 export class Tenant extends BaseEntity {
 
-  // --------------------------------------------------------------------------
-  // DATOS IDENTIFICATIVOS & ESTADO
-  // --------------------------------------------------------------------------
+  /* --- IDENTIFICACIÓN & ESTADO --- */
 
-  /** Código administrativo para uso interno del ERP */
   @ApiProperty({ example: 'TEN-2026-001', description: 'Referencia interna administrativa' })
-  @Column({ name: 'internal_code', nullable: true })
-  internalCode: string;
+  @Column({ name: 'codigo_interno', nullable: true })
+  codigoInterno: string; // 🚩 Sincronizado: internalCode -> codigoInterno
 
-  /** Estado operativo del arrendatario */
   @ApiProperty({ enum: TenantStatus, example: TenantStatus.ACTIVE })
   @Column({ type: 'enum', enum: TenantStatus, default: TenantStatus.ACTIVE })
-  status: TenantStatus;
+  estado: TenantStatus; // 🚩 Sincronizado: status -> estado
 
-  // --------------------------------------------------------------------------
-  // DATOS DE CONTACTO
-  // --------------------------------------------------------------------------
+  /* --- CONTACTO & COMUNICACIÓN --- */
 
-  /** Email para notificaciones legales y envío de facturas */
   @ApiProperty({ example: 'facturacion@arrendatario.es' })
-  @Column({ nullable: true })
+  @Column({ name: 'email_notificaciones', nullable: true })
   email: string;
 
-  /** Teléfono de contacto directo */
   @ApiProperty({ example: '+34 600000000' })
-  @Column({ name: 'phone_number', nullable: true })
-  phoneNumber: string;
+  @Column({ name: 'telefono', nullable: true })
+  telefono: string; // 🚩 Sincronizado
 
-  // --------------------------------------------------------------------------
-  // INFORMACIÓN FINANCIERA (FACTURAE COMPLIANT)
-  // --------------------------------------------------------------------------
+  /* --- INFORMACIÓN FINANCIERA (SEPA / FACTURAE) --- */
 
-  /** Cuenta bancaria en formato IBAN para domiciliaciones (Remesas SEPA) */
-  @ApiProperty({ example: 'ES210000...', description: 'IBAN para cobros automáticos' })
-  @Column({ name: 'bank_account_iban', nullable: true })
-  bankAccountIban: string;
+  @ApiProperty({ example: 'ES210000...', description: 'IBAN para remesas SEPA' })
+  @Column({ name: 'iban_bancario', nullable: true, length: 34 })
+  ibanBancario: string; // 🚩 Sincronizado
 
-  /** * Código de Residencia según Facturae: 
-   * 1 = Residente en España, 2 = Residente UE, 3 = Extranjero 
+  /**
+   * @description Código de Residencia AEAT: 1=España, 2=UE, 3=Extranjero.
    */
-  @ApiProperty({ example: '1', description: 'Código de residencia fiscal (AEAT)' })
-  @Column({ name: 'residency_code', default: '1', length: 1 })
-  residencyCode: string;
+  @ApiProperty({ example: '1', description: 'Código de residencia fiscal' })
+  @Column({ name: 'codigo_residencia', default: '1', length: 1 })
+  codigoResidencia: string;
 
-  // --------------------------------------------------------------------------
-  // RELACIONES Y AISLAMIENTO (MULTI-TENANCY)
-  // --------------------------------------------------------------------------
+  /* --- RELACIONES & MULTI-TENANCY --- */
 
-  /** ID de la empresa propietaria del registro */
-  @ApiProperty({ format: 'uuid' })
+  @ApiProperty({ description: 'UUID de la empresa propietaria del registro' })
   @Column({ name: 'company_id', type: 'uuid' })
   companyId: string;
 
@@ -74,21 +59,23 @@ export class Tenant extends BaseEntity {
   @JoinColumn({ name: 'company_id' })
   company: Company;
 
-  /** * Identidad Legal vinculada.
-   * Explicitamos la columna ID para el índice compuesto y la vinculación por DTO.
+  /**
+   * @description Relación con la identidad legal (NIF/CIF).
+   * Unimos por ID para facilitar la creación atómica desde el DTO.
    */
-  @ApiProperty({ format: 'uuid' })
+  @ApiProperty({ description: 'UUID de la identidad fiscal vinculada' })
   @Column({ name: 'fiscal_identity_id', type: 'uuid' })
   fiscalIdentityId: string;
 
-  @OneToOne(() => FiscalEntity, { cascade: false, eager: true }) // 👈 cascade false para evitar colisiones al vincular IDs existentes
+  @OneToOne(() => FiscalEntity, { cascade: false, eager: true })
   @JoinColumn({ name: 'fiscal_identity_id' })
   fiscalIdentity: FiscalEntity;
 
-  /** * Colección de direcciones asociadas.
-   * Imprescindible filtrar por AddressType.FISCAL para la generación de facturas.
+  /**
+   * @description Direcciones del inquilino.
+   * La dirección con AddressType.FISCAL será la que use Veri*factu.
    */
   @ApiProperty({ type: () => Address, isArray: true })
   @OneToMany(() => Address, (address) => address.tenant, { cascade: true, eager: true })
-  addresses: Address[];
+  direcciones: Address[]; // 🚩 Sincronizado: addresses -> direcciones
 }

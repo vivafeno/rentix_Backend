@@ -19,41 +19,44 @@ import { Property } from 'src/property/entities/property.entity';
 /**
  * @description Entidad que representa el Patrimonio (Empresa) del OWNER.
  * Centraliza la identidad fiscal, dirección y la propiedad de activos (inmuebles).
- * @version 2026.1.17
+ * Sincronizado con el estándar Veri*factu para generación de facturas.
+ * @version 2026.1.18
  */
 @Entity('companies')
 export class Company extends BaseEntity {
 
   /* ------------------------------------------------------------------
-   * IDENTIDAD FISCAL (CIF, Razón Social)
+   * IDENTIDAD FISCAL (NIF, Razón Social)
    * ------------------------------------------------------------------ */
 
   /**
-   * @description UUID de referencia a la identidad fiscal (Facturae).
+   * @description UUID de referencia a la identidad fiscal.
+   * Mantenemos el nombre de columna física por compatibilidad, pero actualizamos el nombre de la propiedad.
    */
   @ApiProperty({
-    description: 'UUID de la identidad fiscal (Referencia a FacturaeParty)',
+    description: 'UUID de la identidad fiscal (Referencia a FiscalEntity)',
     format: 'uuid',
     example: '9f8b4d1e-1a2b-4d9e-b9a2-123456789abc',
   })
   @Column({ name: 'facturae_party_id', type: 'uuid' })
-  facturaePartyId: string;
+  fiscalEntityId: string; // Refactorizado de facturaePartyId
 
   /**
    * @description Relación con los datos fiscales. Blueprint: Cascade permite crear
    * la identidad fiscal simultáneamente al crear la compañía.
+   * @returns {FiscalEntity} Objeto con NIF y Razón Social.
    */
   @ApiProperty({
-    description: 'Objeto completo de la identidad fiscal (Razón social, CIF...)',
+    description: 'Objeto completo de la identidad fiscal (Razón social, NIF...)',
     type: () => FiscalEntity,
   })
-  @OneToOne(() => FiscalEntity, { 
+  @OneToOne(() => FiscalEntity, (fiscalEntity) => fiscalEntity.company, { 
     eager: true,
     cascade: ['insert', 'update'],
     onDelete: 'RESTRICT' // Seguridad: No permitimos borrar datos fiscales si hay empresa activa
   })
   @JoinColumn({ name: 'facturae_party_id' })
-  facturaeParty: FiscalEntity;
+  fiscalEntity: FiscalEntity; // Refactorizado de facturaeParty para cumplimiento Veri*factu
 
   /* ------------------------------------------------------------------
    * DIRECCIÓN FISCAL
@@ -75,6 +78,7 @@ export class Company extends BaseEntity {
 
   /**
    * @description Relación con la dirección física.
+   * @returns {Address} Objeto con dirección, código postal y población.
    */
   @ApiPropertyOptional({
     description: 'Objeto completo de la dirección fiscal',
@@ -154,5 +158,5 @@ export class Company extends BaseEntity {
   @OneToMany(() => TenantProfile, (tenant) => tenant.company, {
     eager: false,
   })
-  tenantProfiles: TenantProfile[]; // Renombrado de clientProfiles a tenantProfiles
+  tenantProfiles: TenantProfile[];
 }

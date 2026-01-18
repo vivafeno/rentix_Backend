@@ -1,30 +1,32 @@
 /**
- * @description Códigos de residencia fiscal según la Orden HAP/1650/2015 (Facturae).
- * Determina el tratamiento fiscal de la operación (IVA, Inversión del Sujeto Pasivo, etc.).
- * @version 2026.1.17
+ * @description Códigos de residencia fiscal (Veri*factu / FacturaE).
+ * Basado en la Orden HAP/1650/2015. Determina el régimen de IVA aplicable:
+ * 'R' -> Nacional, 'U' -> Intracomunitario (VIES), 'E' -> Exportación.
+ * * @author Rentix 2026
+ * @version 2026.2.0
  */
 export enum ResidenceType {
   /**
    * @description R: Residente en España.
-   * Incluye Península, Baleares, Canarias, Ceuta y Melilla.
+   * Sujeto a IVA nacional (incluye regímenes especiales de Canarias, Ceuta y Melilla).
    */
   RESIDENT = 'R',
 
   /**
-   * @description U: Residente en otro país miembro de la Unión Europea.
-   * Clave para operaciones intracomunitarias y validación VIES.
+   * @description U: Residente en la Unión Europea.
+   * Requiere validación de NIF-IVA en el censo VIES para exención de IVA.
    */
-  EU_RESIDENT = 'U',
+  EU_MEMBER = 'U',
 
   /**
-   * @description E: Residente fuera de la Unión Europea.
-   * Clave para exportaciones y operaciones extracomunitarias.
+   * @description E: Extracomunitario.
+   * Operaciones fuera de la UE tratadas como exportaciones de servicios/bienes.
    */
-  NON_EU_RESIDENT = 'E',
+  EXTRA_COMMUNITY = 'E',
 
   /**
-   * @description O: Otros casos especiales.
-   * Nota: Usar solo si no encaja en las categorías anteriores según normativa AEAT.
+   * @description O: Otros / No Residente sin establecimiento permanente.
+   * Casos residuales según normativa técnica de la AEAT.
    */
   OTHER = 'O',
 }

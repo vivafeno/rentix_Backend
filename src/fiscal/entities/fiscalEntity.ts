@@ -8,16 +8,16 @@ import { ResidenceType } from '../enums/residenceType.enum';
 import { Expose } from 'class-transformer';
 
 /**
- * @description Entidad que representa la Identidad Fiscal legal (Persona Física o Jurídica).
- * Centraliza los datos necesarios para el cumplimiento de normativas de facturación (FacturaE, VeriFactu).
- * @version 2026.1.17
+ * @description Entidad de Identidad Fiscal alineada con Veri*factu y FacturaE.
+ * Centraliza la identificación legal para el encadenamiento de facturas.
+ * @version 2026.2.0
  */
 @Entity('fiscal_entities')
-@Index('IDX_FISCAL_ENTITY_GLOBAL_COMPANY', ['taxId'], {
+@Index('IDX_FISCAL_ENTITY_GLOBAL', ['nif'], {
   unique: true,
   where: 'company_id IS NULL'
 })
-@Index('IDX_FISCAL_ENTITY_PER_TENANT', ['taxId', 'companyId'], {
+@Index('IDX_FISCAL_ENTITY_TENANT', ['nif', 'companyId'], {
   unique: true,
   where: 'company_id IS NOT NULL'
 })
@@ -27,112 +27,95 @@ export class FiscalEntity extends BaseEntity {
    * CONTEXTO MULTI-TENANT
    * ------------------------------------------------------------------ */
 
-  @ApiPropertyOptional({ description: 'ID de la empresa propietaria del dato (Null si es global)' })
+  @ApiPropertyOptional({ description: 'ID de la empresa propietaria (Null si es global)' })
   @Column({ name: 'company_id', type: 'uuid', nullable: true })
   companyId?: string;
 
   /* ------------------------------------------------------------------
-   * IDENTIFICACIÓN LEGAL
+   * IDENTIFICACIÓN LEGAL (ESTÁNDAR AEAT)
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
-    description: 'Tipo de persona: F (Física) o J (Jurídica)',
+    description: 'F (Física) o J (Jurídica)',
     enum: PersonType,
-    example: PersonType.LEGAL_ENTITY,
   })
   @Column({
-    name: 'person_type',
+    name: 'tipo_persona',
     type: 'enum',
     enum: PersonType,
     default: PersonType.LEGAL_ENTITY,
   })
-  personType: PersonType;
+  tipoPersona: PersonType;
 
   @ApiProperty({
-    description: 'Tipo de documento fiscal (01: NIF/CIF, 02: Pasaporte...)',
+    description: 'Tipo de documento (01: NIF, 02: Pasaporte...)',
     enum: TaxIdType,
   })
   @Column({
-    name: 'tax_id_type',
+    name: 'tipo_id_fiscal',
     type: 'enum',
     enum: TaxIdType,
     default: TaxIdType.NIF,
   })
-  taxIdType: TaxIdType;
+  tipoIdFiscal: TaxIdType;
 
-  @ApiProperty({ description: 'NIF, CIF o equivalente fiscal', example: 'B12345678' })
-  @Column({ name: 'tax_id', length: 20 })
-  taxId: string;
+  @ApiProperty({ description: 'NIF/CIF del obligado tributario', example: 'B12345678' })
+  @Column({ name: 'nif', length: 20 })
+  nif: string;
 
   /* ------------------------------------------------------------------
-   * NOMBRES Y RAZÓN SOCIAL
+   * NOMBRES Y RAZÓN SOCIAL (UNIFICADO VERI*FACTU)
    * ------------------------------------------------------------------ */
 
-  @ApiPropertyOptional({ description: 'Razón Social (Solo para Persona Jurídica)', example: 'Rentix Solutions S.L.' })
-  @Column({ name: 'corporate_name', nullable: true })
-  corporateName?: string;
+  @ApiProperty({ 
+    description: 'Nombre y Apellidos o Razón Social Completa', 
+    example: 'Rentix Solutions S.L.' 
+  })
+  @Column({ name: 'nombre_razon_social' })
+  nombreRazonSocial: string;
 
-  @ApiPropertyOptional({ description: 'Nombre Legal (Solo para Persona Física)', example: 'Juan' })
-  @Column({ name: 'legal_name', nullable: true })
-  legalName?: string;
-
-  @ApiPropertyOptional({ description: 'Apellidos (Solo para Persona Física)', example: 'Pérez García' })
-  @Column({ name: 'legal_surname', nullable: true })
-  legalSurname?: string;
-
-  @ApiPropertyOptional({ description: 'Nombre comercial o marca conocida', example: 'Rentix App' })
-  @Column({ name: 'trade_name', nullable: true })
-  tradeName?: string;
+  @ApiPropertyOptional({ description: 'Nombre comercial (informativo)', example: 'Rentix App' })
+  @Column({ name: 'nombre_comercial', nullable: true })
+  nombreComercial?: string;
 
   /* ------------------------------------------------------------------
    * RESIDENCIA FISCAL
    * ------------------------------------------------------------------ */
 
   @ApiProperty({
-    description: 'Tipo de residencia (Residente, UE, Extra-UE)',
+    description: 'Residente (R), UE (U), Extra-UE (E)',
     enum: ResidenceType,
     default: ResidenceType.RESIDENT,
   })
   @Column({
-    name: 'residence_type',
+    name: 'tipo_residencia',
     type: 'enum',
     enum: ResidenceType,
     default: ResidenceType.RESIDENT,
   })
-  residenceType: ResidenceType;
+  tipoResidencia: ResidenceType;
 
-  @ApiProperty({ description: 'Código ISO del país (3 caracteres)', example: 'ESP', default: 'ESP' })
-  @Column({ name: 'country_code', length: 3, default: 'ESP' })
-  countryCode: string;
+  @ApiProperty({ description: 'Código ISO país (ESP)', example: 'ESP', default: 'ESP' })
+  @Column({ name: 'codigo_pais', length: 3, default: 'ESP' })
+  codigoPais: string;
 
   /* ------------------------------------------------------------------
    * RELACIONES
    * ------------------------------------------------------------------ */
 
-  /**
-   * @description Relación inversa con Company. 
-   * Se utiliza facturaeParty como nombre de propiedad para mantener compatibilidad con el esquema FacturaE.
-   */
-  @OneToOne(() => Company, (company) => company.facturaeParty)
+  @OneToOne(() => Company, (company) => company.fiscalEntity)
   company: Company;
 
   /* ------------------------------------------------------------------
-   * GETTERS (Lógica Unificada)
+   * GETTERS DE NORMALIZACIÓN
    * ------------------------------------------------------------------ */
 
   /**
-   * @description Nombre calculado automáticamente para exportaciones FacturaE.
-   * Devuelve Razón Social para empresas o Nombre+Apellidos para individuos.
+   * @description Retorna el nombre sanitizado para el nodo <NombreRazonSocial> del XML.
    */
   @Expose()
-  @ApiProperty({
-    description: 'Nombre calculado para documentos oficiales',
-    example: 'Rentix Solutions S.L.'
-  })
-  get facturaeName(): string {
-    if (this.personType === PersonType.LEGAL_ENTITY) {
-      return this.corporateName || 'Sin Razón Social';
-    }
-    return `${this.legalName || ''} ${this.legalSurname || ''}`.trim() || 'Sin Nombre';
+  @ApiProperty({ description: 'Nombre formateado para Veri*factu' })
+  get nombreOficial(): string {
+    return (this.nombreRazonSocial || 'DESCONOCIDO').trim().toUpperCase();
   }
 }

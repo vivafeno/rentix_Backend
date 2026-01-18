@@ -1,43 +1,49 @@
+/**
+ * @description Tipologías de activos inmobiliarios.
+ * Define el tratamiento fiscal automático (IVA/Retenciones) en Rentix 2026.
+ * @author Rentix 2026
+ * @version 2026.2.0
+ */
 export enum PropertyType {
   /**
-   * Vivienda habitual o temporal.
-   * FISCALIDAD: Generalmente EXENTO de IVA (salvo servicios hoteleros).
+   * @description Vivienda habitual o temporal.
+   * FISCALIDAD: Generalmente EXENTO de IVA (Art. 20.Uno.23º Ley IVA).
    */
-  RESIDENTIAL = 'RESIDENTIAL', // Antes: VIVIENDA
+  RESIDENTIAL = 'VIVIENDA',
 
   /**
-   * Locales comerciales u Oficinas.
-   * FISCALIDAD: Sujeto a IVA (21%) y Retención IRPF (19%).
+   * @description Locales comerciales u Oficinas.
+   * FISCALIDAD: Sujeto a IVA (21%) y Retención IRPF.
    */
-  COMMERCIAL = 'COMMERCIAL',   // Antes: LOCAL_COMERCIAL
+  COMMERCIAL = 'LOCAL_COMERCIAL',
 
   /**
-   * Naves industriales o logísticas.
-   * FISCALIDAD: Sujeto a IVA.
+   * @description Naves industriales o logísticas.
    */
-  INDUSTRIAL = 'INDUSTRIAL',
+  INDUSTRIAL = 'NAVE_INDUSTRIAL',
 
   /**
-   * Plazas de garaje.
-   * FISCALIDAD: Si se alquila junto a vivienda (mismo contrato) es exento. Suelto lleva IVA.
+   * @description Plazas de garaje (Sujeto a IVA si es arrendamiento independiente).
    */
-  PARKING = 'PARKING',         // Antes: GARAJE
+  PARKING = 'GARAJE',
 
   /**
-   * Trasteros o almacenes pequeños.
+   * @description Trasteros o almacenes pequeños.
    */
-  STORAGE = 'STORAGE',         // Antes: TRASTERO
+  STORAGE = 'TRASTERO',
 
   /**
-   * Habitaciones (Coliving / Estudiantes).
-   * TENDENCIA: Cada vez más común, requiere contratos distintos a la LAU estándar.
+   * @description Habitaciones (Coliving / Alquiler de temporada por estancias).
    */
-  ROOM = 'ROOM', 
+  ROOM = 'HABITACION',
 
   /**
-   * Terrenos, fincas rústicas o solares.
+   * @description Terrenos, fincas rústicas o solares.
    */
-  LAND = 'LAND',               // Antes: TERRENO
+  LAND = 'TERRENO',
 
-  OTRO = 'OTHER',              // Antes: OTRO
+  /**
+   * @description Otros activos no categorizados.
+   */
+  OTHER = 'OTRO',
 }

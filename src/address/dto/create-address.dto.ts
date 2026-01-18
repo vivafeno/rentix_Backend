@@ -13,9 +13,9 @@ import { AddressType } from '../enums/addressType.enum';
 import { AddressStatus } from '../enums/addressStatus.enum';
 
 /**
- * @description DTO para la creación de direcciones postales y fiscales.
- * Incluye metadatos de Swagger para generación de tipos en Angular.
- * @version 2026.1.17
+ * @description DTO para la creación de direcciones (Veri*factu / FacturaE Compliant).
+ * Sincronizado con la entidad Address para evitar transformaciones costosas en el Service.
+ * @version 2026.2.0
  */
 export class CreateAddressDto {
 
@@ -57,44 +57,35 @@ export class CreateAddressDto {
   isDefault?: boolean = false;
 
   @ApiProperty({
-    description: 'Vía pública y número (Nodo <Address> en FacturaE)',
-    example: 'Calle de Alcalá 1'
+    description: 'Vía pública, número, piso y puerta (Línea única para Veri*factu)',
+    example: 'Calle de Alcalá 1, Piso 2º Derecha'
   })
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => value?.trim())
-  addressLine1: string;
-
-  @ApiPropertyOptional({
-    description: 'Información adicional (Piso, puerta, bloque...)',
-    example: 'Piso 2º Derecha'
-  })
-  @IsOptional()
-  @IsString()
-  @Transform(({ value }) => value?.trim())
-  addressLine2?: string;
+  direccion: string; // 🚩 Refactorizado: de addressLine1/2 a campo único
 
   @ApiProperty({
-    description: 'Código Postal (Validación FacturaE)',
+    description: 'Código Postal (Normativa AEAT)',
     example: '28014'
   })
   @IsString()
   @IsNotEmpty()
   @Length(3, 16)
   @Transform(({ value }) => value?.trim())
-  postalCode: string;
+  codigoPostal: string; // 🚩 Refactorizado: de postalCode a codigoPostal
 
-  @ApiProperty({ description: 'Ciudad o Localidad', example: 'Madrid' })
+  @ApiProperty({ description: 'Localidad / Ciudad', example: 'Madrid' })
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => value?.trim())
-  city: string;
+  poblacion: string; // 🚩 Refactorizado: de city a poblacion
 
   @ApiPropertyOptional({ description: 'Provincia o Región', example: 'Madrid' })
   @IsOptional()
   @IsString()
   @Transform(({ value }) => value?.trim())
-  province?: string;
+  provincia?: string; // 🚩 Refactorizado: de province a provincia
 
   @ApiProperty({
     description: 'Código de país ISO 3166-1 alpha-3',
@@ -103,7 +94,7 @@ export class CreateAddressDto {
   })
   @IsString()
   @IsNotEmpty()
-  @Length(3, 3, { message: 'El código de país debe tener exactamente 3 caracteres (ISO Alpha-3)' })
+  @Length(3, 3, { message: 'El código de país debe ser ISO Alpha-3 (ej. ESP)' })
   @Transform(({ value }) => value?.toUpperCase().trim())
-  countryCode: string = 'ESP';
+  codigoPais: string = 'ESP'; // 🚩 Refactorizado: de countryCode a codigoPais
 }

@@ -1,14 +1,16 @@
 /**
- * Orientación cardinal principal del inmueble.
- * Basado en estándares de habitabilidad y confort térmico.
+ * @description Orientación cardinal principal del inmueble.
+ * Utilizado para métricas de confort térmico y eficiencia energética.
+ * @author Rentix 2026
+ * @version 2026.2.0
  */
 export enum PropertyOrientation {
-  NORTH = 'NORTH',
-  SOUTH = 'SOUTH',
-  EAST = 'EAST',
-  WEST = 'WEST',
-  NORTH_EAST = 'NORTH_EAST',
-  NORTH_WEST = 'NORTH_WEST',
-  SOUTH_EAST = 'SOUTH_EAST',
-  SOUTH_WEST = 'SOUTH_WEST',
+  NORTH = 'NORTE',
+  SOUTH = 'SUR',
+  EAST = 'ESTE',
+  WEST = 'OESTE',
+  NORTH_EAST = 'NORESTE',
+  NORTH_WEST = 'NOROESTE',
+  SOUTH_EAST = 'SURESTE',
+  SOUTH_WEST = 'SUROESTE',
 }

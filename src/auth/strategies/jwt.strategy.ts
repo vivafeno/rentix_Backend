@@ -34,40 +34,31 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  /**
-   * @description Método de validación interna de Passport.
-   * Transforma el payload del JWT en el objeto 'request.user'.
-   * * @param payload Estructura decodificada del JWT (sub, companyId, companyRole, etc.)
-   * @returns {Promise<any>} Entidad de usuario combinada con contexto operativo
-   * @throws {UnauthorizedException} Si el usuario no cumple los criterios de seguridad activos
-   */
-  async validate(payload: any): Promise<any> {
-    const { sub: id, companyId, companyRole } = payload;
+/**
+ * @description Estrategia de Validación JWT (Refactorizada Rentix 2026).
+ * Garantiza que el objeto 'request.user' tenga las propiedades normalizadas.
+ */
+async validate(payload: any): Promise<any> {
+  const { sub: id, companyId, companyRole } = payload;
 
-    // 1. Hidratación: Obtenemos el estado real del usuario desde la persistencia
-    // Esto evita ataques donde un usuario revocado sigue usando un token válido cronológicamente.
-    const user = await this.userRepository.findOne({
-      where: { id },
-    });
+  const user = await this.userRepository.findOne({
+    where: { id },
+  });
 
-    // 2. Blindaje de Existencia y Estado
-    if (!user) {
-      throw new UnauthorizedException('SEGURIDAD: Identidad no encontrada o revocada.');
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException('SEGURIDAD: Cuenta de usuario suspendida.');
-    }
-
-    /**
-     * @description RETORNO DE IDENTIDAD (Context Overriding)
-     * Combinamos la entidad real de la DB (que contiene appRole actualizado)
-     * con los claims de contexto (companyId y companyRole) que vienen en el token.
-     */
-    return {
-      ...user,
-      companyId,    // ID de la empresa seleccionada en el proceso de Login/Switch
-      companyRole,  // Rol específico en esa empresa
-    };
+  if (!user || !user.isActive) {
+    throw new UnauthorizedException('SEGURIDAD: Identidad no válida o inactiva.');
   }
+
+  /**
+   * Normalización del objeto User (Mapping DB -> App)
+   * Extraemos app_role de la DB y lo exponemos como appRole para los decoradores.
+   */
+  return {
+    ...user,
+    id: user.id, // Aseguramos que 'id' esté disponible si se usa 'sub' en el token
+    appRole: user.appRole, // 🚩 CLAVE: Mapeo explícito para @GetUser('appRole')
+    companyId,
+    companyRole,
+  };
+}
 }

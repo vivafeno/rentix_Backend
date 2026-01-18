@@ -3,6 +3,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -12,15 +13,19 @@ import { Company } from 'src/company/entities/company.entity';
 import { CompanyRole } from '../enums/companyRole.enum';
 
 /**
- * @description Entidad que gestiona la relación N:M entre Usuarios y Empresas (Patrimonios).
- * Define el nivel de autoridad (OWNER, TENANT, VIEWER) en un contexto específico.
- * @version 2026.1.17
+ * @description Entidad de interceptación de seguridad (RBAC + ABAC).
+ * Gestiona el acceso granular a Patrimonios (Companies) mediante Roles.
+ * Implementa el 'Blindaje Total' de Rentix 2026.
+ * @version 2026.2.0
  */
 @Entity('company_roles')
+@Index(['userId', 'companyId'], { unique: true }) // Evita duplicidad de roles para un mismo usuario en la misma empresa
+@Index(['role'])
 export class CompanyRoleEntity extends BaseEntity {
 
   /**
-   * @description Rol asignado al usuario en esta empresa/patrimonio.
+   * @description Autoridad delegada en el contexto patrimonial.
+   * Determina las capacidades de facturación y gestión de activos.
    */
   @ApiProperty({
     description: 'Rol del usuario dentro de la empresa',
@@ -34,21 +39,21 @@ export class CompanyRoleEntity extends BaseEntity {
   role: CompanyRole;
 
   /* ------------------------------------------------------------------
-   * RELACIÓN CON USUARIO
+   * CONTEXTO DE USUARIO
    * ------------------------------------------------------------------ */
 
   /**
-   * @description ID del usuario vinculado (Campo de solo lectura para lógica de negocio).
+   * @description UUID del usuario vinculado.
    */
-  @Column({ name: 'user_id' })
+  @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
   /**
-   * @description Relación ManyToOne con la entidad User.
-   * Cascade desactivado aquí para dejar que User controle la persistencia.
+   * @description Relación con la identidad del usuario.
+   * Cascade desactivado: La eliminación de un rol no afecta a la entidad User.
    */
   @ApiProperty({
-    description: 'Usuario al que pertenece este rol',
+    description: 'Usuario vinculado al rol patrimonial',
     type: () => User,
   })
   @ManyToOne(
@@ -63,20 +68,21 @@ export class CompanyRoleEntity extends BaseEntity {
   user: User;
 
   /* ------------------------------------------------------------------
-   * RELACIÓN CON EMPRESA
+   * CONTEXTO PATRIMONIAL (COMPANY)
    * ------------------------------------------------------------------ */
 
   /**
-   * @description ID de la empresa vinculada (Campo de solo lectura para lógica de negocio).
+   * @description UUID de la empresa (Patrimonio).
    */
-  @Column({ name: 'company_id' })
+  @Column({ name: 'company_id', type: 'uuid' })
   companyId: string;
 
   /**
-   * @description Relación ManyToOne con la entidad Company (Patrimonio).
+   * @description Relación con el patrimonio.
+   * Fundamental para el filtrado de facturas y direcciones Veri*factu.
    */
   @ApiProperty({
-    description: 'Empresa a la que pertenece este rol',
+    description: 'Empresa asociada a este nivel de autoridad',
     type: () => Company,
   })
   @ManyToOne(

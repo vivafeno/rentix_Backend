@@ -8,9 +8,9 @@ import { AddressType } from '../enums/addressType.enum';
 import { AddressStatus } from '../enums/addressStatus.enum';
 
 /**
- * @description Gestión centralizada de direcciones postales y fiscales.
- * Cumple con el estándar ISO 3166-1 alpha-3 para compatibilidad con FacturaE.
- * @version 2026.1.17
+ * @description Gestión de direcciones alineada con el estándar Veri*factu y FacturaE.
+ * Se eliminan las líneas múltiples para cumplir con el esquema único de la AEAT.
+ * @version 2026.2.0
  */
 @Entity('addresses')
 @Index(['companyId'])
@@ -18,7 +18,7 @@ import { AddressStatus } from '../enums/addressStatus.enum';
 @Index(['status'])
 @Index(['type'])
 @Index(['createdByUserId'])
-@Index('IDX_ADDRESS_CITY_SEARCH', ['companyId', 'city'])
+@Index('IDX_ADDRESS_CITY_SEARCH', ['companyId', 'poblacion'])
 export class Address extends BaseEntity {
 
   /* ------------------------------------------------------------------
@@ -70,35 +70,31 @@ export class Address extends BaseEntity {
   isDefault: boolean;
 
   /* ------------------------------------------------------------------
-   * DATOS POSTALES (FACTURAE COMPLIANT)
+   * DATOS POSTALES (VERI*FACTU / FACTURAE COMPLIANT)
    * ------------------------------------------------------------------ */
 
-  @ApiProperty({ example: 'Calle de Alcalá 1' })
-  @Column({ name: 'address_line1' })
-  addressLine1: string;
-
-  @ApiPropertyOptional({ example: 'Piso 2º Derecha' })
-  @Column({ name: 'address_line2', nullable: true })
-  addressLine2?: string;
+  @ApiProperty({ example: 'Calle de Alcalá 1, Piso 2º' })
+  @Column({ name: 'direccion' })
+  direccion: string;
 
   @ApiProperty({ example: '28014' })
-  @Column({ name: 'postal_code', length: 16 })
-  postalCode: string;
+  @Column({ name: 'codigo_postal', length: 16 })
+  codigoPostal: string;
 
   @ApiProperty({ example: 'Madrid' })
-  @Column()
-  city: string;
+  @Column({ name: 'poblacion' })
+  poblacion: string;
 
   @ApiPropertyOptional({ example: 'Madrid' })
-  @Column({ nullable: true })
-  province?: string;
+  @Column({ name: 'provincia', nullable: true })
+  provincia?: string;
 
   /**
-   * @description Código de país. Cambiado a length: 3 para cumplir con ISO 3166-1 alpha-3 (ESP).
+   * @description Código de país ISO 3166-1 alpha-3 (ESP).
    */
   @ApiProperty({ example: 'ESP', default: 'ESP' })
-  @Column({ name: 'country_code', length: 3, default: 'ESP' })
-  countryCode: string;
+  @Column({ name: 'codigo_pais', length: 3, default: 'ESP' })
+  codigoPais: string;
 
   /* ------------------------------------------------------------------
    * CICLO DE VIDA Y NORMALIZACIÓN
@@ -107,10 +103,10 @@ export class Address extends BaseEntity {
   @BeforeInsert()
   @BeforeUpdate()
   normalizeData(): void {
-    if (this.city) this.city = this.city.trim();
-    if (this.province) this.province = this.province.trim();
-    if (this.postalCode) this.postalCode = this.postalCode.trim();
-    if (this.addressLine1) this.addressLine1 = this.addressLine1.trim();
-    if (this.countryCode) this.countryCode = this.countryCode.toUpperCase().trim();
+    if (this.poblacion) this.poblacion = this.poblacion.trim();
+    if (this.provincia) this.provincia = this.provincia.trim();
+    if (this.codigoPostal) this.codigoPostal = this.codigoPostal.trim();
+    if (this.direccion) this.direccion = this.direccion.trim();
+    if (this.codigoPais) this.codigoPais = this.codigoPais.toUpperCase().trim();
   }
 }

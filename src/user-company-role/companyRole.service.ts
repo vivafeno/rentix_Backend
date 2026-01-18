@@ -1,74 +1,62 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { CompanyRoleEntity } from './entities/userCompanyRole.entity';
-import { CreateUserCompanyRoleDto, UpdateUserCompanyRoleDto } from './dto';
-import { User } from 'src/user/entities/user.entity';
-import { Company } from 'src/company/entities/company.entity';
+import { CreateUserCompanyRoleDto } from './dto/createUuserCompanyRole.dto';
+import { UpdateUserCompanyRoleDto } from './dto/updateUserCompanyRole.dto';
 
+/**
+ * @class UserCompanyRoleService
+ * @description Lógica de negocio para la gestión de autoridad y acceso (RBAC).
+ * Centraliza la administración de roles en el contexto patrimonial de Rentix 2026.
+ * @version 2.3.0
+ */
 @Injectable()
 export class UserCompanyRoleService {
   constructor(
     @InjectRepository(CompanyRoleEntity)
     private readonly repo: Repository<CompanyRoleEntity>,
-
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
-
-    @InjectRepository(Company)
-    private readonly companyRepo: Repository<Company>,
   ) {}
 
   /**
-   * Crear vínculo usuario ↔ empresa con rol
-   *
-   * Devuelve la entidad completa con relaciones
-   * para coherencia con Swagger / OpenAPI
+   * @method create
+   * @description Registra un nuevo vínculo de autoridad. 
+   * Valida la existencia del vínculo previo para evitar duplicidades mediante el índice único de la DB.
    */
-  async create(
-    dto: CreateUserCompanyRoleDto,
-  ): Promise<CompanyRoleEntity> {
-    const user = await this.userRepo.findOne({
-      where: { id: dto.userId },
-    });
+  async create(dto: CreateUserCompanyRoleDto): Promise<CompanyRoleEntity> {
+    try {
+      // Optimizamos: Usamos los IDs directos para evitar SELECTs innecesarios de User/Company
+      const entity = this.repo.create({
+        role: dto.role,
+        userId: dto.userId,
+        companyId: dto.companyId,
+      });
 
-    if (!user) {
-      throw new NotFoundException(
-        `Usuario con id ${dto.userId} no encontrado`,
-      );
+      const saved = await this.repo.save(entity);
+      return this.findOne(saved.id); // Retornamos con relaciones para el contrato OpenAPI
+    } catch (error) {
+      if (error.code === '23505') { // Código estándar Postgres para Unique Violation
+        throw new ConflictException('El usuario ya tiene un rol asignado en esta empresa');
+      }
+      throw error;
     }
-
-    const company = await this.companyRepo.findOne({
-      where: { id: dto.companyId },
-    });
-
-    if (!company) {
-      throw new NotFoundException(
-        `Empresa con id ${dto.companyId} no encontrada`,
-      );
-    }
-
-    const entity = this.repo.create({
-      role: dto.role,
-      user,
-      company,
-    });
-
-    return this.repo.save(entity);
   }
 
   /**
-   * Listar todos los vínculos usuario-empresa
+   * @method findAll
+   * @description Recupera el histórico global de roles y sus relaciones.
    */
   async findAll(): Promise<CompanyRoleEntity[]> {
     return this.repo.find({
       relations: ['user', 'company'],
+      order: { createdAt: 'DESC' }
     });
   }
 
   /**
-   * Obtener vínculo usuario-empresa por ID
+   * @method findOne
+   * @description Obtiene un vínculo específico validando su existencia.
    */
   async findOne(id: string): Promise<CompanyRoleEntity> {
     const entity = await this.repo.findOne({
@@ -77,18 +65,15 @@ export class UserCompanyRoleService {
     });
 
     if (!entity) {
-      throw new NotFoundException(
-        `Vínculo usuario-empresa con id ${id} no encontrado`,
-      );
+      throw new NotFoundException(`Vínculo con id ${id} no encontrado`);
     }
 
     return entity;
   }
 
   /**
-   * Actualizar vínculo usuario-empresa
-   *
-   * Solo permite modificar el rol
+   * @method update
+   * @description Modifica el nivel de privilegio. El userId y companyId permanecen inmutables.
    */
   async update(
     id: string,
@@ -104,17 +89,14 @@ export class UserCompanyRoleService {
   }
 
   /**
-   * Eliminar vínculo usuario-empresa
-   *
-   * ⚠️ Devuelve objeto explícito para:
-   * - Swagger
-   * - OpenAPI
-   * - api-types.ts en frontend
+   * @method remove
+   * @description Revoca el acceso de forma permanente.
+   * @returns {Promise<{ message: string }>} Confirmación explícita para el frontend.
    */
   async remove(id: string): Promise<{ message: string }> {
     const entity = await this.findOne(id);
     await this.repo.remove(entity);
 
-    return { message: 'Vínculo eliminado correctamente' };
+    return { message: 'Vínculo de autoridad eliminado correctamente' };
   }
 }

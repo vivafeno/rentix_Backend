@@ -1,35 +1,80 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsBoolean, IsEnum, IsOptional, Min, Max, Length } from 'class-validator';
+import { 
+  IsString, 
+  IsNumber, 
+  IsBoolean, 
+  IsEnum, 
+  IsOptional, 
+  Min, 
+  Max, 
+  Length 
+} from 'class-validator';
 import { TaxType } from '../enums/tax-type.enum';
 
+/**
+ * @class CreateTaxDto
+ * @description DTO para la creación de tipos impositivos.
+ * Sincronizado con el motor de facturación Veri*factu.
+ * @version 2026.2.0
+ */
 export class CreateTaxDto {
-  @ApiProperty({ example: 'IVA 21%', minLength: 3, maxLength: 50 })
+
+  @ApiProperty({ 
+    example: 'IVA General 21%', 
+    description: 'Nombre descriptivo para la factura',
+    minLength: 3, 
+    maxLength: 50 
+  })
   @IsString()
   @Length(3, 50)
-  name: string;
+  nombre: string; // 🚩 Sincronizado: name -> nombre
 
-  @ApiProperty({ example: 21.00, minimum: 0, maximum: 100 })
+  @ApiProperty({ 
+    example: 21.00, 
+    description: 'Porcentaje impositivo (0 a 100)',
+    minimum: 0, 
+    maximum: 100 
+  })
   @IsNumber()
   @Min(0)
   @Max(100)
-  rate: number;
+  porcentaje: number; // 🚩 Sincronizado: rate -> porcentaje
 
   @ApiProperty({ 
-    example: TaxType.VAT, 
+    example: TaxType.IVA, 
     enum: TaxType, 
     enumName: 'TaxType',
-    description: 'Tipo lógico para Facturae' 
+    description: 'Categorización lógica del impuesto' 
   })
   @IsEnum(TaxType)
-  type: TaxType;
+  tipo: string; // 🚩 Sincronizado: type -> tipo
 
-  @ApiPropertyOptional({ example: false, default: false })
+  @ApiPropertyOptional({ 
+    example: false, 
+    default: false,
+    description: 'Si es true, el valor resta de la base imponible'
+  })
   @IsBoolean()
   @IsOptional()
-  isRetention?: boolean;
+  esRetencion?: boolean; // 🚩 Sincronizado: isRetention -> esRetencion
 
-  @ApiPropertyOptional({ example: '01', description: 'Código oficial Facturae' })
+  @ApiPropertyOptional({ 
+    example: '01', 
+    description: 'Código oficial FacturaE (IVA=01, IRPF=02)' 
+  })
   @IsString()
   @IsOptional()
-  facturaeCode?: string;
+  codigoFacturae?: string; // 🚩 Sincronizado: facturaeCode -> codigoFacturae
+
+  /**
+   * @description Campo Veri*factu: Requerido si el porcentaje es 0.
+   */
+  @ApiPropertyOptional({ 
+    example: 'E1', 
+    description: 'Causa de exención AEAT (ej: E1 para alquiler vivienda)' 
+  })
+  @IsString()
+  @IsOptional()
+  @Length(2, 5)
+  causaExencion?: string;
 }

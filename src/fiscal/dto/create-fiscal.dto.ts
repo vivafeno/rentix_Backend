@@ -5,125 +5,102 @@ import {
   IsOptional,
   IsString,
   Length,
-  ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-
-import {
-  PersonType,
-  TaxIdType,
-  ResidenceType,
-  TaxRegimeType,
-} from '../enums';
+import { AddressType } from '../../address/enums/addressType.enum';
 
 /**
- * @description DTO para la creación de Entidades Fiscales.
- * Valida condicionalmente los campos según el tipo de persona (Física/Jurídica).
- * Sincronizado con FacturaE y VeriFactu.
- * @version 2026.1.17
+ * @class CreateAddressDto
+ * @description DTO para la creación y validación de direcciones postales (Rentix 2026).
+ * Alineado con el estándar de la AEAT para evitar discrepancias en la generación de XML.
+ * @version 2026.2.0
  */
-export class CreateFiscalEntityDto {
-
+export class CreateAddressDto {
+  /**
+   * @description Tipo de uso de la dirección.
+   * @example 'FISCAL'
+   */
   @ApiProperty({
-    description: 'Tipo de persona física o jurídica',
-    enum: PersonType,
-    enumName: 'PersonType',
-    example: PersonType.LEGAL_ENTITY,
+    description: 'Propósito de la dirección (FISCAL, PROPIEDAD, etc.)',
+    enum: AddressType,
+    enumName: 'AddressType',
   })
-  @IsEnum(PersonType)
+  @IsEnum(AddressType)
   @IsNotEmpty()
-  personType: PersonType;
-
-  @ApiProperty({
-    description: `Tipo de identificación (Claves AEAT): 01: NIF/CIF, 02: NIF-IVA...`,
-    enum: TaxIdType,
-    enumName: 'TaxIdType',
-    example: TaxIdType.NIF,
-  })
-  @IsEnum(TaxIdType)
-  @IsNotEmpty()
-  taxIdType: TaxIdType;
-
-  @ApiProperty({
-    description: 'Identificación fiscal (Normalizada a mayúsculas y sin espacios)',
-    example: 'B12345678',
-  })
-  @IsString()
-  @Length(3, 20)
-  @IsNotEmpty()
-  @Transform(({ value }) => value?.toUpperCase().replace(/\s/g, ''))
-  taxId: string;
-
-  @ApiPropertyOptional({
-    description: 'Razón Social (Obligatorio para Personas Jurídicas)',
-    example: 'Rentix Solutions S.L.',
-  })
-  @ValidateIf((o) => o.personType === PersonType.LEGAL_ENTITY)
-  @IsNotEmpty({ message: 'La Razón Social es obligatoria para empresas' })
-  @IsString()
-  @Transform(({ value }) => value?.trim()) // 🔥 Limpieza de espacios
-  corporateName?: string;
-
-  @ApiPropertyOptional({
-    description: 'Nombre Legal (Obligatorio para Personas Físicas)',
-    example: 'Juan',
-  })
-  @ValidateIf((o) => o.personType === PersonType.INDIVIDUAL)
-  @IsNotEmpty({ message: 'El Nombre es obligatorio para personas físicas' })
-  @IsString()
-  @Transform(({ value }) => value?.trim())
-  legalName?: string;
-
-  @ApiPropertyOptional({
-    description: 'Apellidos (Obligatorio para Personas Físicas)',
-    example: 'Pérez García',
-  })
-  @ValidateIf((o) => o.personType === PersonType.INDIVIDUAL)
-  @IsNotEmpty({ message: 'Los Apellidos son obligatorios para personas físicas' })
-  @IsString()
-  @Transform(({ value }) => value?.trim())
-  legalSurname?: string;
-
-  @ApiPropertyOptional({
-    description: 'Nombre comercial (Opcional)',
-    example: 'Rentix App',
-  })
-  @IsOptional()
-  @IsString()
-  @Transform(({ value }) => value?.trim())
-  tradeName?: string;
-
-  @ApiPropertyOptional({
-    description: 'Código de residencia fiscal según FacturaE',
-    enum: ResidenceType,
-    enumName: 'ResidenceType',
-    example: ResidenceType.RESIDENT,
-  })
-  @IsOptional()
-  @IsEnum(ResidenceType)
-  residenceType?: ResidenceType;
+  type: AddressType;
 
   /**
-   * @description Añadido para completar el esquema FacturaE.
+   * @description Dirección completa (Vía, nombre, número, piso).
+   * Veri*factu no permite división por líneas.
+   */
+  @ApiProperty({
+    description: 'Calle, número, portal y planta en una sola línea',
+    example: 'Calle de Alcalá 1, 2ºB',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'La dirección es obligatoria para la validación fiscal' })
+  @Transform(({ value }) => value?.trim())
+  direccion: string;
+
+  /**
+   * @description Código postal nacional o internacional.
+   */
+  @ApiProperty({
+    description: 'Código postal (máx. 16 caracteres para internacional)',
+    example: '28014',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Length(2, 16)
+  @Transform(({ value }) => value?.trim())
+  codigoPostal: string;
+
+  /**
+   * @description Ciudad o Municipio.
+   */
+  @ApiProperty({
+    description: 'Población o Municipio',
+    example: 'Madrid',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Transform(({ value }) => value?.trim())
+  poblacion: string;
+
+  /**
+   * @description Provincia o Estado.
    */
   @ApiPropertyOptional({
-    description: 'Código ISO del país (3 caracteres, ej: ESP)',
+    description: 'Provincia o Estado',
+    example: 'Madrid',
+  })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value?.trim())
+  provincia?: string;
+
+  /**
+   * @description Código de país en formato ISO 3166-1 alpha-3.
+   * @default 'ESP'
+   */
+  @ApiProperty({
+    description: 'Código ISO del país (3 caracteres)',
     example: 'ESP',
     default: 'ESP',
   })
-  @IsOptional()
   @IsString()
-  @Length(3, 3, { message: 'El código de país debe tener 3 caracteres' })
+  @IsNotEmpty()
+  @Length(3, 3, { message: 'El código de país debe ser ISO alpha-3 (ej: ESP)' })
   @Transform(({ value }) => value?.toUpperCase().trim())
-  countryCode?: string;
+  codigoPais: string = 'ESP';
 
+  /**
+   * @description Indica si es la dirección por defecto para el contexto dado.
+   */
   @ApiPropertyOptional({
-    description: 'Régimen de IVA aplicable (Claves VeriFactu/AEAT)',
-    enum: TaxRegimeType,
-    enumName: 'TaxRegimeType',
-    example: TaxRegimeType.GENERAL,
+    description: 'Establecer como dirección principal',
+    default: false,
   })
   @IsOptional()
-  @IsEnum(TaxRegimeType)
-  taxRegime?: TaxRegimeType;
+  isDefault?: boolean;
 }

@@ -3,14 +3,19 @@ import { IsBoolean, IsOptional } from 'class-validator';
 import { CreateTaxDto } from './create-tax.dto';
 
 /**
- * DTO para actualización parcial de impuestos.
- * Extiende CreateTaxDto haciendo todos los campos opcionales
- * e incluye el control de estado heredado de BaseEntity.
+ * @class UpdateTaxDto
+ * @description DTO para la modificación parcial de tipos impositivos.
+ * Hereda la validación estricta y el tipado Veri*factu del CreateTaxDto.
+ * @version 2026.2.0
  */
 export class UpdateTaxDto extends PartialType(CreateTaxDto) {
   
+  /**
+   * @description Control de disponibilidad operativa.
+   * Si es false, el impuesto no aparecerá en el selector de contratos/facturas.
+   */
   @ApiPropertyOptional({ 
-    description: 'Permite activar o desactivar el impuesto para su uso en la plataforma',
+    description: 'Estado de disponibilidad operativa del impuesto',
     example: true 
   })
   @IsBoolean()

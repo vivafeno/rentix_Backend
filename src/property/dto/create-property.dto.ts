@@ -17,121 +17,121 @@ import { PropertyType, PropertyStatus, PropertyOrientation } from '../enums';
 import { CreateAddressDto } from '../../address/dto/create-address.dto';
 
 /**
- * DTO para la creación de activos inmobiliarios.
- * * Estándares Blueprint 2026:
- * - Validación estricta de tipos nativos.
- * - Soporte para anidamiento de dirección física (CreateAddressDto).
- * - Alineación con campos técnicos y legales (RESO Standard).
- * * @author Rentix
+ * @description DTO para la creación de activos inmobiliarios.
+ * Sincronizado con la entidad Property (Veri*factu Ready).
+ * @version 2026.2.0
  */
 export class CreatePropertyDto {
 
   /* --- Identificación y Clasificación --- */
 
-  @ApiProperty({ description: 'Referencia interna organizacional', example: 'P-VAL-001' })
+  @ApiProperty({ description: 'Referencia interna (ej. P-VAL-001)', example: 'P-VAL-001' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
-  internalCode: string;
+  codigoInterno: string; // 🚩 Refactorizado: internalCode -> codigoInterno
 
-  @ApiProperty({ enum: PropertyType, description: 'Tipología funcional', example: PropertyType.RESIDENTIAL })
+  @ApiProperty({ enum: PropertyType, description: 'Tipología funcional' })
   @IsEnum(PropertyType)
-  type: PropertyType;
+  tipo: PropertyType; // 🚩 Refactorizado: type -> tipo
 
   @ApiPropertyOptional({ enum: PropertyStatus, default: PropertyStatus.AVAILABLE })
   @IsOptional()
   @IsEnum(PropertyStatus)
-  status?: PropertyStatus;
+  estado?: PropertyStatus; // 🚩 Refactorizado: status -> estado
 
-  @ApiPropertyOptional({ example: '1234567AB1234C0001DE', maxLength: 25 })
+  @ApiPropertyOptional({ description: 'Referencia Catastral (Veri*factu)', example: '1234567AB1234C0001DE' })
   @IsOptional()
   @IsString()
   @MaxLength(25)
-  cadastralReference?: string;
+  referenciaCatastral?: string; // 🚩 Refactorizado: cadastralReference -> referenciaCatastral
 
   /* --- Métricas Físicas --- */
 
   @ApiProperty({ description: 'Superficie total construida (m2)', example: 120.50 })
   @IsNumber()
   @Min(1)
-  surfaceTotal: number;
+  superficieConstruida: number; // 🚩 Refactorizado
 
   @ApiProperty({ description: 'Superficie útil habitable (m2)', example: 95.00 })
   @IsNumber()
   @Min(1)
-  surfaceUseful: number;
+  superficieUtil: number; // 🚩 Refactorizado
 
   /* --- Datos Técnicos --- */
 
-  @ApiPropertyOptional({ example: 1998 })
+  @ApiPropertyOptional({ description: 'Año de construcción', example: 1998 })
   @IsOptional()
   @IsInt()
   @Min(1800)
   @Max(2100)
-  constructionYear?: number;
+  anoConstruccion?: number; // 🚩 Refactorizado
 
   @ApiPropertyOptional({ enum: PropertyOrientation })
   @IsOptional()
   @IsEnum(PropertyOrientation)
-  orientation?: PropertyOrientation;
+  orientacion?: PropertyOrientation; // 🚩 Refactorizado
 
   @ApiPropertyOptional({ example: 3 })
   @IsOptional()
   @IsInt()
   @Min(0)
-  bedrooms?: number;
+  dormitorios?: number; // 🚩 Refactorizado
 
   @ApiPropertyOptional({ example: 2 })
   @IsOptional()
   @IsInt()
   @Min(0)
-  bathrooms?: number;
+  baños?: number; // 🚩 Refactorizado
 
   /* --- Eficiencia Energética --- */
 
-  @ApiPropertyOptional({ description: 'Letra calificación energética', example: 'B' })
+  @ApiPropertyOptional({ description: 'Calificación energética (A-G)', example: 'B' })
   @IsOptional()
   @IsString()
   @MaxLength(1)
-  energyRating?: string;
+  certificadoEnergetico?: string; // 🚩 Refactorizado
 
   @ApiPropertyOptional({ description: 'Consumo kWh/m2 año', example: 45.2 })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  energyScore?: number;
+  puntuacionEnergetica?: number; // 🚩 Refactorizado
 
   /* --- Dotaciones (Amenities) --- */
 
   @ApiPropertyOptional({ default: false })
   @IsOptional()
   @IsBoolean()
-  hasElevator?: boolean;
+  tieneAscensor?: boolean; // 🚩 Refactorizado
 
   @ApiPropertyOptional({ default: false })
   @IsOptional()
   @IsBoolean()
-  hasParking?: boolean;
+  tieneParking?: boolean; // 🚩 Refactorizado
 
   @ApiPropertyOptional({ default: false })
   @IsOptional()
   @IsBoolean()
-  hasStorageRoom?: boolean;
+  tieneTrastero?: boolean;
 
   @ApiPropertyOptional({ default: false })
   @IsOptional()
   @IsBoolean()
-  hasTerrace?: boolean;
+  tieneTerraza?: boolean;
 
   /* --- Localización --- */
 
+  /**
+   * @description Dirección física. Veri*factu exige que el inmueble esté localizado.
+   */
   @ApiProperty({ type: CreateAddressDto, description: 'Objeto de dirección física' })
   @ValidateNested()
   @Type(() => CreateAddressDto)
   address: CreateAddressDto;
 
-  @ApiPropertyOptional({ description: 'Memoria descriptiva o notas' })
+  @ApiPropertyOptional({ description: 'Notas adicionales' })
   @IsOptional()
   @IsString()
-  description?: string;
+  notas?: string;
 }

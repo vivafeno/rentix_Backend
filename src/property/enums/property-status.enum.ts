@@ -1,16 +1,27 @@
+/**
+ * @description Estados operativos del activo inmobiliario.
+ * Controla la disponibilidad para la creación de contratos y flujos de wizard.
+ * @author Rentix 2026
+ * @version 2026.2.0
+ */
 export enum PropertyStatus {
-  /** Listo para ser alquilado o publicado. */
-  AVAILABLE = 'AVAILABLE',
+  /** * @description Listo para ser alquilado o publicado. 
+   */
+  AVAILABLE = 'DISPONIBLE',
 
-  /** Tiene un contrato activo y vigente. */
-  RENTED = 'RENTED',
+  /** * @description Tiene un contrato de arrendamiento activo y vigente. 
+   */
+  RENTED = 'ALQUILADO',
 
-  /** Se ha entregado una señal/fianza, pero aún no hay contrato activo. */
-  RESERVED = 'RESERVED',
+  /** * @description Con señal/fianza recibida, bloqueado para nuevos contratos. 
+   */
+  RESERVED = 'RESERVADO',
 
-  /** No disponible por obras, averías o preparación. */
-  MAINTENANCE = 'MAINTENANCE',
+  /** * @description Fuera de servicio por reformas o adecuación técnica. 
+   */
+  MAINTENANCE = 'MANTENIMIENTO',
 
-  /** Retirado del mercado temporalmente (Baja administrativa). */
-  UNAVAILABLE = 'UNAVAILABLE',
+  /** * @description Retirado del inventario activo (Baja lógica). 
+   */
+  UNAVAILABLE = 'NO_DISPONIBLE',
 }

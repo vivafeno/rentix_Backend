@@ -1,141 +1,93 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsDate,
-  IsDateString,
-  IsEnum,
-  IsInt,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Max,
-  Min
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { 
+  IsUUID, IsNumber, IsDateString, IsEnum, IsArray, 
+  IsOptional, Min, Max, ArrayMinSize 
 } from 'class-validator';
-import {
-  ContractStatus,
-  BillingPeriod,
-  ContractType,
-  PaymentMethod
-} from '../enums';
+import { FrecuenciaPago, MetodoPago, ContractStatus } from '../enums/contract.enums';
 
+/**
+ * @class CreateContractDto
+ * @description Contrato de entrada para la creación de nuevos arrendamientos.
+ * Incluye metadatos para la generación estricta de tipos en Angular.
+ */
 export class CreateContractDto {
-  // --------------------------------------------------------------------------
-  // IDENTIFICACIÓN
-  // --------------------------------------------------------------------------
-  @ApiProperty({ description: 'Referencia interna única', example: 'ALQ-2026/001' })
-  @IsString()
-  reference: string;
 
-  @ApiProperty({ enum: ContractType, default: ContractType.ALQUILER })
-  @IsEnum(ContractType)
-  type: ContractType;
-
-  // --------------------------------------------------------------------------
-  // RELACIONES (IDs UUID)
-  // --------------------------------------------------------------------------
-  @ApiProperty({ description: 'UUID de la Empresa (Owner)' })
-  @IsUUID()
-  companyId: string;
-
-  @ApiProperty({ description: 'UUID del Cliente (Inquilino)' })
-  @IsUUID()
-  clientId: string;
-
-  @ApiProperty({ description: 'UUID de la Propiedad' })
+  @ApiProperty({ description: 'ID del inmueble objeto del alquiler' })
   @IsUUID()
   propertyId: string;
 
-  // --------------------------------------------------------------------------
-  // ECONOMÍA
-  // --------------------------------------------------------------------------
-  @ApiProperty({ description: 'Renta mensual base', example: 1000.00 })
+  @ApiProperty({ 
+    type: [String], 
+    description: 'IDs de los inquilinos firmantes (Mínimo 1)' 
+  })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @ArrayMinSize(1)
+  inquilinosIds: string[];
+
+  /* --- CONDICIONES ECONÓMICAS --- */
+
+  @ApiProperty({ example: 1200.00 })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  monthlyRent: number;
+  rentaMensual: number;
 
-  @ApiProperty({ description: 'Fianza', example: 2000.00 })
+  @ApiPropertyOptional({ example: 2400.00, default: 0 })
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  depositAmount: number;
+  fianza?: number;
 
-  // --------------------------------------------------------------------------
-  // IMPUESTOS (Tax Entity)
-  // --------------------------------------------------------------------------
-  @ApiProperty({ description: 'UUID del Impuesto IVA (Tax Entity)' })
+  @ApiProperty({ description: 'ID del impuesto IVA (Tax)' })
   @IsUUID()
-  taxId: string;
+  taxIvaId: string;
 
-  @ApiProperty({ description: 'UUID de la Retención IRPF (Tax Entity)', required: false })
+  @ApiPropertyOptional({ description: 'ID del impuesto IRPF (Tax)' })
   @IsOptional()
   @IsUUID()
-  retentionId?: string;
+  taxIrpfId?: string;
 
-  // --------------------------------------------------------------------------
-  // OPERATIVA DE PAGO (Bancos)
-  // --------------------------------------------------------------------------
-  @ApiProperty({ enum: PaymentMethod })
-  @IsEnum(PaymentMethod)
-  paymentMethod: PaymentMethod;
+  /* --- CONFIGURACIÓN DE FACTURACIÓN --- */
 
-  @ApiProperty({ description: 'UUID de la Cuenta del Cliente (Para domiciliar)', required: false })
-  @IsOptional()
-  @IsUUID()
-  tenantBankAccountId?: string;
+  @ApiProperty({ 
+    enum: FrecuenciaPago, 
+    enumName: 'FrecuenciaPago', // 🚩 Clave para ng-openapi-gen
+    default: FrecuenciaPago.MENSUAL 
+  })
+  @IsEnum(FrecuenciaPago)
+  frecuenciaPago: FrecuenciaPago;
 
-  @ApiProperty({ description: 'UUID de la Cuenta de la Empresa (Para recibir transf.)', required: false })
-  @IsOptional()
-  @IsUUID()
-  companyBankAccountId?: string;
+  @ApiProperty({ 
+    enum: MetodoPago, 
+    enumName: 'MetodoPago', // 🚩 Clave para ng-openapi-gen
+    default: MetodoPago.TRANSFERENCIA 
+  })
+  @IsEnum(MetodoPago)
+  metodoPago: MetodoPago;
 
-  // --------------------------------------------------------------------------
-  // CICLO DE VIDA & FECHAS
-  // --------------------------------------------------------------------------
-  @ApiProperty({ enum: ContractStatus, default: ContractStatus.BORRADOR })
-  @IsEnum(ContractStatus)
-  status: ContractStatus;
-
-  @ApiProperty({ example: '2026-01-01' })
-  @Type(() => Date) // 👈 "Magia": Convierte el string entrante a Date
-  @IsDate()         // Valida que sea un objeto Date real
-  startDate: Date;  // 👈 Ahora sí podemos decir que es Date
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  endDate?: Date;
-
-  @ApiProperty({ description: 'Día de cobro programado (1-28)', example: 1 })
-  @IsInt()
+  @ApiProperty({ example: 5, description: 'Día del mes para emitir factura' })
+  @IsNumber()
   @Min(1)
-  @Max(28)
-  billingDay: number;
+  @Max(31)
+  diaFacturacion: number;
 
-  @ApiProperty({ enum: BillingPeriod })
-  @IsEnum(BillingPeriod)
-  billingPeriod: BillingPeriod;
+  /* --- TEMPORALIDAD --- */
 
-  // --------------------------------------------------------------------------
-  // AUTOMATIZACIÓN
-  // --------------------------------------------------------------------------
-  @ApiProperty({ description: 'Activar facturación automática', default: false })
+  @ApiProperty({ example: '2026-02-01' })
+  @IsDateString()
+  fechaInicio: string;
+
+  @ApiProperty({ example: 12, description: 'Vigencia en meses' })
+  @IsNumber()
+  @Min(1)
+  duracionMeses: number;
+
+  @ApiPropertyOptional({ 
+    enum: ContractStatus, 
+    enumName: 'ContractStatus', // 🚩 Clave para ng-openapi-gen
+    default: ContractStatus.ACTIVO 
+  })
   @IsOptional()
-  @IsBoolean()
-  isAutoBillingEnabled?: boolean;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  autoBillingUntil?: Date;
-
-  // --------------------------------------------------------------------------
-  // DOCUMENTACIÓN
-  // --------------------------------------------------------------------------
-  @ApiProperty({ description: 'URL del documento firmado', required: false })
-  @IsOptional()
-  @IsString()
-  documentUrl?: string;
+  @IsEnum(ContractStatus)
+  estado?: ContractStatus;
 }

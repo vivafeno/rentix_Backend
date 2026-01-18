@@ -1,21 +1,31 @@
 /**
- * @description Clasificación de sujeción al impuesto.
- * Define si la entidad está "Obligada a" (Sujeta) o "Exenta" de aplicar el impuesto.
- * @version 2026.1.17
+ * @description Clasificación de sujeción al IVA/IGIC (Veri*factu / FacturaE).
+ * Define el comportamiento del impuesto en la línea de factura y el desglose en el XML.
+ * @author Rentix 2026
+ * @version 2026.2.0
  */
 export enum SubjectType {
-  /** * @description Sujeto (Obligado): La operación conlleva aplicación de IVA/IGIC.
-   * Mapea al código 'S' en esquemas oficiales.
+  /**
+   * @description Sujeto: Operación sujeta y no exenta.
+   * Clave AEAT: 'S1'. Corresponde a operaciones con cuota de IVA ordinaria.
    */
-  SUBJECT = 'S',
+  SUBJECT = 'S1',
 
-  /** * @description Exento: Operación sujeta pero exenta (ej. Alquiler de vivienda).
-   * Mapea al código 'E' en esquemas oficiales.
+  /**
+   * @description Sujeto y Exento: Operación sujeta pero con exención (Art. 20 LIVA).
+   * Clave AEAT: 'S2'. Ej: Alquiler de vivienda estable, servicios médicos.
    */
-  EXEMPT = 'E',
+  EXEMPT = 'S2',
 
-  /** * @description No Sujeto: Fuera del ámbito del impuesto.
-   * Mapea al código 'N' en esquemas oficiales.
+  /**
+   * @description No Sujeto por reglas de localización (Art. 7, 14 LIVA).
+   * Clave AEAT: 'N1'. Operaciones que se consideran realizadas fuera del territorio.
    */
-  NOT_SUBJECT = 'N',
+  NOT_SUBJECT_LOCALIZATION = 'N1',
+
+  /**
+   * @description No Sujeto por otros motivos.
+   * Clave AEAT: 'N2'. Otros supuestos de no sujeción.
+   */
+  NOT_SUBJECT_OTHER = 'N2',
 }
