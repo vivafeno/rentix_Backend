@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AddressService } from './address.service';
 import { AddressController } from './address.controller';
 import { Address } from './entities/address.entity';
-import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
+import { CompanyRoleEntity } from 'src/user-company-role/entities/user-company-role.entity';
 
 /**
  * AddressModule

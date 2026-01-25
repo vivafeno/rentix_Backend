@@ -1,0 +1,29 @@
+{
+  "general": {
+    "internal_error": "Ha ocorregut un error inesperat. Per favor, contacta amb suport.",
+    "not_found": "El recurs sol·licitat no existeix.",
+    "forbidden": "No tens permisos suficients per a realitzar esta operació."
+  },
+  "company": {
+    "not_found": "No es troba l'empresa sol·licitada.",
+    "create_error": "No s'ha pogut crear l'empresa. El NIF podria estar duplicat."
+  },
+  "property": {
+    "not_found": "No s'ha trobat la propietat especificada.",
+    "active_contracts": "No es pot eliminar una propietat que té contractes actius.",
+    "invalid_status": "L'estat de la propietat no permet realitzar esta acció."
+  },
+  "tenant": {
+    "not_found": "L'arrendatari no existeix en la nostra base de dades.",
+    "already_exists": "Ja existeix un arrendatari registrat amb este ID."
+  },
+  "contract": {
+    "not_found": "No s'ha trobat el contracte.",
+    "overlap": "Les dates seleccionades se solapen amb un contracte existent.",
+    "invalid_dates": "La data de fi no pot ser anterior a la data d'inici."
+  },
+  "billing": {
+    "invoice_generation_error": "Error en generar la factura. Revisa les dades fiscals.",
+    "payment_failed": "El procés de pagament no s'ha pogut completar."
+  }
+}

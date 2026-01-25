@@ -13,26 +13,24 @@ import { CreateAddressDto } from 'src/address/dto/create-address.dto';
 
 /**
  * @class UpdateFiscalEntityDto
- * @description DTO parcial para la actualización de la Identidad Fiscal.
+ * @description DTO parcial para la Identidad Fiscal.
  */
 export class UpdateFiscalEntityDto extends PartialType(CreateFiscalDto) {}
 
 /**
  * @class UpdateFiscalAddressDto
- * @description DTO parcial para la actualización de la Dirección Fiscal.
+ * @description DTO parcial para la Dirección Fiscal.
  */
 export class UpdateFiscalAddressDto extends PartialType(CreateAddressDto) {}
 
 /**
  * @class UpdateCompanyDto
- * @description DTO para la actualización de Empresa/Patrimonio (Rentix 2026).
- * Resuelve errores de linter mediante tipado estricto en transformaciones.
- * @version 2026.2.0
+ * @description DTO para la actualización de Empresa/Patrimonio.
+ * Soporta actualización anidada (Deep Save) de datos fiscales y dirección.
+ * @version 2026.2.1
  */
 export class UpdateCompanyDto {
-  /**
-   * @description Actualización parcial de identidad fiscal.
-   */
+  
   @ApiPropertyOptional({
     description: 'Actualización parcial de identidad fiscal',
     type: UpdateFiscalEntityDto,
@@ -40,11 +38,8 @@ export class UpdateCompanyDto {
   @IsOptional()
   @ValidateNested()
   @Type(() => UpdateFiscalEntityDto)
-  fiscalEntity?: UpdateFiscalEntityDto; // 🚩 Sincronizado: de facturaeParty
+  fiscalEntity?: UpdateFiscalEntityDto;
 
-  /**
-   * @description Dirección fiscal actualizable.
-   */
   @ApiPropertyOptional({
     description: 'Actualización parcial de dirección fiscal',
     type: UpdateFiscalAddressDto,
@@ -54,23 +49,17 @@ export class UpdateCompanyDto {
   @Type(() => UpdateFiscalAddressDto)
   fiscalAddress?: UpdateFiscalAddressDto;
 
-  /**
-   * @description Email de contacto corporativo. Normalizado a minúsculas con tipado seguro.
-   */
   @ApiPropertyOptional({
     description: 'Email de contacto de la empresa',
     example: 'contacto@patrimonio.com',
   })
   @IsOptional()
   @IsEmail({}, { message: 'El formato del email no es válido' })
-  @Transform(({ value }: { value: unknown }) =>
+  @Transform(({ value }: { value: any }) =>
     typeof value === 'string' ? value.toLowerCase().trim() : value,
   )
   email?: string;
 
-  /**
-   * @description Teléfono de contacto. Sanitizado con tipado seguro.
-   */
   @ApiPropertyOptional({
     description: 'Teléfono de contacto de la empresa',
     example: '+34900000000',
@@ -78,8 +67,13 @@ export class UpdateCompanyDto {
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  @Transform(({ value }: { value: unknown }) =>
+  @Transform(({ value }: { value: any }) =>
     typeof value === 'string' ? value.trim() : value,
   )
   phone?: string;
+
+  /**
+   * Nota para el Superadmin: isActive y deletedAt no están aquí.
+   * Se gestionan mediante el endpoint toggleStatus por seguridad operativa.
+   */
 }

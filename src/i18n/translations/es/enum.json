@@ -1,0 +1,19 @@
+{
+  "AppRole": {
+    "SUPERADMIN": "Administrador del Sistema",
+    "ADMIN": "Administrador de Empresa",
+    "USER": "Usuario Estándar"
+  },
+  "PropertyStatus": {
+    "AVAILABLE": "Disponible",
+    "RENTED": "Alquilado",
+    "MAINTENANCE": "En mantenimiento",
+    "RESERVED": "Reservado"
+  },
+  "ContractStatus": {
+    "DRAFT": "Borrador",
+    "ACTIVE": "Activo",
+    "EXPIRED": "Vencido",
+    "CANCELED": "Cancelado"
+  }
+}

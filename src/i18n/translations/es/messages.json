@@ -1,0 +1,17 @@
+{
+  "crud": {
+    "create_success": "Registro creado correctamente.",
+    "update_success": "Datos actualizados correctamente.",
+    "delete_success": "Elemento eliminado correctamente.",
+    "restore_success": "Elemento restaurado correctamente."
+  },
+  "auth": {
+    "logout_success": "Sesión cerrada correctamente."
+  },
+  "company": {
+    "switch_success": "Has cambiado al contexto de {companyName}."
+  },
+  "profile": {
+    "password_updated": "Tu contraseña ha sido modificada con éxito."
+  }
+}

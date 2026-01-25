@@ -7,6 +7,9 @@ import {
   MinLength,
   IsUrl,
   MaxLength,
+  IsBoolean,
+  IsNotEmpty,
+  Equals,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -14,103 +17,77 @@ import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
 /**
  * @class CreateUserDto
- * @description Data Transfer Object para la creación de usuarios.
- * Sigue el estándar Blueprint 2026 con tipado estricto y sanitización obligatoria.
- * @version 2026.1.18
- * @author Rentix
+ * @description DTO de alta de usuarios Rentix 2026.
+ * Incluye localización, cumplimiento legal (RGPD) y sanitización estricta.
  */
 export class CreateUserDto {
-  /**
-   * @description Identificador único de acceso. Normalizado a minúsculas y sin espacios.
-   */
-  @ApiProperty({
-    description: 'Correo electrónico único del usuario',
-    example: 'user@example.com',
-  })
+
+  /* --- 🔐 CREDENCIALES --- */
+
+  @ApiProperty({ example: 'user@example.com', description: 'Email único del usuario' })
   @IsEmail({}, { message: 'El formato del email no es válido' })
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.toLowerCase().trim() : value,
-  ) // 🛡️ Solución: Tipado explícito para eliminar 'unsafe member access'
+  @IsNotEmpty()
+  @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase().trim() : value))
   email: string;
 
-  /**
-   * @description Contraseña de acceso (Hash se genera en el Service).
-   */
-  @ApiProperty({
-    description: 'Contraseña del usuario (mínimo 6 caracteres)',
-    example: 'StrongPassword123!',
-    minLength: 6,
-  })
+  @ApiProperty({ example: 'StrongPassword123!', minLength: 8 })
   @IsString()
-  @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
+  @MinLength(8, { message: 'La seguridad Rentix requiere al menos 8 caracteres' })
   password: string;
 
-  /**
-   * @description Nombre de pila del usuario.
-   */
-  @ApiPropertyOptional({
-    description: 'Nombre del usuario',
-    example: 'Carlos',
-  })
+  /* --- 👤 DATOS PERSONALES --- */
+
+  @ApiPropertyOptional({ example: 'Carlos' })
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim() : value,
-  )
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   firstName?: string;
 
-  /**
-   * @description Apellidos del usuario.
-   */
-  @ApiPropertyOptional({
-    description: 'Apellidos del usuario',
-    example: 'Sanz',
-  })
+  @ApiPropertyOptional({ example: 'Sanz' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim() : value,
-  )
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   lastName?: string;
 
-  /**
-   * @description Teléfono de contacto.
-   */
-  @ApiPropertyOptional({
-    description: 'Teléfono de contacto',
-    example: '+34600112233',
-  })
+  @ApiPropertyOptional({ example: '+34600112233' })
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim() : value,
-  )
+  @Transform(({ value }) => (typeof value === 'string' ? value.replace(/\s/g, '') : value)) // Quita espacios en teléfonos
   phone?: string;
 
-  /**
-   * @description Enlace a la imagen de perfil.
-   */
-  @ApiPropertyOptional({
-    description: 'URL de la foto de perfil',
-    example: 'https://cdn.rentix.com/avatars/user-1.jpg',
-  })
+  @ApiPropertyOptional({ example: 'https://cdn.rentix.com/avatars/u1.jpg' })
   @IsOptional()
   @IsUrl({}, { message: 'La URL del avatar no es válida' })
   avatarUrl?: string;
 
-  /**
-   * @description Rol de aplicación global.
-   */
-  @ApiPropertyOptional({
-    description: 'Rol global del usuario',
-    enum: AppRole,
-    example: AppRole.USER,
-    default: AppRole.USER,
-  })
+  /* --- 🌍 LOCALIZACIÓN (Rigor 2026) --- */
+
+  @ApiPropertyOptional({ example: 'es', default: 'es' })
   @IsOptional()
-  @IsEnum(AppRole, { message: 'El rol de aplicación no es válido' })
-  appRole?: AppRole;
+  @IsString()
+  @MaxLength(5)
+  language?: string = 'es';
+
+  @ApiPropertyOptional({ example: 'Europe/Madrid', default: 'Europe/Madrid' })
+  @IsOptional()
+  @IsString()
+  timezone?: string = 'Europe/Madrid';
+
+  /* --- ⚖️ CUMPLIMIENTO LEGAL (RGPD) --- */
+
+  @ApiProperty({ description: 'Aceptación obligatoria de términos y condiciones' })
+  @IsBoolean({ message: 'El campo de términos debe ser un valor booleano' })
+  @Equals(true, { message: 'Debes aceptar los términos y condiciones para continuar' }) // 🚩 Rigor: Bloqueo si es false
+  @IsNotEmpty()
+  acceptTerms: boolean;
+
+  /* --- 🛡️ SEGURIDAD --- */
+
+  @ApiPropertyOptional({ enum: AppRole, default: AppRole.USER })
+  @IsOptional()
+  @IsEnum(AppRole)
+  appRole?: AppRole = AppRole.USER;
 }

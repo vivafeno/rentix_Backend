@@ -7,6 +7,8 @@ import {
   IsString,
   Min,
   ValidateNested,
+  IsArray,
+  MaxLength,
 } from 'class-validator';
 
 import { CreateFiscalDto } from '../../fiscal/dto/create-fiscal.dto';
@@ -14,90 +16,80 @@ import { CreateAddressDto } from '../../address/dto/create-address.dto';
 
 /**
  * @class CreateTenantProfileDto
- * @description DTO Maestro para la creación de perfiles CRM de clientes.
- * Orquesta la validación de datos administrativos, fiscales y postales.
- * @version 2026.1.19
+ * @description Orquestador de la capa operativa. 
+ * Maneja CRM, Finanzas y Estructuras Anidadas.
  */
 export class CreateTenantProfileDto {
-  /* ------------------------------------------------------------------
-   * ⚙️ DATOS CRM (Gestión)
-   * ------------------------------------------------------------------ */
-
-  @ApiPropertyOptional({
-    description: 'Código interno administrativo (ej: CLI-2024-001).',
-    example: 'CLI-001',
-  })
+  /* --- ⚙️ DATOS CRM --- */
+  
+  @ApiPropertyOptional({ example: 'CLI-001' })
   @IsOptional()
   @IsString()
+  @MaxLength(50)
   internalCode?: string;
 
-  @ApiPropertyOptional({
-    description: 'Email de facturación (Veri*factu compliant).',
-    example: 'facturacion@cliente.com',
-  })
+  @ApiPropertyOptional({ example: 'facturacion@arrendatario.es' })
   @IsOptional()
-  @IsEmail({}, { message: 'El formato del email de facturación no es válido.' })
+  @IsEmail({}, { message: 'El formato del email de facturación es incorrecto' })
   billingEmail?: string;
 
-  @ApiPropertyOptional({
-    description: 'Teléfono de contacto administrativo.',
-    example: '+34 600 000 000',
-  })
+  @ApiPropertyOptional({ example: '+34 600 000 000' })
   @IsOptional()
   @IsString()
   phone?: string;
 
-  @ApiPropertyOptional({
-    description: 'Observaciones internas del cliente.',
-    example: 'Llamar solo por las tardes.',
-  })
+  @ApiPropertyOptional({ example: 'Cliente preferente' })
   @IsOptional()
   @IsString()
   notes?: string;
 
-  /* ------------------------------------------------------------------
-   * 💰 CONDICIONES DE PAGO
-   * ------------------------------------------------------------------ */
+  /* --- 💰 FINANZAS & SEPA (Sincronizado con Entity) --- */
 
-  @ApiPropertyOptional({
-    description: 'Método de pago habitual (TRANSFERENCIA, RECIBO, etc).',
-    example: 'TRANSFERENCIA',
+  @ApiPropertyOptional({ 
+    example: 'ES2100001234567890123456',
+    description: 'IBAN para domiciliaciones bancarias'
   })
+  @IsOptional()
+  @IsString()
+  @MaxLength(34)
+  bankIban?: string;
+
+  @ApiPropertyOptional({ example: 'TRANSFERENCIA' })
   @IsOptional()
   @IsString()
   paymentMethod?: string;
 
-  @ApiPropertyOptional({
-    description: 'Días de vencimiento (0 = Contado).',
-    default: 0,
-    example: 30,
-  })
+  @ApiPropertyOptional({ default: 0 })
   @IsOptional()
   @IsInt()
   @Min(0)
   paymentDays?: number;
 
-  /* ------------------------------------------------------------------
-   * 🏗️ ESTRUCTURAS ANIDADAS (Relaciones)
-   * ------------------------------------------------------------------ */
+  @ApiPropertyOptional({ 
+    description: '1=ES, 2=UE, 3=EXT',
+    example: '1' 
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1)
+  taxResidenceCode?: string;
 
-  /**
-   * @description Datos de identidad fiscal.
-   * Resuelve el error de linter asegurando que el tipo es una clase constructora.
-   */
+  /* --- 🏗️ ESTRUCTURAS ANIDADAS --- */
+
   @ApiProperty({
-    description: 'Datos Fiscales (NIF, Razón Social) para Facturae',
+    description: 'Datos Fiscales (NIF, Razón Social)',
     type: () => CreateFiscalDto,
   })
   @ValidateNested()
-  @Type((): typeof CreateFiscalDto => CreateFiscalDto) // 🚩 Solución linter: Tipado explícito del retorno
+  @Type(() => CreateFiscalDto)
   fiscalIdentity: CreateFiscalDto;
 
   @ApiProperty({
-    description: 'Dirección Fiscal Principal',
-    type: () => CreateAddressDto,
+    description: 'Array de direcciones (Fiscal, Envío, Notificaciones)',
+    type: [CreateAddressDto],
   })
-  @ValidateNested()
-  @Type((): typeof CreateAddressDto => CreateAddressDto) // 🚩 Solución linter: Tipado explícito del retorno
-  address: CreateAddressDto;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateAddressDto)
+  addresses: CreateAddressDto[];
 }

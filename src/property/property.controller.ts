@@ -7,158 +7,94 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
-  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
-  ApiResponse,
+  ApiOkResponse,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
 
 import { PropertyService } from './property.service';
-import { CreatePropertyDto } from './dto/create-property.dto';
-import { UpdatePropertyDto } from './dto/update-property.dto';
+import { CreatePropertyDto, UpdatePropertyDto } from './dto';
 import { Property } from './entities/property.entity';
 
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
-import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
+import { CompanyRole } from 'src/user-company-role/enums/user-company-role.enum';
 
 /**
  * @class PropertyController
- * @description Gestión del inventario de activos inmobiliarios.
- * Implementa Multi-tenancy mediante aislamiento por companyId inyectado en el JWT.
+ * @description Gestión de activos inmobiliarios con rigor Multi-tenant.
  * @author Rentix 2026
- * @version 2.4.0
+ * @version 2.5.0
  */
 @ApiTags('Properties')
 @ApiBearerAuth()
 @Controller('properties')
+@Auth() // Protección base para cualquier usuario autenticado
 export class PropertyController {
   constructor(private readonly propertyService: PropertyService) {}
 
-  /**
-   * @method findAll
-   * @description Recupera el catálogo de inmuebles operativos del patrimonio actual.
-   */
   @Get()
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Consultar activos operativos del patrimonio' })
-  @ApiResponse({ status: 200, type: [Property] })
-  async findAll(@GetUser('companyId') companyId: string): Promise<Property[]> {
-    this.validateCompanyContext(companyId);
-    return this.propertyService.findAll(companyId);
-  }
-
-  /**
-   * @method findTrash
-   * @description Recupera los inmuebles en estado 'Eliminado Lógico'.
-   */
-  @Get('trash')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Consultar activos en la papelera' })
-  @ApiResponse({ status: 200, type: [Property] })
-  async findTrash(
+  @ApiOperation({ summary: 'Listado de activos (Contextual: Activos/Inactivos)' })
+  @ApiOkResponse({ type: [Property] })
+  async findAll(
     @GetUser('companyId') companyId: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<Property[]> {
-    this.validateCompanyContext(companyId);
-    return this.propertyService.findTrash(companyId);
+    return this.propertyService.findAll(companyId, appRole);
   }
 
-  /**
-   * @method findOne
-   * @description Obtiene la ficha técnica completa de un inmueble.
-   */
   @Get(':id')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Consultar detalle de activo por UUID' })
-  @ApiResponse({ status: 200, type: Property })
+  @ApiOperation({ summary: 'Consulta de ficha técnica de activo' })
+  @ApiOkResponse({ type: Property })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('companyId') companyId: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<Property> {
-    this.validateCompanyContext(companyId);
-    return this.propertyService.findOne(id, companyId);
+    return this.propertyService.findOne(id, companyId, appRole);
   }
 
-  /**
-   * @method create
-   * @description Registra un nuevo activo con creación atómica de dirección.
-   */
   @Post()
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Registrar nueva unidad inmobiliaria' })
-  @ApiResponse({ status: 201, type: Property })
+  @ApiOperation({ summary: 'Alta atómica de activo e infraestructura geográfica' })
+  @ApiCreatedResponse({ type: Property })
   async create(
     @Body() createDto: CreatePropertyDto,
     @GetUser('companyId') companyId: string,
   ): Promise<Property> {
-    this.validateCompanyContext(companyId);
+    // El companyId viene del contexto de selección del usuario
     return this.propertyService.create(companyId, createDto);
   }
 
-  /**
-   * @method restore
-   * @description Recupera un activo de la papelera (Soft-delete rollback).
-   */
-  @Patch(':id/restore')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Restaurar activo desde la papelera' })
-  @ApiResponse({ status: 200, type: Property })
-  async restore(
-    @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
-    @GetUser('companyRole') companyRole: CompanyRole,
-  ): Promise<Property> {
-    this.validateCompanyContext(companyId);
-    return this.propertyService.restore(id, companyId, companyRole);
-  }
-
-  /**
-   * @method update
-   * @description Actualiza los atributos del activo. Solo editable por OWNER o REPRESENTATIVE.
-   */
   @Patch(':id')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Actualizar atributos de activo existente' })
-  @ApiResponse({ status: 200, type: Property })
+  @ApiOperation({ summary: 'Actualización parcial de atributos y dirección' })
+  @ApiOkResponse({ type: Property })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: UpdatePropertyDto,
     @GetUser('companyId') companyId: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<Property> {
-    this.validateCompanyContext(companyId);
-    return this.propertyService.update(id, companyId, updateDto);
+    return this.propertyService.update(id, companyId, updateDto, appRole);
   }
 
   /**
-   * @method remove
-   * @description Ejecuta el borrado lógico del inmueble.
+   * @method toggleStatus
+   * @description El interruptor de vida del activo. Reemplaza Delete y Restore.
    */
-  @Delete(':id')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Mover activo a la papelera (Soft-Delete)' })
-  @ApiResponse({ status: 200, type: Property })
-  async remove(
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Alternar estado operativo (Activar/Desactivar)' })
+  @ApiOkResponse({ type: Property })
+  async toggleStatus(
     @Param('id', ParseUUIDPipe) id: string,
+    @Body('isActive') isActive: boolean,
     @GetUser('companyId') companyId: string,
     @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Property> {
-    this.validateCompanyContext(companyId);
-    return this.propertyService.remove(id, companyId, companyRole);
-  }
-
-  /**
-   * @private
-   * @description Valida la existencia del contexto organizacional en la traza del JWT.
-   */
-  private validateCompanyContext(companyId: string | undefined): void {
-    if (!companyId) {
-      throw new BadRequestException(
-        'Contexto de empresa (companyId) es requerido para operar con activos.',
-      );
-    }
+    return this.propertyService.toggleStatus(id, companyId, isActive, companyRole);
   }
 }

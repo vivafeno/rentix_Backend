@@ -6,47 +6,66 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../user/entities/user.entity';
 import { AppRole } from '../auth/enums/user-global-role.enum';
 
+/**
+ * @class SeederService
+ * @description Motor de hidratación de datos maestros Rentix 2026.
+ * Implementa el protocolo de "Nodo Raíz" para asegurar el acceso inicial al sistema.
+ */
 @Injectable()
 export class SeederService {
   private readonly logger = new Logger(SeederService.name);
 
   constructor(
-    @InjectRepository(User) private readonly userRepo: Repository<User>,
+    @InjectRepository(User) 
+    private readonly userRepo: Repository<User>,
   ) {}
 
+  /**
+   * @method seed
+   * @description Orquestador de seeding. Ejecuta tareas en secuencia lógica.
+   */
   async seed(): Promise<void> {
-    this.logger.log('▶ Iniciando seeding (SUPERADMIN ONLY)...');
+    this.logger.log('🚀 [Rentix 2026] Iniciando protocolo de Seeding...');
+    
     try {
-      await this.seedSuperAdmin();
-      this.logger.log('🚀 Seeding completado con éxito.');
-    } catch (e) {
-      this.logger.error('Error crítico en seeding:', e);
+      const admin = await this.seedSuperAdmin();
+      this.logger.log(`✅ [Identity] Nodo Raíz verificado: ${admin.email}`);
+      this.logger.log('🏁 [Rentix 2026] Seeding completado con éxito.');
+    } catch (error) {
+      this.logger.error('❌ [Critical] Fallo en la hidratación de datos:', error);
+      throw error; 
     }
   }
 
-  private async seedSuperAdmin(): Promise<User> {
+  /**
+   * @method seedSuperAdmin
+   * @description Garantiza la existencia del SUPERADMIN.
+   * Resuelve TS2740 mediante tipado explícito de instancia.
+   */
+private async seedSuperAdmin(): Promise<User> {
     const email = 'admin@rentix.com';
 
-    // 1. Usamos find (devuelve Array)
-    const existingUsers = await this.userRepo.find({ where: { email } });
+    const existingUser = await this.userRepo.findOne({ where: { email } });
+    if (existingUser) return existingUser;
 
-    // 2. Comprobación explícita de longitud y retorno del índice 0
-    if (existingUsers.length > 0) {
-      this.logger.log(`Superadmin ya existe: ${email}`);
-      return existingUsers[0]; // Retorna explícitamente User
-    }
+    const hashedPassword = await bcrypt.hash('Admin123!', 10);
 
-    // 3. Creación limpia sin 'as any' si es posible, o mínima
-    const newAdminPayload = {
+    // 🚩 Rigor 2026: Reset de inferencia mediante 'unknown'
+    // 1. Creamos el objeto
+    // 2. Lo convertimos a unknown para romper el enlace con User[]
+    // 3. Lo convertimos a User para que el save() sea feliz
+    const superAdmin = this.userRepo.create({
       email,
-      password: await bcrypt.hash('Admin123!', 10),
+      password: hashedPassword,
       appRole: AppRole.SUPERADMIN,
-      fullName: 'System Admin',
-    };
+      firstName: 'System',
+      lastName: 'Admin',
+      acceptTerms: true,
+      isActive: true,
+      isEmailVerified: true,
+    } as any) as unknown as User; 
 
-    // create() devuelve un objeto único cuando se le pasa un objeto único
-    const newAdmin = this.userRepo.create(newAdminPayload as unknown as User);
-
-    return await this.userRepo.save(newAdmin);
+    // Ahora TS reconoce que save() recibe un User y devuelve un User
+    return await this.userRepo.save(superAdmin);
   }
 }

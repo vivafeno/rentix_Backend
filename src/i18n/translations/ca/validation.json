@@ -1,0 +1,15 @@
+{
+  "IS_EMAIL": "El correu electrònic no és vàlid.",
+  "IS_NOT_EMPTY": "Este camp és obligatori i no pot estar buit.",
+  "MIN_LENGTH": "La longitud mínima és de $constraint1 caràcters.",
+  "MAX_LENGTH": "La longitud màxima és de $constraint1 caràcters.",
+  "MIN": "El valor mínim permés és $constraint1.",
+  "MAX": "El valor màxim permés és $constraint1.",
+  "IS_DATE_STRING": "Has d'introduir una data vàlida (format ISO).",
+  "IS_NUMBER": "El valor ha de ser un número.",
+  "IS_DECIMAL": "El valor ha de ser un número decimal (ex. 10.50).",
+  "EQUALS": "Has d'acceptar este camp per a continuar.",
+  "IS_BOOLEAN": "El valor ha de ser verdader o fals.",
+  "IS_ENUM": "El valor seleccionat no és una opció vàlida.",
+  "IS_UUID": "L'identificador proporcionat no és un UUID vàlid."
+}

@@ -1,0 +1,29 @@
+{
+  "general": {
+    "internal_error": "Ha ocurrido un error inesperado. Por favor, contacta con soporte.",
+    "not_found": "El recurso solicitado no existe.",
+    "forbidden": "No tienes permisos suficientes para realizar esta operación."
+  },
+  "company": {
+    "not_found": "No se encuentra la empresa solicitada.",
+    "create_error": "No se ha podido crear la empresa. El CIF podría estar duplicado."
+  },
+  "property": {
+    "not_found": "No se ha encontrado la propiedad especificada.",
+    "active_contracts": "No se puede eliminar una propiedad que tiene contratos activos.",
+    "invalid_status": "El estado de la propiedad no permite realizar esta acción."
+  },
+  "tenant": {
+    "not_found": "El arrendatario no existe en nuestra base de datos.",
+    "already_exists": "Ya existe un arrendatario registrado con este ID."
+  },
+  "contract": {
+    "not_found": "No se ha encontrado el contrato.",
+    "overlap": "Las fechas seleccionadas se solapan con un contrato existente.",
+    "invalid_dates": "La fecha de fin no puede ser anterior a la fecha de inicio."
+  },
+  "billing": {
+    "invoice_generation_error": "Error al generar la factura. Revisa los datos fiscales.",
+    "payment_failed": "El proceso de pago no se ha podido completar."
+  }
+}

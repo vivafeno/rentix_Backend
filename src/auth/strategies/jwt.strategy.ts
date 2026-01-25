@@ -1,30 +1,25 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 
-import { User } from '../../user/entities/user.entity';
 import { ActiveUserData } from '../interfaces/jwt-payload.interface';
+
 /**
  * @class JwtStrategy
- * @description Estrategia de Validación JWT (Blueprint 2026).
- * Hidrata la request con datos del usuario y contexto de empresa.
- * @version 2026.1.19
+ * @description Estrategia Stateless de Alto Rendimiento.
+ * Elimina la latencia de DB en cada petición confiando en la integridad de la firma.
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     private readonly configService: ConfigService,
   ) {
     const secret = configService.get<string>('JWT_ACCESS_SECRET');
 
     if (!secret) {
-      throw new Error(
-        'CONFIG_ERROR: JWT_ACCESS_SECRET no definido en el entorno.',
+      throw new InternalServerErrorException(
+        'CONFIG_ERROR: JWT_ACCESS_SECRET no definido.',
       );
     }
 
@@ -37,35 +32,20 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   /**
    * @method validate
-   * @description Valida el payload y retorna los datos del usuario activo.
-   * Resuelve errores 44, 47, 64 y 65 al eliminar el uso de 'any'.
-   * @param {ActiveUserData} payload Datos decodificados del token
-   * @returns {Promise<ActiveUserData>} Datos para inyectar en request.user
+   * @description Procesa el payload inyectándolo directamente en la request.
+   * La validez del usuario se garantiza por la firma del token y el tiempo de expiración.
    */
-  async validate(payload: ActiveUserData): Promise<ActiveUserData> {
-    const { id: id, companyId, companyRole } = payload;
-
-    const user = await this.userRepository.findOne({
-      where: { id },
-    });
-
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException(
-        'SEGURIDAD: Identidad no válida o inactiva.',
-      );
-    }
-
-    /**
-     * @description Normalización del objeto ActiveUserData.
-     * Mapeamos explícitamente los campos para garantizar la compatibilidad
-     * con los decoradores de seguridad y la lógica multi-tenant.
-     */
+  validate(payload: ActiveUserData): ActiveUserData {
+    // 🚩 Rigor 2026: No consultamos la DB aquí.
+    // Si el token es válido, su contenido es ley hasta que expire.
+    // Las validaciones de 'isActive' se manejan en el Refresh Token o mediante una Blacklist.
+    
     return {
-      id: user.id,
-      email: user.email,
-      appRole: user.appRole,
-      companyId: companyId || '',
-      companyRole: companyRole || '',
+      id: payload.id,
+      email: payload.email,
+      appRole: payload.appRole,
+      companyId: payload.companyId,
+      companyRole: payload.companyRole,
     };
   }
 }

@@ -13,7 +13,7 @@ import { Tax } from './entities/tax.entity';
 import { CreateTaxDto } from './dto/create-tax.dto';
 import { UpdateTaxDto } from './dto/update-tax.dto';
 import { TaxType } from './enums/tax-type.enum';
-import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
+import { CompanyRole } from 'src/user-company-role/enums/user-company-role.enum';
 
 /**
  * @class TaxService

@@ -19,7 +19,7 @@ import { CreateBillingConceptDto } from './dto/create-billing-concept.dto';
 import { UpdateBillingConceptDto } from './dto/update-billing-concept.dto';
 import { BillingConcept } from './entities/billing-concept.entity';
 import { AppRole } from '../auth/enums/user-global-role.enum';
-import { CompanyRole } from '../user-company-role/enums/companyRole.enum';
+import { CompanyRole } from '../user-company-role/enums/user-company-role.enum';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
 /**

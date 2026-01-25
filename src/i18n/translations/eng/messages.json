@@ -1,0 +1,17 @@
+{
+  "crud": {
+    "create_success": "Record created successfully.",
+    "update_success": "Data updated successfully.",
+    "delete_success": "Item deleted successfully.",
+    "restore_success": "Item restored successfully."
+  },
+  "auth": {
+    "logout_success": "Logged out successfully."
+  },
+  "company": {
+    "switch_success": "Switched to {companyName} context."
+  },
+  "profile": {
+    "password_updated": "Your password has been changed successfully."
+  }
+}

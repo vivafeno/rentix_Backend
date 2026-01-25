@@ -1,4 +1,15 @@
 {
-  "email_invalid": "El email no es válido",
-  "required": "El campo $property es obligatorio"
+  "IS_EMAIL": "El correo electrónico no es válido.",
+  "IS_NOT_EMPTY": "Este campo es obligatorio y no puede estar vacío.",
+  "MIN_LENGTH": "La longitud mínima es de $constraint1 caracteres.",
+  "MAX_LENGTH": "La longitud máxima es de $constraint1 caracteres.",
+  "MIN": "El valor mínimo permitido es $constraint1.",
+  "MAX": "El valor máximo permitido es $constraint1.",
+  "IS_DATE_STRING": "Debes introducir una fecha válida (formato ISO).",
+  "IS_NUMBER": "El valor debe ser un número.",
+  "IS_DECIMAL": "El valor debe ser un número decimal (ej. 10.50).",
+  "EQUALS": "Debes aceptar este campo para continuar.",
+  "IS_BOOLEAN": "El valor debe ser verdadero o falso.",
+  "IS_ENUM": "El valor seleccionado no es una opción válida.",
+  "IS_UUID": "El identificador proporcionado no es un UUID válido."
 }

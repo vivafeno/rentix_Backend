@@ -6,8 +6,8 @@
     "deleteOutDir": true,
     "assets": [
       {
-        "include": "i18n/translations/**/*",
-        "outDir": "dist/src"
+        "include": "../i18n/**/*",
+        "outDir": "dist/i18n" 
       }
     ],
     "watchAssets": true

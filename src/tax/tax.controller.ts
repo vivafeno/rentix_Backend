@@ -24,7 +24,7 @@ import { Tax } from './entities/tax.entity';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
-import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
+import { CompanyRole } from 'src/user-company-role/enums/user-company-role.enum';
 
 /**
  * @class TaxController

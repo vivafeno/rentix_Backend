@@ -1,21 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, ValidateNested, IsNotEmpty } from 'class-validator';
+import { IsUUID, ValidateNested, IsNotEmpty, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { CreateFiscalDto } from '../../fiscal/dto/create-fiscal.dto';
 import { CreateAddressDto } from 'src/address/dto/create-address.dto';
-import { CreateCompanyDto } from './';
+import { CreateCompanyDto } from './create-company.dto';
+import { PersonType } from 'src/fiscal/enums/personType.enum';
 
 /**
  * @class CreateCompanyLegalDto
  * @description DTO Maestro para la creación atómica de sujetos legales.
  * Orquesta la validación de los tres bloques: Empresa, Fiscal y Dirección.
- * @version 2026.2.0
- * @author Rentix
+ * @version 2026.2.1
+ * @author Rentix 2026
  */
 export class CreateCompanyLegalDto {
   /**
-   * @description ID del usuario al que se vinculará la entidad (Owner/Tenant/Viewer).
+   * @description ID del usuario al que se vinculará la entidad (Owner original).
    */
   @ApiProperty({
     description: 'ID del usuario al que se vinculará la entidad (UUID v4)',
@@ -26,10 +27,22 @@ export class CreateCompanyLegalDto {
   userId: string;
 
   /**
+   * @description Clasificación AEAT de la entidad.
+   */
+  @ApiProperty({
+    enum: PersonType,
+    enumName: 'PersonType',
+    description: 'Naturaleza jurídica: F (Física) o J (Jurídica)',
+  })
+  @IsEnum(PersonType)
+  @IsNotEmpty()
+  personType: PersonType;
+
+  /**
    * @description Datos básicos de la empresa/patrimonio.
    */
   @ApiProperty({
-    description: 'Configuración de la entidad de empresa',
+    description: 'Configuración básica de la entidad de empresa',
     type: CreateCompanyDto,
   })
   @ValidateNested()
@@ -38,14 +51,14 @@ export class CreateCompanyLegalDto {
   company: CreateCompanyDto;
 
   /**
-   * @description Datos de identidad fiscal (NIF, Razón Social, etc).
+   * @description Datos de identidad fiscal (Veri*factu Compliant).
    */
   @ApiProperty({
-    description: 'Datos de identidad fiscal (Veri*factu Compliant)',
+    description: 'Datos de identidad fiscal (NIF, Razón Social, etc)',
     type: CreateFiscalDto,
   })
   @ValidateNested()
-  @Type(() => CreateFiscalDto) // 🚩 Sincronizado con el nuevo nombre
+  @Type(() => CreateFiscalDto)
   @IsNotEmpty()
   fiscal: CreateFiscalDto;
 

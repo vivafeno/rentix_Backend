@@ -1,0 +1,19 @@
+{
+  "AppRole": {
+    "SUPERADMIN": "Administrador del Sistema",
+    "ADMIN": "Administrador d'Empresa",
+    "USER": "Usuari Estàndard"
+  },
+  "PropertyStatus": {
+    "AVAILABLE": "Disponible",
+    "RENTED": "Llogat",
+    "MAINTENANCE": "En manteniment",
+    "RESERVED": "Reservat"
+  },
+  "ContractStatus": {
+    "DRAFT": "Esborrany",
+    "ACTIVE": "Actiu",
+    "EXPIRED": "Finalitzat",
+    "CANCELED": "Cancel·lat"
+  }
+}

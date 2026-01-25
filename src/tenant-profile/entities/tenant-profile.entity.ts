@@ -14,107 +14,89 @@ import { Company } from 'src/company/entities/company.entity';
 import { Address } from 'src/address/entities/address.entity';
 import { FiscalEntity } from 'src/fiscal/entities/fiscalEntity';
 import { User } from 'src/user/entities/user.entity';
+import { Contract } from 'src/contract/entities/contract.entity';
+import { Tenant } from './../../tenant/entities/tenant.entity';
 
 /**
  * 👤 TenantProfile
- *
- * Representa la ficha operativa de un cliente dentro de una empresa (Tenant).
- *
- * ARQUITECTURA:
- * - Datos Fiscales: Delegados en FiscalIdentity (Core Facturae).
- * - Datos CRM: Propios de esta entidad (Email, condiciones de pago, notas).
- * - Multi-tenant: Protegido por index único [companyId + internalCode].
+ * Versión Gema Rentix 2026: Orquestador Operativo y Fiscal.
  */
 @Entity('tenant_profiles')
 @Index(['companyId', 'internalCode'], { unique: true })
 export class TenantProfile extends BaseEntity {
-  /* ------------------------------------------------------------------
-   * 🏢 TENANT (EMPRESA PROPIETARIA)
-   * ------------------------------------------------------------------ */
 
-  @ApiProperty({ type: () => Company })
+  /* --- EMPRESA PROPIETARIA (Aislamiento Multi-tenant) --- */
   @ManyToOne(() => Company, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'company_id' })
   company: Company;
 
-  @Column({ name: 'company_id' })
+  @Column({ name: 'company_id', type: 'uuid' })
   companyId: string;
 
-  /* ------------------------------------------------------------------
-   * ⚖️ IDENTIDAD FISCAL (CORE FACTURAE)
-   * ------------------------------------------------------------------ */
+  /* --- VÍNCULO CON LA IDENTIDAD (Core) --- */
+  @OneToOne(() => Tenant, (tenant) => tenant.profile, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'tenant_id' })
+  tenant: Tenant;
 
+  @Column({ name: 'tenant_id', type: 'uuid' })
+  tenantId: string;
+
+  /* --- IDENTIDAD FISCAL (Veri*factu Ready) --- */
   @ApiProperty({ description: 'Datos fiscales validados (NIF, Razón Social)' })
   @OneToOne(() => FiscalEntity, {
     cascade: true,
-    eager: true, // Carga automática para mostrar nombre en listados
+    eager: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'fiscal_identity_id' })
   fiscalIdentity: FiscalEntity;
 
-  /* ------------------------------------------------------------------
-   * ⚙️ DATOS DE GESTIÓN (CRM)
-   * ------------------------------------------------------------------ */
+  @Column({ name: 'fiscal_identity_id', type: 'uuid', nullable: true })
+  fiscalIdentityId: string;
 
-  @ApiProperty({
-    description: 'Código interno único por empresa (ej: CLI-2024-001)',
-    example: 'CLI-001',
-  })
-  @Column({ name: 'internal_code', length: 50 })
+  /* --- DATOS DE GESTIÓN CRM --- */
+  @ApiProperty({ example: 'CLI-001' })
+  @Column({ name: 'internal_code', length: 50, nullable: true })
   internalCode: string;
 
-  @ApiPropertyOptional({
-    description: 'Email principal para facturación electrónica',
-  })
+  @ApiPropertyOptional({ example: 'facturacion@arrendatario.es' })
   @Column({ name: 'billing_email', nullable: true })
   billingEmail?: string;
 
-  @ApiPropertyOptional({ description: 'Teléfono de contacto administrativo' })
-  @Column({ nullable: true })
+  @ApiPropertyOptional({ example: '+34 600 000 000' })
+  @Column({ name: 'phone', nullable: true })
   phone?: string;
 
-  /* ------------------------------------------------------------------
-   * 💰 CONDICIONES DE PAGO (CRÍTICO FACTURAE)
-   * ------------------------------------------------------------------ */
+  /* --- CONDICIONES DE PAGO & SEPA --- */
+  @ApiPropertyOptional({ example: 'ES210000...' })
+  @Column({ name: 'bank_iban', nullable: true, length: 34 })
+  bankIban?: string;
 
-  @ApiPropertyOptional({
-    description:
-      'Método de pago habitual (ej: TRANSFERENCIA, RECIBO, EFECTIVO)',
-    example: 'TRANSFERENCIA',
-  })
+  @ApiPropertyOptional({ example: 'TRANSFERENCIA' })
   @Column({ name: 'payment_method', nullable: true, default: 'TRANSFERENCIA' })
   paymentMethod?: string;
 
-  @ApiProperty({
-    description: 'Días de vencimiento para cálculo automático (0 = Contado)',
-    default: 0,
-  })
-  @Column({ name: 'payment_days', default: 0 })
+  @ApiProperty({ description: 'Días de vencimiento', default: 0 })
+  @Column({ name: 'payment_days', type: 'int', default: 0 })
   paymentDays: number;
 
-  @ApiPropertyOptional({ description: 'Notas internas sobre el cliente (CRM)' })
-  @Column({ type: 'text', nullable: true })
-  notes?: string;
+  @ApiPropertyOptional({ description: 'Código residencia (1=ES, 2=UE, 3=EXT)' })
+  @Column({ name: 'tax_residence_code', length: 1, default: '1' })
+  taxResidenceCode: string;
 
-  /* ------------------------------------------------------------------
-   * 🔐 ACCESO / PORTAL
-   * ------------------------------------------------------------------ */
-
-  @ApiPropertyOptional({
-    description: 'Usuario vinculado para acceso al portal de clientes',
-    type: () => User, // <--- ESTO ROMPE EL CICLO INFINITO EN SWAGGER
-  })
+  /* --- VÍNCULO CON EL PORTAL --- */
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'user_id' })
   user?: User;
 
-  /* ------------------------------------------------------------------
-   * 📍 DIRECCIONES
-   * ------------------------------------------------------------------ */
+  /* --- RELACIONES INVERSAS (Navegabilidad) --- */
 
-  @OneToMany(() => Address, (address) => address.clientProfile, {
-    cascade: ['insert', 'update'],
+  @ApiProperty({ type: () => Address, isArray: true })
+  @OneToMany(() => Address, (address) => address.tenant, {
+    cascade: true,
   })
   addresses: Address[];
+
+  @OneToMany(() => Contract, (contract) => contract.tenants)
+  contracts: Contract[];
 }

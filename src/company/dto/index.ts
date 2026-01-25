@@ -1,4 +1,4 @@
-export * from './createCompany.dto';
-export * from './createCompanyLegal.dto';
-export * from './updateCompany.dto';
-export * from './company-me.dto';
+export * from './create-company.dto';
+export * from './create-company-legal.dto';
+export * from './update-company.dto';
+

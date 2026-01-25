@@ -5,62 +5,40 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { Request } from 'express'; // 🛡️ Importación para tipado de Request
 import { ROLES_KEY } from '../decorators/roles.decorator';
-import type { ActiveUserData } from '../interfaces/jwt-payload.interface';
+import { ActiveUserData } from '../interfaces/jwt-payload.interface';
 import { AppRole } from '../enums/user-global-role.enum';
-import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
+import { CompanyRole } from 'src/user-company-role/enums/user-company-role.enum';
 
-/**
- * @class RolesGuard
- * @description Guard de Autorización Jerárquica basado en Blueprint 2026.
- * Valida el acceso mediante la intersección de Roles Globales (AppRole) y de Empresa (CompanyRole).
- * @version 2026.1.20
- */
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
-  /**
-   * @method canActivate
-   * @description Valida si el usuario posee los roles requeridos.
-   * Resuelve errores de linter mediante el tipado de la Request y casting seguro.
-   */
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<
-      (AppRole | CompanyRole)[]
-    >(ROLES_KEY, [context.getHandler(), context.getClass()]);
+    const requiredRoles = this.reflector.getAllAndOverride<(AppRole | CompanyRole)[]>(
+      ROLES_KEY, 
+      [context.getHandler(), context.getClass()]
+    );
 
-    if (!requiredRoles || requiredRoles.length === 0) {
-      return true;
-    }
+    if (!requiredRoles || requiredRoles.length === 0) return true;
 
-    // 🛡️ Blindaje de tipos: Tipamos la request para que 'user' sea ActiveUserData y no 'any'
-    const request = context
-      .switchToHttp()
-      .getRequest<Request & { user?: ActiveUserData }>();
-    const user = request.user;
+    const request = context.switchToHttp().getRequest();
+    const user: ActiveUserData = request.user;
 
-    if (!user) {
-      return false;
-    }
+    if (!user) return false;
 
-    // Comprobación de acceso comparando con el payload del JWT tipado
-    const hasAccess = requiredRoles.some((role) => {
-      const isAppRole = user.appRole === (role as AppRole);
-      const isCompanyRole = user.companyRole === (role as CompanyRole);
-      return isAppRole || isCompanyRole;
-    });
+    // 🚩 MEJORA 1: Fast-pass para SuperAdmin (Máxima Eficiencia)
+    if (user.appRole === AppRole.SUPERADMIN) return true;
+
+    // 🚩 MEJORA 2: Comparación optimizada
+    const hasAccess = requiredRoles.some((role) => 
+      user.appRole === role || user.companyRole === role
+    );
 
     if (!hasAccess) {
-      throw new ForbiddenException({
-        message: 'Blindaje Total: Acceso denegado por jerarquía insuficiente.',
-        required: requiredRoles,
-        current: {
-          app: user.appRole,
-          company: user.companyRole || 'NONE',
-        },
-      });
+      // 🚩 MEJORA 3: Blindaje de información (Efectividad en Seguridad)
+      // No devolvemos los roles requeridos ni los actuales para evitar ingeniería inversa.
+      throw new ForbiddenException('Acceso denegado: Jerarquía insuficiente para realizar esta acción.');
     }
 
     return true;

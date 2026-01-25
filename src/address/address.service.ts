@@ -7,10 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Address } from './entities/address.entity';
-import { AddressStatus } from './enums/addressStatus.enum';
+import { AddressStatus } from './enums/address-status.enum';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
-import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
-import { CompanyRole } from 'src/user-company-role/enums/companyRole.enum';
+import { CompanyRoleEntity } from 'src/user-company-role/entities/user-company-role.entity';
+import { CompanyRole } from 'src/user-company-role/enums/user-company-role.enum';
 
 /**
  * @class AddressService

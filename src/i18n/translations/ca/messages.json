@@ -1,0 +1,17 @@
+{
+  "crud": {
+    "create_success": "Registre creat correctament.",
+    "update_success": "Dades actualitzades correctament.",
+    "delete_success": "Element eliminat correctament.",
+    "restore_success": "Element restaurat correctament."
+  },
+  "auth": {
+    "logout_success": "Sessió tancada correctament."
+  },
+  "company": {
+    "switch_success": "Has canviat al context de {companyName}."
+  },
+  "profile": {
+    "password_updated": "La teua contrasenya ha sigut modificada amb èxit."
+  }
+}

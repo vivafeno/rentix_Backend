@@ -1,77 +1,37 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsUUID,
   IsString,
   IsOptional,
   IsEmail,
-  // 🛡️ IsIBAN eliminado para limpiar el error de 'defined but never used'
   IsEnum,
-  MaxLength,
+  IsNotEmpty,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
 import { TenantStatus } from '../enums/tenant-status.enum';
+import { CreateTenantProfileDto } from './../../tenant-profile/dto/create-tenant-profile.dto'; // 🚩 Path corregido a relativo local
 
-/**
- * @class CreateTenantDto
- * @description DTO para la vinculación de arrendatarios.
- * Sincronizado con la lógica de Veri*factu y FacturaE.
- * @version 2026.2.1
- * @author Rentix
- */
 export class CreateTenantDto {
-  @ApiProperty({
-    description: 'ID de la Identidad Fiscal (NIF/CIF)',
-    example: 'uuid',
-  })
-  @IsUUID()
-  fiscalIdentityId: string;
-
-  @ApiProperty({ description: 'ID de la Dirección Fiscal', example: 'uuid' })
-  @IsUUID()
-  direccionFiscalId: string;
-
-  /* --- ATRIBUTOS OPERATIVOS --- */
-
-  @ApiPropertyOptional({
-    example: 'TEN-2026-001',
-    description: 'Código interno ERP',
-  })
-  @IsOptional()
+  
+  @ApiProperty({ example: 'Juan Pérez' })
   @IsString()
-  @MaxLength(50)
-  codigoInterno?: string;
+  @IsNotEmpty({ message: 'El nombre es obligatorio.' })
+  name: string;
+
+  @ApiProperty({ example: 'inquilino@email.com' })
+  @IsEmail({}, { message: 'El formato del email no es válido.' })
+  @IsNotEmpty()
+  email: string;
 
   @ApiPropertyOptional({ enum: TenantStatus, default: TenantStatus.ACTIVE })
   @IsOptional()
   @IsEnum(TenantStatus)
-  estado?: TenantStatus;
+  status?: TenantStatus;
 
-  /* --- CONTACTO & PAGOS --- */
-
-  @ApiPropertyOptional({ example: 'inquilino@email.com' })
-  @IsOptional()
-  @IsEmail()
-  email?: string;
-
-  @ApiPropertyOptional({ example: '+34600000000' })
-  @IsOptional()
-  @IsString()
-  telefono?: string;
-
-  @ApiPropertyOptional({
-    description: 'IBAN para domiciliaciones SEPA',
-    example: 'ES21...',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(34)
-  ibanBancario?: string;
-
-  @ApiPropertyOptional({
-    description: 'Código residencia AEAT (1: Es, 2: UE, 3: Ext)',
-    default: '1',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(1)
-  codigoResidencia?: string;
+  @ApiProperty({ type: () => CreateTenantProfileDto })
+  @ValidateNested()
+  @Type(() => CreateTenantProfileDto) // 🚩 Crucial para hidratar el sub-objeto
+  @IsNotEmpty()
+  profile: CreateTenantProfileDto;
 }

@@ -5,18 +5,18 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
-  ApiResponse,
+  ApiOkResponse,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
+
 import { TenantService } from './tenant.service';
-import { CreateTenantDto } from './dto/create-tenant.dto';
-import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { CreateTenantDto, UpdateTenantDto } from './dto'
 import { Tenant } from './entities/tenant.entity';
 
 import { Auth } from 'src/auth/decorators/auth.decorator';
@@ -28,84 +28,70 @@ import { AppRole } from 'src/auth/enums/user-global-role.enum';
  * @description Gestión de Arrendatarios con blindaje multi-tenant.
  * El aislamiento se garantiza mediante la extracción del companyId del JWT.
  * @author Rentix 2026
- * @version 2.1.0
+ * @version 2.2.0
  */
 @ApiTags('Tenants')
 @ApiBearerAuth()
 @Controller('tenants')
+@Auth() // Protección base para cualquier usuario autenticado
 export class TenantController {
   constructor(private readonly tenantService: TenantService) {}
 
-  /**
-   * @method create
-   * @description Registra un nuevo arrendatario inyectando el contexto de empresa del usuario.
-   */
   @Post()
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Crear un nuevo arrendatario' })
-  @ApiResponse({ status: 201, type: Tenant })
+  @ApiOperation({ summary: 'Registrar un nuevo arrendatario (Sujeto Fiscal)' })
+  @ApiCreatedResponse({ type: Tenant })
   async create(
     @Body() createTenantDto: CreateTenantDto,
-    @GetUser('companyId') companyId: string, // 🚩 Context Overriding
+    @GetUser('companyId') companyId: string,
   ): Promise<Tenant> {
     return this.tenantService.create(companyId, createTenantDto);
   }
 
-  /**
-   * @method findAll
-   * @description Listado de arrendatarios operativos para la empresa actual.
-   */
   @Get()
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Listar todos los arrendatarios de la empresa' })
-  @ApiResponse({ status: 200, type: [Tenant] })
-  async findAll(@GetUser('companyId') companyId: string): Promise<Tenant[]> {
-    return this.tenantService.findAll(companyId);
+  @ApiOperation({ summary: 'Listar arrendatarios (Contextual: Activos/Inactivos)' })
+  @ApiOkResponse({ type: [Tenant] })
+  async findAll(
+    @GetUser('companyId') companyId: string,
+    @GetUser('appRole') appRole: AppRole,
+  ): Promise<Tenant[]> {
+    return this.tenantService.findAll(companyId, appRole);
   }
 
-  /**
-   * @method findOne
-   * @description Consulta detallada de un arrendatario validando pertenencia.
-   */
   @Get(':id')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Obtener un arrendatario por ID' })
-  @ApiResponse({ status: 200, type: Tenant })
+  @ApiOperation({ summary: 'Consulta de ficha detallada del arrendatario' })
+  @ApiOkResponse({ type: Tenant })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('companyId') companyId: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<Tenant> {
-    return this.tenantService.findOne(id, companyId);
+    return this.tenantService.findOne(id, companyId, appRole);
   }
 
-  /**
-   * @method update
-   * @description Actualización parcial de datos del arrendatario.
-   */
   @Patch(':id')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Actualizar un arrendatario' })
-  @ApiResponse({ status: 200, type: Tenant })
+  @ApiOperation({ summary: 'Actualización parcial de datos operativos o SEPA' })
+  @ApiOkResponse({ type: Tenant })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateTenantDto: UpdateTenantDto,
     @GetUser('companyId') companyId: string,
+    @GetUser('appRole') appRole: AppRole,
   ): Promise<Tenant> {
-    return this.tenantService.update(id, companyId, updateTenantDto);
+    return this.tenantService.update(id, companyId, updateTenantDto, appRole);
   }
 
   /**
-   * @method remove
-   * @description Ejecuta el borrado lógico del registro.
+   * @method toggleStatus
+   * @description El interruptor de vida operativa del inquilino. Reemplaza al DELETE.
    */
-  @Delete(':id')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Eliminar un arrendatario (Soft Delete)' })
-  @ApiResponse({ status: 200, description: 'Registro movido a la papelera.' })
-  async remove(
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Alternar estado operativo (Activar/Desactivar)' })
+  @ApiOkResponse({ type: Tenant })
+  async toggleStatus(
     @Param('id', ParseUUIDPipe) id: string,
+    @Body('isActive') isActive: boolean,
     @GetUser('companyId') companyId: string,
-  ): Promise<void> {
-    return this.tenantService.remove(id, companyId);
+  ): Promise<Tenant> {
+    return this.tenantService.toggleStatus(id, companyId, isActive);
   }
 }

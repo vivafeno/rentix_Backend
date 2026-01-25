@@ -1,80 +1,32 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 
 import { BaseEntity } from 'src/common/base/base.entity';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
-import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
+import { CompanyRoleEntity } from 'src/user-company-role/entities/user-company-role.entity';
 import { TenantProfile } from 'src/tenant-profile/entities/tenant-profile.entity';
 
 /**
- * @description Entidad fundamental de Usuario en Rentix.
- * Centraliza la identidad global (AppRole) y vincula las relaciones patrimoniales.
- * @version 2026.1.17
+ * @class User
+ * @description Entidad fundamental de Identidad en Rentix.
+ * Implementa Rigor 2026: Tipado explícito para PostgreSQL y seguridad de serialización.
  */
 @Entity('users')
 export class User extends BaseEntity {
-  /**
-   * @description Correo electrónico único. Actúa como identificador de login.
-   */
-  @ApiProperty({
-    description: 'Correo electrónico único del usuario',
-    example: 'admin@rentix.com',
-  })
-  @Column({ unique: true })
+
+  /* --- 🔐 CREDENCIALES & SEGURIDAD --- */
+
+  @ApiProperty({ example: 'admin@rentix.com' })
+  @Index({ unique: true }) // Rigor: Índice único a nivel de DB
+  @Column({ type: 'varchar', length: 255 })
   email: string;
 
-  /**
-   * @description Contraseña hasheada. Excluida de las consultas por defecto.
-   */
-  @ApiProperty({ description: 'Contraseña (Hashed)', writeOnly: true })
-  @Column({ select: false })
+  @Column({ type: 'varchar', select: false }) 
+  @Exclude()
   password: string;
 
-  /* ------------------------------------------------------------------
-   * DATOS PERSONALES
-   * ------------------------------------------------------------------ */
-
-  /**
-   * @description Nombre del usuario. Capturado en el Step 1 del Wizard.
-   */
-  @ApiPropertyOptional({ description: 'Nombre', example: 'Carlos' })
-  @Column({ name: 'first_name', nullable: true })
-  firstName?: string;
-
-  /**
-   * @description Apellidos del usuario. Capturado en el Step 1 del Wizard.
-   */
-  @ApiPropertyOptional({ description: 'Apellidos', example: 'Sanz' })
-  @Column({ name: 'last_name', nullable: true })
-  lastName?: string;
-
-  /**
-   * @description Teléfono de contacto.
-   */
-  @ApiPropertyOptional({ description: 'Teléfono', example: '+34600112233' })
-  @Column({ nullable: true })
-  phone?: string;
-
-  /**
-   * @description URL de imagen de perfil almacenada en bucket.
-   */
-  @ApiPropertyOptional({ description: 'URL de la foto de perfil' })
-  @Column({ name: 'avatar_url', nullable: true })
-  avatarUrl?: string;
-
-  /* ------------------------------------------------------------------
-   * SEGURIDAD Y ROLES GLOBALES
-   * ------------------------------------------------------------------ */
-
-  /**
-   * @description Rol de sistema (SUPERADMIN, ADMIN, USER).
-   * Determina el acceso a módulos globales de la aplicación.
-   */
-  @ApiProperty({
-    description: 'Rol global del usuario (SUPERADMIN, ADMIN, USER)',
-    enum: AppRole,
-    default: AppRole.USER,
-  })
+  @ApiProperty({ enum: AppRole, default: AppRole.USER })
   @Column({
     name: 'app_role',
     type: 'enum',
@@ -83,48 +35,63 @@ export class User extends BaseEntity {
   })
   appRole: AppRole;
 
-  /**
-   * @description Flag de seguridad para verificación de cuenta.
-   */
-  @ApiProperty({ description: 'Estado de verificación del email' })
-  @Column({ name: 'is_email_verified', default: false })
+  @Column({ name: 'is_email_verified', type: 'boolean', default: false })
   isEmailVerified: boolean;
 
-  /**
-   * @description Hash del Refresh Token. Excluido de los JSON por seguridad.
-   */
-  @Column({
-    name: 'refresh_token_hash',
-    type: 'varchar',
-    nullable: true,
-    select: false,
-  })
+  // 🚩 SOLUCIÓN AL ERROR: Forzamos 'text' para evitar la inferencia 'Object'
+  @Column({ name: 'refresh_token_hash', type: 'text', nullable: true, select: false })
+  @Exclude()
   refreshTokenHash?: string | null;
 
-  /* ------------------------------------------------------------------
-   * RELACIONES (Jerarquía de Patrimonio)
-   * ------------------------------------------------------------------ */
+  /* --- 👤 DATOS PERSONALES (Normalizados) --- */
 
-  /**
-   * @description Vínculos del usuario con empresas/patrimonios.
-   * Blueprint 2026: Uso de cascade para permitir creación atómica en Wizard.
-   */
-  @ApiPropertyOptional({
-    description:
-      'Roles del usuario en diferentes patrimonios (OWNER, TENANT, VIEWER)',
-    type: () => [CompanyRoleEntity],
-  })
+  @ApiPropertyOptional({ example: 'Carlos' })
+  @Column({ name: 'first_name', type: 'varchar', length: 100, nullable: true })
+  firstName?: string;
+
+  @ApiPropertyOptional({ example: 'Sanz' })
+  @Column({ name: 'last_name', type: 'varchar', length: 100, nullable: true })
+  lastName?: string;
+
+  @ApiPropertyOptional({ example: '+34600112233' })
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone?: string;
+
+  @Column({ name: 'avatar_url', type: 'varchar', length: 500, nullable: true })
+  avatarUrl?: string;
+
+  /* --- 🌍 LOCALIZACIÓN & PREFERENCIAS (Rigor 2026) --- */
+
+  @Column({ type: 'varchar', length: 5, default: 'es' })
+  language: string;
+
+  @Column({ name: 'timezone', type: 'varchar', length: 50, default: 'Europe/Madrid' })
+  timezone: string;
+
+  /* --- 📈 AUDITORÍA & ONBOARDING --- */
+
+  @Column({ name: 'last_login_at', type: 'timestamp', nullable: true })
+  lastLoginAt?: Date;
+
+  @Column({ name: 'onboarding_step', type: 'int', default: 1 })
+  onboardingStep: number;
+
+  @Column({ name: 'accepted_terms_at', type: 'timestamp', nullable: true })
+  acceptedTermsAt?: Date;
+
+  /* --- 🏗️ RELACIONES --- */
+
+  @ApiPropertyOptional({ type: () => [CompanyRoleEntity] })
   @OneToMany(() => CompanyRoleEntity, (ucr) => ucr.user, { cascade: true })
   companyRoles: CompanyRoleEntity[];
 
-  /**
-   * @description Perfiles de arrendatario asociados.
-   * Un usuario puede ser tenant en múltiples propiedades (mismo u otro Owner).
-   */
-  @ApiPropertyOptional({
-    description: 'Detalles de perfil de arrendatario (datos fiscales, etc.)',
-    type: () => [TenantProfile],
-  })
+  @ApiPropertyOptional({ type: () => [TenantProfile] })
   @OneToMany(() => TenantProfile, (tp) => tp.user, { cascade: true })
-  tenantProfiles: TenantProfile[]; // Renombrado a tenantProfiles para consistencia con tu lógica de roles
+  tenantProfiles: TenantProfile[];
+
+  /* --- 🛠️ VIRTUALS --- */
+
+  get fullName(): string {
+    return `${this.firstName || ''} ${this.lastName || ''}`.trim();
+  }
 }

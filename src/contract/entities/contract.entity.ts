@@ -9,175 +9,163 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntity } from 'src/common/base/base.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { Property } from 'src/property/entities/property.entity';
 import { Tenant } from 'src/tenant/entities/tenant.entity';
 import { Tax } from 'src/tax/entities/tax.entity';
 import {
-  FrecuenciaPago,
-  MetodoPago,
+  PaymentFrequency,
+  PaymentMethod,
   ContractStatus,
-} from '../enums/contract.enums';
+} from '../enums';
 
 /**
  * @class Contract
- * @description Entidad maestra que regula la relación contractual entre arrendador e inquilinos.
- * Almacena las condiciones económicas y temporales para el motor de facturación Veri*factu.
- * @author Rentix 2026
- * @version 1.0.1
+ * @description Entidad maestra de arrendamiento. 
+ * Eje central de la generación de ingresos y cumplimiento fiscal 2026.
  */
 @Entity('contracts')
 export class Contract extends BaseEntity {
-  /* --- RELACIONES CORE --- */
 
-  /** @property companyId - Referencia al propietario legal (Multi-tenancy) */
-  @ApiProperty({ description: 'ID de la empresa propietaria' })
+  /* --- CONTEXTO Y SEGURIDAD (Multi-tenancy) --- */
+
   @Index()
   @Column({ name: 'company_id', type: 'uuid' })
   companyId: string;
 
   @ManyToOne(() => Company)
   @JoinColumn({ name: 'company_id' })
-  propietario: Company;
+  company: Company;
 
-  /** @property propertyId - Referencia al activo inmobiliario arrendado */
-  @ApiProperty({
-    description: 'ID del activo inmobiliario objeto del contrato',
-  })
+  /* --- VÍNCULOS OPERATIVOS --- */
+
   @Column({ name: 'property_id', type: 'uuid' })
   propertyId: string;
 
-  @ManyToOne(() => Property)
+  @ManyToOne(() => Property, { eager: false })
   @JoinColumn({ name: 'property_id' })
-  inmueble: Property;
+  property: Property;
 
-  /** @property inquilinos - Colección de arrendatarios firmantes */
-  @ApiProperty({
-    type: () => [Tenant],
-    description: 'Arrendatarios vinculados',
-  })
-  @ManyToMany(() => Tenant, { eager: true })
+  @ManyToMany(() => Tenant, (tenant) => tenant.contracts, { eager: true })
   @JoinTable({
     name: 'contract_tenants',
     joinColumn: { name: 'contract_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'tenant_id', referencedColumnName: 'id' },
   })
-  inquilinos: Tenant[];
+  tenants: Tenant[];
 
-  /* --- ECONOMÍA Y FISCALIDAD --- */
+  /* --- ECONOMÍA (Rigor Financiero) --- */
 
-  /** @property rentaMensual - Importe neto de la renta mensual */
-  @ApiProperty({ example: 1200.0, description: 'Base imponible de la renta' })
+  @ApiProperty({ example: 1200.00 })
   @Column({
-    name: 'renta_mensual',
+    name: 'base_rent',
     type: 'decimal',
     precision: 12,
     scale: 2,
     transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
-  rentaMensual: number;
+  baseRent: number;
 
-  /** @property fianza - Depósito de garantía legal */
-  @ApiProperty({ example: 2400.0, description: 'Importe de fianza' })
+  @ApiProperty({ example: 2400.00 })
   @Column({
-    name: 'fianza',
+    name: 'deposit_amount',
     type: 'decimal',
     precision: 12,
     scale: 2,
     default: 0,
     transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
-  fianza: number;
+  depositAmount: number;
 
-  @ApiProperty({ description: 'Relación con el impuesto IVA aplicado' })
-  @ManyToOne(() => Tax)
+  @Column({ 
+    name: 'additional_guarantee', 
+    type: 'decimal', 
+    precision: 12, 
+    scale: 2, 
+    default: 0,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
+  })
+  additionalGuarantee: number;
+
+  /* --- FISCALIDAD --- */
+
+  @ManyToOne(() => Tax, { eager: true })
   @JoinColumn({ name: 'tax_iva_id' })
-  iva: Tax;
+  taxIva: Tax;
 
-  @ApiProperty({ description: 'Relación con la retención IRPF (si aplica)' })
-  @ManyToOne(() => Tax, { nullable: true })
+  @ManyToOne(() => Tax, { nullable: true, eager: true })
   @JoinColumn({ name: 'tax_irpf_id' })
-  retencion: Tax;
+  taxIrpf: Tax;
 
-  /* --- GESTIÓN Y ESTADOS (ENUMS) --- */
+  /* --- CONFIGURACIÓN DE FACTURACIÓN --- */
 
-  /** @property frecuenciaPago - Ciclo de facturación */
-  @ApiProperty({
-    enum: FrecuenciaPago,
-    enumName: 'FrecuenciaPago',
-  })
   @Column({
     type: 'enum',
-    enum: FrecuenciaPago,
-    default: FrecuenciaPago.MENSUAL,
+    enum: PaymentFrequency,
+    default: PaymentFrequency.MONTHLY,
+    name: 'payment_frequency'
   })
-  frecuenciaPago: FrecuenciaPago;
+  paymentFrequency: PaymentFrequency;
 
-  /** @property metodoPago - Vía de liquidación del recibo */
-  @ApiProperty({
-    enum: MetodoPago,
-    enumName: 'MetodoPago',
+  @Column({ 
+    type: 'enum', 
+    enum: PaymentMethod, 
+    default: PaymentMethod.TRANSFER,
+    name: 'payment_method'
   })
-  @Column({ type: 'enum', enum: MetodoPago, default: MetodoPago.TRANSFERENCIA })
-  metodoPago: MetodoPago;
+  paymentMethod: PaymentMethod;
 
-  /** @property estado - Situación administrativa del contrato */
-  @ApiProperty({
-    enum: ContractStatus,
-    enumName: 'ContractStatus',
-  })
   @Column({
     type: 'enum',
     enum: ContractStatus,
-    default: ContractStatus.ACTIVO,
+    default: ContractStatus.DRAFT,
+    name: 'status'
   })
-  estado: ContractStatus;
+  status: ContractStatus;
 
-  /* --- TEMPORALIDAD --- */
+  @Column({ name: 'billing_day', type: 'int', default: 1 })
+  billingDay: number;
 
-  /** @property diaFacturacion - Día del mes pactado para el devengo */
-  @ApiProperty({ example: 5 })
-  @Column({ name: 'dia_facturacion', type: 'int', default: 1 })
-  diaFacturacion: number;
+  /* --- TEMPORALIDAD (Rigor Temporal) --- */
 
-  @ApiProperty({ example: '2026-02-01' })
-  @Column({ name: 'fecha_inicio', type: 'date' })
-  fechaInicio: Date;
+  @Column({ name: 'start_date', type: 'date' })
+  startDate: Date;
 
-  @ApiProperty({ example: 12, description: 'Vigencia pactada en meses' })
-  @Column({ name: 'duracion_meses', type: 'int' })
-  duracionMeses: number;
+  @Column({ name: 'end_date', type: 'date' })
+  endDate: Date;
 
-  @ApiProperty({ description: 'Fecha de fin de contrato calculada' })
-  @Column({ name: 'fecha_vencimiento', type: 'date' })
-  fechaVencimiento: Date;
+  @Column({ name: 'grace_period_days', type: 'int', default: 0 })
+  gracePeriodDays: number;
 
-  /* --- LOGICA ATÓMICA --- */
+  @Column({ name: 'notice_period_days', type: 'int', default: 30 })
+  noticePeriodDays: number;
 
-  /**
-   * @method actualizarMetadatos
-   * @description Hook para sincronizar el vencimiento antes de cada persistencia.
-   */
+  @Column({ name: 'actual_termination_date', type: 'date', nullable: true })
+  actualTerminationDate?: Date;
+
+  @Column({ name: 'next_billing_date', type: 'date', nullable: true })
+  nextBillingDate: Date;
+
+  /* --- LOGICA DE SINCRONIZACIÓN --- */
+
   @BeforeInsert()
   @BeforeUpdate()
-  actualizarMetadatos(): void {
-    if (this.fechaInicio && this.duracionMeses) {
-      const inicio = new Date(this.fechaInicio);
-      inicio.setMonth(inicio.getUTCMonth() + this.duracionMeses);
-      this.fechaVencimiento = inicio;
-    }
+  syncMetadata(): void {
+    if (this.startDate) this.startDate = new Date(this.startDate);
+    if (this.endDate) this.endDate = new Date(this.endDate);
+    
+    // El cálculo de nextBillingDate se delega al Service para mayor control
+    // sobre los periodos de carencia y prorrateos iniciales.
   }
 
   /**
-   * @getter tiempoRestanteDias
-   * @description Calcula el delta entre hoy y el vencimiento para avisos en UI.
+   * @description Helper para la UI de Angular: Días hasta el vencimiento.
    */
-  get tiempoRestanteDias(): number {
-    const hoy = new Date();
-    const diferencia =
-      new Date(this.fechaVencimiento).getTime() - hoy.getTime();
-    return Math.max(0, Math.ceil(diferencia / (1000 * 60 * 60 * 24)));
+  get daysUntilExpiration(): number {
+    if (!this.endDate) return 0;
+    const diff = new Date(this.endDate).getTime() - new Date().getTime();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   }
 }

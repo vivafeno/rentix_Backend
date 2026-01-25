@@ -1,0 +1,15 @@
+{
+  "IS_EMAIL": "Email is invalid.",
+  "IS_NOT_EMPTY": "This field is mandatory and cannot be empty.",
+  "MIN_LENGTH": "Minimum length is $constraint1 characters.",
+  "MAX_LENGTH": "Maximum length is $constraint1 characters.",
+  "MIN": "Minimum allowed value is $constraint1.",
+  "MAX": "Maximum allowed value is $constraint1.",
+  "IS_DATE_STRING": "You must enter a valid date (ISO format).",
+  "IS_NUMBER": "Value must be a number.",
+  "IS_DECIMAL": "Value must be a decimal number (e.g. 10.50).",
+  "EQUALS": "You must accept this field to continue.",
+  "IS_BOOLEAN": "The value must be true or false.",
+  "IS_ENUM": "Selected value is not a valid option.",
+  "IS_UUID": "The provided identifier is not a valid UUID."
+}

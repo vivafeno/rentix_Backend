@@ -1,126 +1,139 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { 
+  Injectable, 
+  NotFoundException, 
+  ConflictException, 
+  InternalServerErrorException, 
+  Logger
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { plainToInstance } from 'class-transformer';
 
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
-import { MeDto } from './dto/me.dto';
 
 /**
  * @class UserService
- * @description Gestión de identidades de usuario, credenciales y perfiles.
- * Maneja el mapeo de roles y el contexto patrimonial para el frontend.
- * @version 2026.1.19
- * @author Rentix
+ * @description Gestión de identidades y perfiles de usuario bajo estándar Rentix 2026.
+ * Implementa SoftDelete, Hashing de seguridad y Contexto Patrimonial (findMe).
  */
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
 
   /* ------------------------------------------------------------------
-   * MAPPERS (Privados)
+   * 👤 CONTEXTO DE USUARIO (Me)
    * ------------------------------------------------------------------ */
 
   /**
-   * @method toDto
-   * @description Transforma la entidad User en un DTO seguro sin datos sensibles.
+   * @method findMe
+   * @description Recupera el perfil completo incluyendo relaciones patrimoniales para el Front.
    */
-  private toDto(user: User): UserDto {
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      appRole: user.appRole,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+  async findMe(userId: string): Promise<UserDto> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId, isActive: true },
+      relations: [
+        'companyRoles',
+        'companyRoles.company',
+        'companyRoles.company.fiscalIdentity', // Rigor: Trazabilidad fiscal completa
+      ],
+    });
+
+    if (!user) throw new NotFoundException('Perfil de usuario no localizado.');
+    
+    return plainToInstance(UserDto, user);
   }
 
   /* ------------------------------------------------------------------
-   * CRUD
+   * 🏗️ GESTIÓN DE CICLO DE VIDA (CRUD)
    * ------------------------------------------------------------------ */
 
   async create(dto: CreateUserDto): Promise<UserDto> {
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const user = this.userRepository.create({
-      ...dto,
-      password: hashedPassword,
-    });
-    const saved = await this.userRepository.save(user);
-    return this.toDto(saved);
+    const { password, email, acceptTerms, ...userData } = dto;
+
+    // 1. Verificación de identidad única
+    const existing = await this.userRepository.findOne({ where: { email } });
+    if (existing) throw new ConflictException(`Identidad ${email} ya registrada.`);
+
+    // 2. Hidratación Rentix 2026
+    const user = new User();
+    Object.assign(user, userData);
+    
+    user.email = email;
+    user.password = await bcrypt.hash(password, 10);
+    user.isActive = true;
+    
+    if (acceptTerms) {
+      user.acceptedTermsAt = new Date();
+    }
+
+    try {
+      const saved = await this.userRepository.save(user);
+      return plainToInstance(UserDto, saved);
+    } catch (error) {
+      this.logger.error(`Error creando usuario: ${error.message}`);
+      throw new InternalServerErrorException('Error atómico en la creación del usuario.');
+    }
   }
 
   async findAll(): Promise<UserDto[]> {
     const users = await this.userRepository.find({
       where: { isActive: true },
+      order: { createdAt: 'DESC' }
     });
-    return users.map((u) => this.toDto(u));
+    return plainToInstance(UserDto, users);
   }
 
   async findOne(id: string): Promise<UserDto> {
     const user = await this.userRepository.findOne({
-      where: { id, isActive: true },
+      where: { id },
       relations: ['companyRoles', 'companyRoles.company'],
     });
 
-    if (!user) {
-      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
-    }
-    return this.toDto(user);
+    if (!user) throw new NotFoundException(`Usuario con UUID ${id} no encontrado.`);
+    return plainToInstance(UserDto, user);
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<UserDto> {
-    const user = await this.userRepository.findOne({
-      where: { id, isActive: true },
-    });
-    if (!user) {
-      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
-    }
+    // 🚩 Rigor: Preload asegura que la entidad exista antes de intentar el merge
+    const user = await this.userRepository.preload({ id, ...dto });
+    if (!user) throw new NotFoundException(`Imposible actualizar: Usuario ${id} inexistente.`);
 
-    if (dto.password) {
-      dto.password = await bcrypt.hash(dto.password, 10);
-    }
-
-    Object.assign(user, dto);
     const updated = await this.userRepository.save(user);
-    return this.toDto(updated);
+    return plainToInstance(UserDto, updated);
   }
 
+  /**
+   * @method remove
+   * @description Implementación SoftDelete Rentix. Bloqueo operativo + Borrado lógico.
+   */
   async remove(id: string): Promise<void> {
     const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) {
-      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
-    }
+    if (!user) throw new NotFoundException(`Usuario ${id} no encontrado.`);
 
-    user.isActive = false;
-    await this.userRepository.save(user);
+    // Bloqueo preventivo y borrado de TypeORM (deletedAt)
+    await this.userRepository.update(id, { isActive: false });
+    await this.userRepository.softDelete(id);
   }
 
   /* ------------------------------------------------------------------
-   * AUTH HELPERS
+   * 🔐 HELPERS PARA AUTENTICACIÓN
    * ------------------------------------------------------------------ */
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmailForAuth(email: string): Promise<User | null> {
     return this.userRepository
       .createQueryBuilder('user')
-      .addSelect('user.password')
+      .addSelect('user.password') // Necesario por select: false en entity
       .where('user.email = :email', { email })
-      .getOne();
-  }
-
-  async findById(id: string): Promise<User | null> {
-    return this.userRepository
-      .createQueryBuilder('user')
-      .addSelect('user.refreshTokenHash')
-      .where('user.id = :id', { id })
+      .andWhere('user.isActive = :active', { active: true })
       .getOne();
   }
 
@@ -128,49 +141,16 @@ export class UserService {
     await this.userRepository.update(id, { refreshTokenHash: hash });
   }
 
-  /* ------------------------------------------------------------------
-   * GET ME (Perfil completo para el Front)
-   * ------------------------------------------------------------------ */
-
   /**
-   * @method findMe
-   * @description Recupera el perfil completo incluyendo relaciones fiscales actualizadas.
-   * Resuelve errores de linter mapeando correctamente a FiscalEntity.
-   */
-  async findMe(userId: string): Promise<MeDto> {
-    const user = await this.userRepository.findOne({
-      where: { id: userId, isActive: true },
-      relations: [
-        'companyRoles',
-        'companyRoles.company',
-        'companyRoles.company.fiscalEntity', // 🚩 Sincronizado: de facturaeParty
-      ],
-    });
-
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      appRole: user.appRole,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-
-      // 🚩 MAPEO SINCRONIZADO CON FISCALENTITY
-      companyRoles:
-        user.companyRoles?.map((cr) => ({
-          companyId: cr.company.id,
-          // 🛡️ Usamos el nuevo campo nombreRazonSocial
-          companyName:
-            cr.company.fiscalEntity?.nombreRazonSocial ||
-            'Empresa sin nombre fiscal',
-          role: cr.role,
-        })) || [],
-    };
-  }
+ * @method findByIdForAuth
+ * @description Uso exclusivo para Auth: Recupera el usuario con el hash del refresh token.
+ */
+async findByIdForAuth(id: string): Promise<User | null> {
+  return await this.userRepository.createQueryBuilder('user')
+    .addSelect('user.refreshTokenHash') // Recuperamos el campo oculto
+    .leftJoinAndSelect('user.companyRoles', 'companyRoles') // Cargamos roles para el contexto
+    .where('user.id = :id', { id })
+    .andWhere('user.isActive = :active', { active: true })
+    .getOne();
+}
 }

@@ -1,50 +1,55 @@
 /**
- * @description Códigos de tipo de identificación fiscal (Veri*factu / FacturaE).
- * Estos códigos son obligatorios para el nodo <TaxIdentificationNumber> y determinan
- * el algoritmo de validación que aplicará la AEAT al recibir el XML.
- * @author Rentix 2026
- * @version 2026.2.0
+ * @description Códigos oficiales de la AEAT para el tipo de identificación (IDType).
+ * Estos códigos mapean directamente con el bloque <IDOtro> de Veri*factu y SII.
+ * Nota: El código '01' es de uso interno para NIF/CIF español (que se envía en el campo <NIF>).
+ * @version 2026.1.22
  */
 export enum TaxIdType {
   /**
    * @description 01: NIF/CIF (España).
-   * Identificador estándar para personas físicas (DNI/NIE) y jurídicas españolas.
+   * Se utiliza para personas físicas o jurídicas con NIF español identificado en el censo.
    */
   NIF = '01',
 
   /**
-   * @description 02: NIF-IVA (Intra-community VAT).
-   * Requerido para operadores inscritos en el censo VIES.
+   * @description 02: NIF-IVA (NIF Intracomunitario).
+   * Obligatorio para operadores de la UE inscritos en el registro VIES.
+   * Regla AEAT: El campo CódigoPaís es opcional ya que va implícito en las dos primeras letras.
    */
-  VAT_NUMBER = '02',
+  INTRACOMMUNITY_VAT = '02',
 
   /**
    * @description 03: Pasaporte.
-   * Utilizado para clientes extranjeros sin NIF español ni residencia en la UE.
+   * Documento de viaje internacional para clientes de fuera de la UE.
+   * Regla AEAT: CódigoPaís obligatorio.
    */
   PASSPORT = '03',
 
   /**
-   * @description 04: Documento oficial de identidad del país de residencia.
-   * Usado cuando el cliente no tiene pasaporte pero sí DNI de su país de origen.
+   * @description 04: Documento oficial de identidad expedido por el país de residencia.
+   * Utilizado para clientes extranjeros (UE o terceros) sin NIF-IVA.
+   * Regla AEAT: CódigoPaís obligatorio.
    */
-  OFFICIAL_COUNTRY_ID = '04',
+  FOREIGN_OFFICIAL_ID = '04',
 
   /**
-   * @description 05: Certificado de residencia.
-   * Documento que acredita la residencia fiscal a efectos de convenios de doble imposición.
+   * @description 05: Certificado de residencia fiscal.
+   * Acredita la residencia a efectos de convenios de doble imposición.
+   * Regla AEAT: CódigoPaís obligatorio.
    */
   RESIDENCE_CERTIFICATE = '05',
 
   /**
    * @description 06: Otro documento probatorio.
-   * Categoría residual para identificaciones no contempladas en las anteriores.
+   * Categoría residual para cualquier otro medio de identificación aceptado legalmente.
+   * Regla AEAT: CódigoPaís obligatorio.
    */
   OTHER_PROBATORY_ID = '06',
 
   /**
-   * @description 07: No Censado.
-   * Aplicable a entidades en proceso de constitución o sin presencia en el censo de la AEAT.
+   * @description 07: NIF no censado (España).
+   * Aplicable cuando el NIF español no figura en la base de datos de la AEAT.
+   * Regla AEAT: El CódigoPaís DEBE ser 'ES'.
    */
   NOT_IN_CENSUS = '07',
 }

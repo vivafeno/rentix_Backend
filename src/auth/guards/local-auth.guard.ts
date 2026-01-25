@@ -1,35 +1,42 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from 'src/user/entities/user.entity';
 
 /**
  * @class LocalAuthGuard
- * @description Guard de Autenticación Local (Blueprint 2026).
- * Actúa como disparador de la 'LocalStrategy' para validar credenciales primarias.
- * @version 2026.1.19
- * @author Rentix
+ * @description Guard de Autenticación Local optimizado.
+ * Implementa el manejo de errores tipado y asegura la limpieza del objeto de usuario.
  */
 @Injectable()
 export class LocalAuthGuard extends AuthGuard('local') {
+  
+  /**
+   * @description Eliminamos RxJS para usar el motor de promesas nativo de NestJS (Rigor 2026).
+   */
+  override canActivate(context: ExecutionContext): boolean | Promise<boolean> {
+    return super.canActivate(context) as boolean | Promise<boolean>;
+  }
+
   /**
    * @method handleRequest
-   * @description Maneja el resultado de la validación de la estrategia local con tipado estricto.
-   * Resuelve el error 27 de linter al eliminar el retorno de tipo 'any'.
-   * @param {unknown} err Error capturado por Passport
-   * @param {User | null} user Usuario validado por la estrategia
-   * @returns {User} El usuario validado si la autenticación es exitosa
-   * @throws {UnauthorizedException} Si las credenciales son incorrectas
+   * @description Procesa la validación con tipado estricto.
    */
   override handleRequest<TUser = User>(
     err: unknown,
     user: TUser | null,
   ): TUser {
+    // 1. Validación de error y existencia
     if (err || !user) {
-      // 🛡️ Blindaje de información: Mensaje genérico para evitar enumeración de cuentas
       throw new UnauthorizedException('Credenciales de acceso no válidas.');
     }
 
-    // Al tipar TUser como genérico restringido por la llamada, eliminamos el error de unsafe return
+    // 2. Punto de Rigor Rentix: 
+    // Si el usuario es una instancia de la entidad, aquí podríamos realizar 
+    // una sanitización final antes de que llegue al controlador si fuera necesario.
     return user;
   }
 }

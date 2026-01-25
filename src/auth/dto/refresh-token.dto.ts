@@ -1,20 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsJWT, IsNotEmpty } from 'class-validator';
 
 /**
- * RefreshTokenDto
- *
- * Usado por:
- * POST /auth/refresh
- *
- * Necesario para que Swagger / OpenAPI
- * genere tipos correctos en el frontend
+ * @class RefreshTokenDto
+ * @description DTO para la rotación de identidad (Blueprint 2026).
+ * Valida la integridad estructural del token antes de procesar el refresco de sesión.
  */
 export class RefreshTokenDto {
   @ApiProperty({
-    description: 'Refresh token JWT',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: 'Refresh token JWT emitido por el servidor',
+    example: 'eyJhbGciOiJIUzI1NiJ9.payload.signature',
+    format: 'JWT',
   })
-  @IsString()
-  refreshToken: string;
+  @IsJWT({ message: 'El token de refresco no tiene una estructura JWT válida.' })
+  @IsNotEmpty({ message: 'El token de refresco es obligatorio.' })
+  readonly refreshToken: string; // 🚩 Rigor: Inmutable para proteger la integridad del flujo
 }

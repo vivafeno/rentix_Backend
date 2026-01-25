@@ -17,7 +17,7 @@ import { SeederModule } from './config/seeder.module';
 // --- SEGURIDAD Y CONTEXTO ---
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
-import { UserCompanyRoleModule } from './user-company-role/companyRole.module';
+import { UserCompanyRoleModule } from './user-company-role/user-company-role.module';
 // 🛡️ Eliminado CompanyContextModule por error TS2307 (Módulo inexistente o refactorizado)
 
 // --- DOMINIO / NEGOCIO (Rentix 2026) ---

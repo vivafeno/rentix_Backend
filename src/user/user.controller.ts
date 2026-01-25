@@ -26,54 +26,56 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
-import { MeDto } from './dto/me.dto';
 
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 
-@ApiTags('Users') // Estándar plural
+/**
+ * @class UserController
+ * @description Punto de entrada para la gestión de identidades y perfiles.
+ * Implementa seguridad jerárquica y documentación OpenAPI 3.0.
+ */
+@ApiTags('Users')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'No autenticado' })
 @ApiForbiddenResponse({ description: 'Sin permisos suficientes' })
-@Controller('users') // Estándar plural
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
   @Auth(AppRole.SUPERADMIN, AppRole.ADMIN)
-  @ApiOperation({ summary: 'Crear un nuevo usuario (Solo Admin/SuperAdmin)' })
-  @ApiCreatedResponse({
-    description: 'Usuario creado correctamente',
-    type: UserDto,
-  })
+  @ApiOperation({ summary: 'Alta de usuario administrativa' })
+  @ApiCreatedResponse({ description: 'Usuario creado', type: UserDto })
   create(@Body() dto: CreateUserDto): Promise<UserDto> {
     return this.userService.create(dto);
   }
 
   @Get()
-  @Auth(AppRole.SUPERADMIN) // Solo el dueño del sistema lista a todos
-  @ApiOperation({
-    summary: 'Listar todos los usuarios activos (Solo SuperAdmin)',
-  })
-  @ApiOkResponse({ description: 'Listado de usuarios', type: [UserDto] })
+  @Auth(AppRole.SUPERADMIN)
+  @ApiOperation({ summary: 'Listar ecosistema de usuarios (Solo SuperAdmin)' })
+  @ApiOkResponse({ description: 'Listado global', type: [UserDto] })
   findAll(): Promise<UserDto[]> {
     return this.userService.findAll();
   }
 
+  /**
+   * @description Endpoint crítico para el arranque del Frontend Angular.
+   * Proporciona el perfil, idioma, onboarding y roles patrimoniales.
+   */
   @Get('me')
-  @Auth() // Cualquier usuario autenticado puede ver sus datos
-  @ApiOperation({ summary: 'Obtener datos del usuario logueado' })
-  @ApiOkResponse({ description: 'Datos del usuario autenticado', type: MeDto })
-  getMe(@GetUser('id') userId: string): Promise<MeDto> {
-    // Usamos el ID del token para buscar en DB y devolver el DTO completo
+  @Auth() 
+  @ApiOperation({ summary: 'Obtener perfil del usuario autenticado' })
+  @ApiOkResponse({ description: 'Perfil actual', type: UserDto })
+  getMe(@GetUser('id') userId: string): Promise<UserDto> {
     return this.userService.findMe(userId);
   }
 
   @Get(':id')
   @Auth(AppRole.SUPERADMIN, AppRole.ADMIN)
-  @ApiOperation({ summary: 'Obtener un usuario por ID' })
-  @ApiOkResponse({ description: 'Usuario encontrado', type: UserDto })
+  @ApiOperation({ summary: 'Consultar usuario por UUID' })
+  @ApiOkResponse({ description: 'Usuario localizado', type: UserDto })
   @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<UserDto> {
     return this.userService.findOne(id);
@@ -81,8 +83,8 @@ export class UserController {
 
   @Patch(':id')
   @Auth(AppRole.SUPERADMIN)
-  @ApiOperation({ summary: 'Actualizar un usuario' })
-  @ApiOkResponse({ description: 'Usuario actualizado', type: UserDto })
+  @ApiOperation({ summary: 'Actualización administrativa de usuario' })
+  @ApiOkResponse({ description: 'Cambios aplicados', type: UserDto })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
@@ -93,8 +95,8 @@ export class UserController {
   @Delete(':id')
   @Auth(AppRole.SUPERADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Desactivar un usuario (soft delete)' })
-  @ApiNoContentResponse({ description: 'Usuario desactivado correctamente' })
+  @ApiOperation({ summary: 'Baja lógica de usuario (Soft Delete)' })
+  @ApiNoContentResponse({ description: 'Usuario desactivado y marcado como borrado' })
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.userService.remove(id);
   }

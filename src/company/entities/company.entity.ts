@@ -1,162 +1,101 @@
-import {
-  Entity,
-  Column,
-  OneToMany,
-  OneToOne,
-  ManyToOne,
-  JoinColumn,
+import { 
+  Entity, 
+  Column, 
+  OneToMany, 
+  OneToOne, 
+  ManyToOne, 
+  JoinColumn, 
+  BeforeUpdate,
+  BeforeInsert 
 } from 'typeorm';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
+import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from 'src/common/base/base.entity';
 import { FiscalEntity } from 'src/fiscal/entities/fiscalEntity';
 import { Address } from 'src/address/entities/address.entity';
 import { User } from 'src/user/entities/user.entity';
-import { CompanyRoleEntity } from 'src/user-company-role/entities/userCompanyRole.entity';
-import { TenantProfile } from 'src/tenant-profile/entities/tenant-profile.entity';
+import { CompanyRoleEntity } from 'src/user-company-role/entities/user-company-role.entity';
 import { Property } from 'src/property/entities/property.entity';
+import { PersonType } from 'src/fiscal/enums/personType.enum';
 
 /**
- * @description Entidad que representa el Patrimonio (Empresa) del OWNER.
- * Centraliza la identidad fiscal, dirección y la propiedad de activos (inmuebles).
- * Sincronizado con el estándar Veri*factu para generación de facturas.
- * @version 2026.1.18
+ * @description Entidad Núcleo de Patrimonio (Tenant).
+ * Gestiona la segregación de datos y el estado operativo para monetización.
+ * @version 2026.2.1
  */
 @Entity('companies')
 export class Company extends BaseEntity {
-  /* ------------------------------------------------------------------
-   * IDENTIDAD FISCAL (NIF, Razón Social)
-   * ------------------------------------------------------------------ */
 
-  /**
-   * @description UUID de referencia a la identidad fiscal.
-   * Mantenemos el nombre de columna física por compatibilidad, pero actualizamos el nombre de la propiedad.
-   */
-  @ApiProperty({
-    description: 'UUID de la identidad fiscal (Referencia a FiscalEntity)',
-    format: 'uuid',
-    example: '9f8b4d1e-1a2b-4d9e-b9a2-123456789abc',
-  })
-  @Column({ name: 'facturae_party_id', type: 'uuid' })
-  fiscalEntityId: string; // Refactorizado de facturaePartyId
+  /* --- IDENTIDAD FISCAL --- */
 
-  /**
-   * @description Relación con los datos fiscales. Blueprint: Cascade permite crear
-   * la identidad fiscal simultáneamente al crear la compañía.
-   * @returns {FiscalEntity} Objeto con NIF y Razón Social.
-   */
-  @ApiProperty({
-    description:
-      'Objeto completo de la identidad fiscal (Razón social, NIF...)',
-    type: () => FiscalEntity,
-  })
-  @OneToOne(() => FiscalEntity, (fiscalEntity) => fiscalEntity.company, {
+  @ApiProperty({ description: 'ID de referencia fiscal', format: 'uuid' })
+  @Column({ name: 'fiscal_entity_id', type: 'uuid' })
+  fiscalEntityId: string;
+
+  @ApiProperty({ type: () => FiscalEntity })
+  @OneToOne(() => FiscalEntity, (fiscal) => fiscal.company, {
     eager: true,
-    cascade: ['insert', 'update'],
-    onDelete: 'RESTRICT', // Seguridad: No permitimos borrar datos fiscales si hay empresa activa
+    cascade: true,
+    onDelete: 'RESTRICT',
   })
-  @JoinColumn({ name: 'facturae_party_id' })
-  fiscalEntity: FiscalEntity; // Refactorizado de facturaeParty para cumplimiento Veri*factu
+  @JoinColumn({ name: 'fiscal_entity_id' })
+  fiscalEntity: FiscalEntity;
 
-  /* ------------------------------------------------------------------
-   * DIRECCIÓN FISCAL
-   * ------------------------------------------------------------------ */
+  /* --- DIRECCIÓN FISCAL (Obligatoria para Veri*factu) --- */
 
-  /**
-   * @description UUID de la dirección física/fiscal.
-   */
-  @ApiPropertyOptional({
-    description: 'UUID de la dirección fiscal asociada',
-    format: 'uuid',
-  })
-  @Column({
-    name: 'fiscal_address_id',
-    type: 'uuid',
-    nullable: true,
-  })
-  fiscalAddressId?: string;
+  @ApiProperty({ description: 'ID de la dirección fiscal', format: 'uuid' })
+  @Column({ name: 'fiscal_address_id', type: 'uuid' })
+  fiscalAddressId: string;
 
-  /**
-   * @description Relación con la dirección física.
-   * @returns {Address} Objeto con dirección, código postal y población.
-   */
-  @ApiPropertyOptional({
-    description: 'Objeto completo de la dirección fiscal',
-    type: () => Address,
-  })
+  @ApiProperty({ type: () => Address })
   @OneToOne(() => Address, {
-    nullable: true,
     eager: true,
-    cascade: ['insert', 'update'],
+    cascade: true,
+    nullable: false, 
   })
   @JoinColumn({ name: 'fiscal_address_id' })
-  fiscalAddress?: Address;
+  fiscalAddress: Address;
 
-  /* ------------------------------------------------------------------
-   * AUDITORÍA (Creador)
-   * ------------------------------------------------------------------ */
+  /* --- PERSONALIDAD JURÍDICA (AEAT: F/J) --- */
 
-  /**
-   * @description ID del OWNER que dio de alta el patrimonio.
-   */
-  @ApiPropertyOptional({
-    description: 'ID del usuario que creó el registro (Auditoría)',
-    format: 'uuid',
+  @ApiProperty({ 
+    enum: PersonType, 
+    enumName: 'PersonType', 
+    description: 'Naturaleza jurídica: F (Física) o J (Jurídica)' 
   })
   @Column({
-    name: 'created_by_user_id',
-    type: 'uuid',
-    nullable: true,
+    type: 'enum',
+    enum: PersonType,
+    default: PersonType.LEGAL_ENTITY // Se asume Jurídica por defecto para Rentix
   })
-  createdByUserId?: string;
+  personType: PersonType;
 
-  /**
-   * @description Entidad del creador. No se carga por defecto para evitar ciclos.
-   */
-  @ApiPropertyOptional({
-    description: 'Entidad del usuario creador',
-    type: () => User,
-  })
-  @ManyToOne(() => User, { nullable: true })
+  /* --- AUDITORÍA Y MONETIZACIÓN --- */
+
+  @ApiProperty({ description: 'ID del Owner (Inmutable tras creación)' })
+  @Column({ name: 'created_by_user_id', type: 'uuid', update: false })
+  createdByUserId: string;
+
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: 'created_by_user_id' })
-  createdBy?: User;
+  createdBy: User;
 
-  /* ------------------------------------------------------------------
-   * RELACIONES 1:N (Roles, Propiedades, Clientes)
-   * ------------------------------------------------------------------ */
+  /* --- LÓGICA AUTOMÁTICA DE ESTADO --- */
 
-  /**
-   * @description Vínculos de autoridad (OWNER, TENANT, VIEWER).
-   */
-  @ApiPropertyOptional({
-    description: 'Lista de usuarios y sus roles en esta empresa',
-    type: () => [CompanyRoleEntity],
-  })
+  @BeforeUpdate()
+  @BeforeInsert()
+  syncStatusAudit() {
+    if (this.isActive === false) {
+      this.deletedAt = this.deletedAt || new Date();
+    } else {
+      this.deletedAt = null;
+    }
+  }
+
+  /* --- RELACIONES --- */
+
   @OneToMany(() => CompanyRoleEntity, (ucr) => ucr.company)
   companyRoles: CompanyRoleEntity[];
 
-  /**
-   * @description Lista de inmuebles vinculados a este patrimonio.
-   */
-  @ApiPropertyOptional({
-    description: 'Inventario de propiedades (inmuebles) de la empresa',
-    type: () => [Property],
-  })
-  @OneToMany(() => Property, (property) => property.company, {
-    eager: false,
-  })
+  @OneToMany(() => Property, (property) => property.company)
   properties: Property[];
-
-  /**
-   * @description Perfiles de arrendatarios registrados por el OWNER.
-   * Blueprint 2026: Consistencia con el término TENANT.
-   */
-  @ApiPropertyOptional({
-    description: 'Cartera de arrendatarios asociados al patrimonio',
-    type: () => [TenantProfile],
-  })
-  @OneToMany(() => TenantProfile, (tenant) => tenant.company, {
-    eager: false,
-  })
-  tenantProfiles: TenantProfile[];
 }

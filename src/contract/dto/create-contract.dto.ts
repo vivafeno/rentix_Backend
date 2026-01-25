@@ -6,98 +6,106 @@ import {
   IsEnum,
   IsArray,
   IsOptional,
+  IsInt,
   Min,
   Max,
   ArrayMinSize,
 } from 'class-validator';
 import {
-  FrecuenciaPago,
-  MetodoPago,
+  PaymentFrequency,
+  PaymentMethod,
   ContractStatus,
-} from '../enums/contract.enums';
+} from '../enums'; // Asegúrate de que apunte a tus nuevos archivos de enums
 
 /**
  * @class CreateContractDto
- * @description Contrato de entrada para la creación de nuevos arrendamientos.
- * Incluye metadatos para la generación estricta de tipos en Angular.
+ * @description DTO de alta de contratos. Sincronizado 1:1 con la entidad Contract.
+ * @version 2026.3.5
  */
 export class CreateContractDto {
-  @ApiProperty({ description: 'ID del inmueble objeto del alquiler' })
-  @IsUUID()
+
+  /* --- VÍNCULOS (Naming coincidente con Entity) --- */
+
+  @ApiProperty({ description: 'ID del inmueble' })
+  @IsUUID('4')
   propertyId: string;
 
-  @ApiProperty({
-    type: [String],
-    description: 'IDs de los inquilinos firmantes (Mínimo 1)',
-  })
+  @ApiProperty({ type: [String], description: 'IDs de inquilinos' })
   @IsArray()
   @IsUUID('4', { each: true })
   @ArrayMinSize(1)
-  inquilinosIds: string[];
+  tenantIds: string[]; // 🚩 Sincronizado con la relación "tenants" de la entidad
 
-  /* --- CONDICIONES ECONÓMICAS --- */
+  /* --- ECONOMÍA --- */
 
-  @ApiProperty({ example: 1200.0 })
+  @ApiProperty({ example: 1200.0, description: 'Renta base' })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  rentaMensual: number;
+  baseRent: number; // 🚩 Coincide con @Column({ name: 'base_rent' })
 
-  @ApiPropertyOptional({ example: 2400.0, default: 0 })
+  @ApiPropertyOptional({ example: 1200.0 })
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  fianza?: number;
+  depositAmount?: number; // 🚩 Coincide con @Column({ name: 'deposit_amount' })
 
-  @ApiProperty({ description: 'ID del impuesto IVA (Tax)' })
-  @IsUUID()
-  taxIvaId: string;
-
-  @ApiPropertyOptional({ description: 'ID del impuesto IRPF (Tax)' })
+  @ApiPropertyOptional({ example: 0 })
   @IsOptional()
-  @IsUUID()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  additionalGuarantee?: number;
+
+  /* --- FISCALIDAD --- */
+
+  @ApiProperty({ description: 'ID del IVA aplicable' })
+  @IsUUID('4')
+  taxIvaId: string; // 🚩 Coincide con @JoinColumn({ name: 'tax_iva_id' })
+
+  @ApiPropertyOptional({ description: 'ID del IRPF' })
+  @IsOptional()
+  @IsUUID('4')
   taxIrpfId?: string;
 
-  /* --- CONFIGURACIÓN DE FACTURACIÓN --- */
+  /* --- OPERATIVA --- */
 
-  @ApiProperty({
-    enum: FrecuenciaPago,
-    enumName: 'FrecuenciaPago', // 🚩 Clave para ng-openapi-gen
-    default: FrecuenciaPago.MENSUAL,
-  })
-  @IsEnum(FrecuenciaPago)
-  frecuenciaPago: FrecuenciaPago;
+  @ApiProperty({ enum: PaymentFrequency })
+  @IsEnum(PaymentFrequency)
+  paymentFrequency: PaymentFrequency; // 🚩 Sincronizado con el tipo de la entidad
 
-  @ApiProperty({
-    enum: MetodoPago,
-    enumName: 'MetodoPago', // 🚩 Clave para ng-openapi-gen
-    default: MetodoPago.TRANSFERENCIA,
-  })
-  @IsEnum(MetodoPago)
-  metodoPago: MetodoPago;
+  @ApiProperty({ enum: PaymentMethod })
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod;
 
-  @ApiProperty({ example: 5, description: 'Día del mes para emitir factura' })
-  @IsNumber()
+  @ApiProperty({ example: 5 })
+  @IsInt()
   @Min(1)
-  @Max(31)
-  diaFacturacion: number;
+  @Max(28) // 🚩 Límite de rigor para seguridad en febrero
+  billingDay: number;
 
   /* --- TEMPORALIDAD --- */
 
   @ApiProperty({ example: '2026-02-01' })
   @IsDateString()
-  fechaInicio: string;
+  startDate: string;
 
-  @ApiProperty({ example: 12, description: 'Vigencia en meses' })
-  @IsNumber()
-  @Min(1)
-  duracionMeses: number;
+  @ApiProperty({ example: '2027-01-31' })
+  @IsDateString()
+  endDate: string; // 🚩 Eliminamos 'duracionMeses' para usar fecha de fin explícita
 
-  @ApiPropertyOptional({
-    enum: ContractStatus,
-    enumName: 'ContractStatus', // 🚩 Clave para ng-openapi-gen
-    default: ContractStatus.ACTIVO,
-  })
+  @ApiPropertyOptional({ example: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  gracePeriodDays?: number;
+
+  @ApiPropertyOptional({ example: 30 })
+  @IsOptional()
+  @IsInt()
+  @Min(15)
+  noticePeriodDays?: number;
+
+  @ApiPropertyOptional({ enum: ContractStatus, default: ContractStatus.DRAFT })
   @IsOptional()
   @IsEnum(ContractStatus)
-  estado?: ContractStatus;
+  status?: ContractStatus;
 }

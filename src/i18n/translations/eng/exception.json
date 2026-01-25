@@ -1,0 +1,29 @@
+{
+  "general": {
+    "internal_error": "An unexpected error occurred. Please contact support.",
+    "not_found": "The requested resource does not exist.",
+    "forbidden": "You do not have sufficient permissions to perform this operation."
+  },
+  "company": {
+    "not_found": "The requested company could not be found.",
+    "create_error": "Could not create company. Tax ID might be duplicated."
+  },
+  "property": {
+    "not_found": "The specified property was not found.",
+    "active_contracts": "Cannot delete a property that has active contracts.",
+    "invalid_status": "The property status does not allow this action."
+  },
+  "tenant": {
+    "not_found": "The tenant does not exist in our database.",
+    "already_exists": "A tenant with this ID is already registered."
+  },
+  "contract": {
+    "not_found": "Contract not found.",
+    "overlap": "The selected dates overlap with an existing contract.",
+    "invalid_dates": "The end date cannot be earlier than the start date."
+  },
+  "billing": {
+    "invoice_generation_error": "Error generating invoice. Please check fiscal data.",
+    "payment_failed": "Payment process could not be completed."
+  }
+}

@@ -7,16 +7,17 @@ import {
   Patch,
   Delete,
   ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
-  ApiParam,
   ApiForbiddenResponse,
   ApiUnauthorizedResponse,
   ApiCreatedResponse,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 
 import { CompanyService } from './company.service';
@@ -25,98 +26,47 @@ import { CreateCompanyLegalDto, UpdateCompanyDto } from './dto';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { CompanyRole } from 'src/user-company-role/enums/user-company-role.enum';
 
-/**
- * @class CompanyController
- * @description Controlador de orquestación patrimonial (Rentix 2026).
- * Gestiona el ciclo de vida de las empresas y sus entidades legales bajo
- * estándares Veri*factu para garantizar la trazabilidad fiscal.
- * @author Rentix 2026
- * @version 2.3.1
- */
 @ApiTags('Companies')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({
-  description: 'Error de autenticación: Token JWT no válido o expirado.',
-})
-@ApiForbiddenResponse({
-  description:
-    'Error de autorización: El rol del usuario no permite esta acción.',
-})
+@ApiUnauthorizedResponse({ description: 'JWT no válido o expirado.' })
+@ApiForbiddenResponse({ description: 'Privilegios insuficientes.' })
 @Controller('companies')
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
 
   /**
-   * @method createOwner
-   * @description Ejecuta el alta atómica de una nueva empresa vinculada a un propietario.
-   * Restringido a SUPERADMIN para control de creación de nuevos patrimonios raíz.
-   * @param {CreateCompanyLegalDto} dto - Estructura Veri*factu compliant (Fiscal + Address).
-   * @returns {Promise<Company>}
+   * @description ALTA ATÓMICA (Contexto SUPERADMIN).
+   * El SA crea la infraestructura y asigna al dueño legal.
    */
-  @Post('owner')
+  @Post()
   @Auth(AppRole.SUPERADMIN)
-  @ApiOperation({
-    summary: 'Alta atómica de Propietario (Owner)',
-    description:
-      'Genera Address, FiscalEntity y Company en una transacción única.',
-  })
-  @ApiCreatedResponse({
-    description: 'Empresa y registros legales creados con éxito.',
-    type: Company,
-  })
-  async createOwner(@Body() dto: CreateCompanyLegalDto): Promise<Company> {
-    return await this.companyService.createOwner(dto);
+  @ApiOperation({ summary: 'Alta atómica de Patrimonio (SA)' })
+  @ApiCreatedResponse({ type: Company })
+  async create(@Body() dto: CreateCompanyLegalDto): Promise<Company> {
+    // Por defecto, el SA crea el nodo raíz (OWNER)
+    return await this.companyService.createCompany(dto, CompanyRole.OWNER);
   }
 
   /**
-   * @method createTenant
-   * @description Registra un nuevo arrendatario con su estructura legal propia.
-   * @param {CreateCompanyLegalDto} dto - Datos de identidad fiscal del inquilino.
+   * @description LISTADO DINÁMICO.
+   * Si eres SA, ves TODO (incluído suspendidos). Si eres USER, solo tus activas.
    */
-  @Post('tenant')
+  @Get()
   @Auth()
-  @ApiOperation({ summary: 'Alta atómica de Arrendatario (Tenant)' })
-  async createTenant(@Body() dto: CreateCompanyLegalDto): Promise<Company> {
-    return await this.companyService.createTenant(dto);
-  }
-
-  /**
-   * @method getMyCompanies
-   * @description Punto de entrada para el Dashboard.
-   * Recupera el inventario de empresas accesibles con validación de tipos estricta.
-   * @param {string} userId - ID del usuario extraído del JWT.
-   * @param {AppRole} appRole - Rol global para determinar visibilidad.
-   */
-  @Get('me')
-  @Auth()
-  @ApiOperation({
-    summary: 'Listado de patrimonios vinculados',
-    description:
-      'Visión global para SUPERADMIN y filtrada por jerarquía para USER/ADMIN.',
-  })
-  @ApiResponse({
-    status: 200,
-    type: [Company],
-    description: 'Colección de empresas recuperada.',
-  })
-  async getMyCompanies(
+  @ApiOperation({ summary: 'Listado de empresas (Contextual)' })
+  @ApiOkResponse({ type: [Company] })
+  async findAll(
     @GetUser('id') userId: string,
     @GetUser('appRole') appRole: AppRole,
   ): Promise<Company[]> {
-    // 🛡️ Casting explícito a AppRole para satisfacer TS2345
-    return await this.companyService.findAllByUser(userId, appRole);
+    return await this.companyService.findAll(userId, appRole);
   }
 
-  /**
-   * @method findOne
-   * @description Recupera el detalle técnico y legal de una empresa.
-   * @param {string} id - UUID de la empresa.
-   */
   @Get(':id')
   @Auth()
-  @ApiOperation({ summary: 'Detalle de empresa con validación de acceso' })
-  @ApiParam({ name: 'id', description: 'UUID del patrimonio.' })
+  @ApiOperation({ summary: 'Detalle técnico y legal de empresa' })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('id') userId: string,
@@ -126,12 +76,22 @@ export class CompanyController {
   }
 
   /**
-   * @method update
-   * @description Actualización parcial de los metadatos de una empresa.
+   * @description KILL-SWITCH / REACTIVACIÓN (Exclusivo SA).
+   * Maneja el estado isActive y el borrado lógico en una sola operación.
    */
+  @Patch(':id/status')
+  @Auth(AppRole.SUPERADMIN)
+  @ApiOperation({ summary: 'Alternar estado operativo (Activar/Suspender) - SA' })
+  async toggleStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('isActive') isActive: boolean,
+  ): Promise<Company> {
+    return await this.companyService.toggleStatus(id, isActive);
+  }
+
   @Patch(':id')
   @Auth()
-  @ApiOperation({ summary: 'Actualización de metadatos de empresa' })
+  @ApiOperation({ summary: 'Actualización parcial de metadatos' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: UpdateCompanyDto,
@@ -142,22 +102,14 @@ export class CompanyController {
   }
 
   /**
-   * @method remove
-   * @description Baja lógica de la empresa (Soft Delete).
-   * Restringido a SUPERADMIN por impacto en trazabilidad fiscal.
+   * @description BORRADO FÍSICO (Opcional, solo SA).
+   * En 2026 preferimos toggleStatus para trazabilidad Veri*factu.
    */
-  @Delete(':id')
+  @Delete(':id/permanent')
   @Auth(AppRole.SUPERADMIN)
-  @ApiOperation({ summary: 'Baja lógica de empresa' })
-  @ApiResponse({
-    status: 204,
-    description: 'Empresa marcada como eliminada correctamente.',
-  })
-  async remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('id') userId: string,
-    @GetUser('appRole') appRole: AppRole,
-  ): Promise<void> {
-    return await this.companyService.remove(id, userId, appRole);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Eliminación permanente de DB (SA)' })
+  async hardDelete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    // Implementar solo si es estrictamente necesario, si no, usar toggleStatus(false)
   }
 }
