@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
-import { BaseEntity } from 'src/common/base/base.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { CompanyRole } from '../enums/user-company-role.enum';

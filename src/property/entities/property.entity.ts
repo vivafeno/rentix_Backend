@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { BaseEntity } from 'src/common/base/base.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { Address } from 'src/address/entities/address.entity';
 import { PropertyType, PropertyStatus, PropertyOrientation } from '../enums';

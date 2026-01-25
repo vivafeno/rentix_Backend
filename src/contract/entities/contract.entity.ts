@@ -10,7 +10,7 @@ import {
   BeforeUpdate,
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BaseEntity } from 'src/common/base/base.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { Property } from 'src/property/entities/property.entity';
 import { Tenant } from 'src/tenant/entities/tenant.entity';

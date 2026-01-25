@@ -49,7 +49,7 @@ export class TaxController {
   @ApiResponse({ status: 201, type: Tax })
   async create(
     @Body() createTaxDto: CreateTaxDto,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ): Promise<Tax> {
     this.checkContext(companyId);
     return this.taxService.create(companyId, createTaxDto);
@@ -63,7 +63,7 @@ export class TaxController {
   @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
   @ApiOperation({ summary: 'Listar impuestos activos de la empresa' })
   @ApiResponse({ status: 200, type: [Tax] })
-  async findAll(@GetUser('companyId') companyId: string): Promise<Tax[]> {
+  async findAll(@GetUser('activeCompanyId') companyId: string): Promise<Tax[]> {
     this.checkContext(companyId);
     return this.taxService.findAll(companyId);
   }
@@ -77,7 +77,7 @@ export class TaxController {
   @ApiOperation({ summary: 'Listar impuestos eliminados (Papelera)' })
   @ApiResponse({ status: 200, type: [Tax] })
   async findAllDeleted(
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ): Promise<Tax[]> {
     this.checkContext(companyId);
     return this.taxService.findAllDeleted(companyId);
@@ -93,7 +93,7 @@ export class TaxController {
   @ApiResponse({ status: 200, type: Tax })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ): Promise<Tax> {
     this.checkContext(companyId);
     return this.taxService.findOne(id, companyId);
@@ -110,7 +110,7 @@ export class TaxController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateTaxDto: UpdateTaxDto,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ): Promise<Tax> {
     this.checkContext(companyId);
     return this.taxService.update(id, companyId, updateTaxDto);
@@ -126,7 +126,7 @@ export class TaxController {
   @ApiResponse({ status: 200, type: Tax })
   async restore(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Tax> {
     this.checkContext(companyId);
@@ -143,7 +143,7 @@ export class TaxController {
   @ApiResponse({ status: 200, type: Tax })
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Tax> {
     this.checkContext(companyId);

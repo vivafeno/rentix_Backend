@@ -42,7 +42,7 @@ export class TenantController {
   @ApiCreatedResponse({ type: Tenant })
   async create(
     @Body() createTenantDto: CreateTenantDto,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ): Promise<Tenant> {
     return this.tenantService.create(companyId, createTenantDto);
   }
@@ -51,7 +51,7 @@ export class TenantController {
   @ApiOperation({ summary: 'Listar arrendatarios (Contextual: Activos/Inactivos)' })
   @ApiOkResponse({ type: [Tenant] })
   async findAll(
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('appRole') appRole: AppRole,
   ): Promise<Tenant[]> {
     return this.tenantService.findAll(companyId, appRole);
@@ -62,7 +62,7 @@ export class TenantController {
   @ApiOkResponse({ type: Tenant })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('appRole') appRole: AppRole,
   ): Promise<Tenant> {
     return this.tenantService.findOne(id, companyId, appRole);
@@ -74,7 +74,7 @@ export class TenantController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateTenantDto: UpdateTenantDto,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('appRole') appRole: AppRole,
   ): Promise<Tenant> {
     return this.tenantService.update(id, companyId, updateTenantDto, appRole);
@@ -90,7 +90,7 @@ export class TenantController {
   async toggleStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('isActive') isActive: boolean,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ): Promise<Tenant> {
     return this.tenantService.toggleStatus(id, companyId, isActive);
   }

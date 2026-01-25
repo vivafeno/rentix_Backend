@@ -45,7 +45,7 @@ export class ContractController {
   @ApiResponse({ status: 201, type: Contract })
   async create(
     @Body() createContractDto: CreateContractDto,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Contract> {
     return this.contractService.create(
@@ -58,7 +58,7 @@ export class ContractController {
   @Get()
   @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
   @ApiOperation({ summary: 'Listar contratos de la empresa' })
-  async findAll(@GetUser('companyId') companyId: string): Promise<Contract[]> {
+  async findAll(@GetUser('activeCompanyId') companyId: string): Promise<Contract[]> {
     return this.contractService.findAll(companyId);
   }
 
@@ -67,7 +67,7 @@ export class ContractController {
   @ApiOperation({ summary: 'Obtener detalle de un contrato' })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ): Promise<Contract> {
     return this.contractService.findOne(id, companyId);
   }
@@ -78,7 +78,7 @@ export class ContractController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateContractDto: UpdateContractDto,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Contract> {
     return this.contractService.update(
@@ -94,7 +94,7 @@ export class ContractController {
   @ApiOperation({ summary: 'Restaurar un contrato desactivado' })
   async restore(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Contract> {
     return this.contractService.restore(id, companyId, companyRole);
@@ -106,7 +106,7 @@ export class ContractController {
   @ApiOperation({ summary: 'Borrado lógico de contrato' })
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<void> {
     return this.contractService.remove(id, companyId, companyRole);

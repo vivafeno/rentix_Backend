@@ -19,7 +19,7 @@ export interface ActiveUserData {
   /** * Contexto de Tenant: Puede ser opcional si el usuario 
    * no ha seleccionado empresa al autenticarse. 
    */
-  readonly companyId?: string;
+  readonly activeCompanyId: string;
 
   /** Rol específico dentro del Tenant */
   readonly companyRole?: CompanyRole;

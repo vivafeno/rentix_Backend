@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, IsNull } from 'typeorm';
 import { Invoice, InvoiceStatus, InvoiceType } from './entities/invoice.entity';
@@ -10,10 +10,12 @@ import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 /**
  * @description Servicio de Facturación Rentix 2026.
  * Maneja el ciclo de vida de facturas bajo normativa Veri*factu.
- * Garantiza inmutabilidad, cálculos precisos y prevención de duplicados.
+ * Garantiza inmutabilidad, cálculos precisos y soporte para documentos PDF.
  */
 @Injectable()
 export class InvoiceService {
+  private readonly logger = new Logger(InvoiceService.name);
+
   constructor(
     @InjectRepository(Invoice)
     private readonly invoiceRepository: Repository<Invoice>,
@@ -59,10 +61,8 @@ export class InvoiceService {
 
     const { items, ...header } = updateInvoiceDto;
 
-    // Si se envían nuevos items, reemplazamos la colección
     if (items) {
-      // Nota: El cascade insert de TypeORM se encargará de los nuevos, 
-      // pero debemos limpiar los anteriores para evitar huérfanos.
+      // Limpiamos los anteriores para evitar huérfanos
       await this.itemRepository.delete({ invoiceId: id });
       invoice.items = items.map(itemDto => this.calculateItem(itemDto));
     }
@@ -89,7 +89,6 @@ export class InvoiceService {
       const year = new Date(invoice.issueDate).getFullYear();
       const prefix = invoice.type === InvoiceType.RECTIFICATIVE ? 'R-' : '';
 
-      // Bloqueo pesimista para evitar colisión de números correlativos
       let sequence = await manager.findOne(InvoiceSequence, {
         where: { companyId, year, prefix },
         lock: { mode: 'pessimistic_write' },
@@ -102,15 +101,116 @@ export class InvoiceService {
       sequence.lastNumber += 1;
       await manager.save(sequence);
 
-      // Formateo legal: Prefijo + Año / Número (ej: R-2026/0001)
       const formattedNumber = `${prefix}${year}/${sequence.lastNumber.toString().padStart(4, '0')}`;
       
       invoice.invoiceNumber = formattedNumber;
       invoice.status = InvoiceStatus.EMITTED;
-      invoice.fingerprint = `VERIFACTU-${formattedNumber}-${Date.now()}`; // Simulación de hash
+      invoice.fingerprint = `VERIFACTU-${formattedNumber}-${Date.now()}`;
 
       return await manager.save(invoice);
     });
+  }
+
+  /**
+   * @description NUEVO: Recolecta metadata enriquecida para el PdfService.
+   */
+  async getInvoiceDataForPdf_OLD(id: string, companyId: string): Promise<any> {
+    const invoice = await this.invoiceRepository.findOne({
+      where: { id, companyId },
+      relations: [
+        'items',
+        'company',
+        'company.fiscalEntity',
+        'company.fiscalAddress',
+        'client',
+        'client.fiscalIdentity',
+        'property',
+        'property.address',
+      ],
+    });
+
+    if (!invoice) throw new NotFoundException('Error al recuperar datos para el PDF');
+
+    return {
+      invoiceNumber: invoice.invoiceNumber || 'BORRADOR',
+      issueDate: new Date(invoice.issueDate).toLocaleDateString('es-ES'),
+      companyName: invoice.company.fiscalEntity?.nombreRazonSocial || 'N/A',
+      companyTaxId: invoice.company.fiscalEntity?.nif || 'N/A',
+      companyAddress: invoice.company.fiscalAddress ? 
+        `${invoice.company.fiscalAddress.street}, ${invoice.company.fiscalAddress.postalCode} ${invoice.company.fiscalAddress.city}` : 'N/A',
+      clientName: invoice.client.fiscalIdentity?.nombreRazonSocial || 'N/A',
+      clientTaxId: invoice.client.fiscalIdentity?.nif || 'N/A',
+      clientAddress: invoice.property?.address ? 
+        `${invoice.property.address.street}, ${invoice.property.address.postalCode} ${invoice.property.address.city}` : 'N/A',
+      items: invoice.items.map(i => ({
+        description: i.description,
+        taxableAmount: Number(i.taxableAmount).toFixed(2),
+        taxPercentage: i.taxPercentage,
+        totalLine: Number(i.totalLine).toFixed(2)
+      })),
+      totalTaxableAmount: Number(invoice.totalTaxableAmount).toFixed(2),
+      totalTaxAmount: Number(invoice.totalTaxAmount).toFixed(2),
+      totalRetentionAmount: Number(invoice.totalRetentionAmount) > 0 ? Number(invoice.totalRetentionAmount).toFixed(2) : null,
+      totalAmount: Number(invoice.totalAmount).toFixed(2),
+    };
+  }
+
+  /**
+   * @description NUEVO: Recolecta metadata enriquecida para el PdfService.
+   * Incluye blindaje contra nulos para evitar Error 500 si los datos fiscales están incompletos.
+   */
+  async getInvoiceDataForPdf(id: string, companyId: string): Promise<any> {
+    const invoice = await this.invoiceRepository.findOne({
+      where: { id, companyId },
+      relations: [
+        'items',
+        'company',
+        'company.fiscalEntity',
+        'company.fiscalAddress',
+        'client',
+        'client.fiscalIdentity',
+        'property',
+        'property.address',
+      ],
+    });
+
+    if (!invoice) throw new NotFoundException('Error al recuperar datos para el PDF');
+
+    // Blindaje con Optional Chaining (?.) y valores Fallback (||)
+    return {
+      invoiceNumber: invoice.invoiceNumber || 'BORRADOR',
+      issueDate: invoice.issueDate 
+        ? new Date(invoice.issueDate).toLocaleDateString('es-ES') 
+        : new Date().toLocaleDateString('es-ES'),
+      
+      // Datos Emisor (Empresa)
+      companyName: invoice.company?.fiscalEntity?.nombreRazonSocial || 'EMPRESA DEMO RENTIX',
+      companyTaxId: invoice.company?.fiscalEntity?.nif || 'NIF-00000000',
+      companyAddress: invoice.company?.fiscalAddress 
+        ? `${invoice.company.fiscalAddress.street}, ${invoice.company.fiscalAddress.city}` 
+        : 'Dirección Emisor no configurada',
+      
+      // Datos Receptor (Inquilino)
+      clientName: invoice.client?.fiscalIdentity?.nombreRazonSocial || 'CLIENTE DE PRUEBA',
+      clientTaxId: invoice.client?.fiscalIdentity?.nif || 'NIF-CLIENTE',
+      clientAddress: invoice.property?.address 
+        ? `${invoice.property.address.street}, ${invoice.property.address.city}` 
+        : 'Dirección Inmueble no configurada',
+
+      // Líneas de factura (con mapeo seguro)
+      items: (invoice.items || []).map(i => ({
+        description: i.description || 'Concepto de alquiler',
+        taxableAmount: Number(i.taxableAmount || 0).toFixed(2),
+        taxPercentage: i.taxPercentage || 0,
+        totalLine: Number(i.totalLine || 0).toFixed(2)
+      })),
+
+      // Totales formateados para el Rigor Fiscal (2 decimales siempre)
+      totalTaxableAmount: Number(invoice.totalTaxableAmount || 0).toFixed(2),
+      totalTaxAmount: Number(invoice.totalTaxAmount || 0).toFixed(2),
+      totalRetentionAmount: Number(invoice.totalRetentionAmount || 0).toFixed(2),
+      totalAmount: Number(invoice.totalAmount || 0).toFixed(2),
+    };
   }
 
   /**
@@ -123,22 +223,14 @@ export class InvoiceService {
     const unitPrice = Number(item.unitPrice);
     const discPercent = Number(item.discountPercentage || 0);
     
-    // Cálculo de base neta
     item.taxableAmount = unitPrice - (unitPrice * (discPercent / 100));
-
-    // Cálculo de cuotas
     item.taxAmount = item.applyTax ? item.taxableAmount * (Number(item.taxPercentage) / 100) : 0;
     item.retentionAmount = item.applyRetention ? item.taxableAmount * (Number(item.retentionPercentage) / 100) : 0;
-
-    // Total línea: Neto + IVA - Retención
     item.totalLine = item.taxableAmount + item.taxAmount - item.retentionAmount;
 
     return item;
   }
 
-  /**
-   * @description Actualiza los campos de resumen de la cabecera sumando sus líneas.
-   */
   private updateInvoiceTotals(invoice: Invoice): void {
     invoice.totalTaxableAmount = invoice.items.reduce((s, i) => s + Number(i.taxableAmount), 0);
     invoice.totalTaxAmount = invoice.items.reduce((s, i) => s + Number(i.taxAmount), 0);
@@ -146,9 +238,6 @@ export class InvoiceService {
     invoice.totalAmount = invoice.items.reduce((s, i) => s + Number(i.totalLine), 0);
   }
 
-  /**
-   * @description Verifica si ya se facturó el mismo concepto para el mismo periodo/inmueble.
-   */
   private async validateDuplicity(dto: CreateInvoiceDto, companyId: string): Promise<void> {
     for (const item of dto.items) {
       const existing = await this.itemRepository.findOne({
@@ -167,14 +256,10 @@ export class InvoiceService {
       });
 
       if (existing) {
-        throw new ConflictException(
-          `Conflicto: Ya existe un cargo de tipo ${item.category} para este periodo e inmueble.`
-        );
+        throw new ConflictException(`Conflicto: Ya existe un cargo de tipo ${item.category} para este periodo.`);
       }
     }
   }
-
-  // --- MÉTODOS DE CONSULTA Y BORRADO ---
 
   async findAll(companyId: string): Promise<Invoice[]> {
     return this.invoiceRepository.find({
@@ -196,7 +281,7 @@ export class InvoiceService {
   async remove(id: string, companyId: string): Promise<void> {
     const invoice = await this.findOne(id, companyId);
     if (invoice.status !== InvoiceStatus.DRAFT) {
-      throw new BadRequestException('No se puede eliminar una factura emitida. Debe ser anulada legalmente.');
+      throw new BadRequestException('No se puede eliminar una factura emitida.');
     }
     await this.invoiceRepository.softRemove(invoice);
   }

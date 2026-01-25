@@ -9,7 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BaseEntity } from 'src/common/base/base.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { TenantStatus } from '../enums/tenant-status.enum';
 import { Contract } from 'src/contract/entities/contract.entity';

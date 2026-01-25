@@ -6,6 +6,7 @@ import { Invoice } from './entities/invoice.entity';
 import { InvoiceItem } from './entities/invoice-item.entity';
 import { InvoiceSequence } from './entities/invoice-sequence.entity';
 import { InvoiceCronService } from './invoice-cron.service';
+import { CommonModule } from 'src/common/common.module';
 
 /**
  * @description Módulo de Facturación de Rentix 2026.
@@ -20,6 +21,7 @@ import { InvoiceCronService } from './invoice-cron.service';
       InvoiceItem,
       InvoiceSequence
     ]),
+    CommonModule
   ],
   controllers: [InvoiceController],
   providers: [

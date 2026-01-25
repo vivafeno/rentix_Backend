@@ -69,7 +69,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       appRole: user.appRole,
-      companyId: context?.id,
+      activeCompanyId: context?.id ?? '',
       companyRole: context?.role,
     };
 

@@ -1,6 +1,6 @@
 import { Column, Entity, Index, OneToOne } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BaseEntity } from '../../common/base/base.entity';
+import { BaseEntity } from '../../common/entities/base.entity';
 import { Company } from '../../company/entities/company.entity';
 import { PersonType } from '../enums/personType.enum';
 import { TaxIdType } from '../enums/taxIdType.enum';

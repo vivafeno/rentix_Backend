@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { BaseEntity } from '../../common/base/base.entity';
+import { BaseEntity } from '../../common/entities/base.entity';
 import { Company } from '../../company/entities/company.entity';
 import { TaxType } from '../enums/tax-type.enum';
 

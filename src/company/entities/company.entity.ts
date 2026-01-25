@@ -9,7 +9,7 @@ import {
   BeforeInsert 
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BaseEntity } from 'src/common/base/base.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 import { FiscalEntity } from 'src/fiscal/entities/fiscal.entity';
 import { Address } from 'src/address/entities/address.entity';
 import { User } from 'src/user/entities/user.entity';

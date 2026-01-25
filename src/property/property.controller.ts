@@ -42,7 +42,7 @@ export class PropertyController {
   @ApiOperation({ summary: 'Listado de activos (Contextual: Activos/Inactivos)' })
   @ApiOkResponse({ type: [Property] })
   async findAll(
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('appRole') appRole: AppRole,
   ): Promise<Property[]> {
     return this.propertyService.findAll(companyId, appRole);
@@ -53,7 +53,7 @@ export class PropertyController {
   @ApiOkResponse({ type: Property })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('appRole') appRole: AppRole,
   ): Promise<Property> {
     return this.propertyService.findOne(id, companyId, appRole);
@@ -64,7 +64,7 @@ export class PropertyController {
   @ApiCreatedResponse({ type: Property })
   async create(
     @Body() createDto: CreatePropertyDto,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ): Promise<Property> {
     // El companyId viene del contexto de selección del usuario
     return this.propertyService.create(companyId, createDto);
@@ -76,7 +76,7 @@ export class PropertyController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: UpdatePropertyDto,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('appRole') appRole: AppRole,
   ): Promise<Property> {
     return this.propertyService.update(id, companyId, updateDto, appRole);
@@ -92,7 +92,7 @@ export class PropertyController {
   async toggleStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('isActive') isActive: boolean,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
     @GetUser('companyRole') companyRole: CompanyRole,
   ): Promise<Property> {
     return this.propertyService.toggleStatus(id, companyId, isActive, companyRole);

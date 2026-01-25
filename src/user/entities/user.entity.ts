@@ -2,7 +2,7 @@ import { Entity, Column, OneToMany, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 
-import { BaseEntity } from 'src/common/base/base.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
 import { CompanyRoleEntity } from 'src/user-company-role/entities/user-company-role.entity';
 import { TenantProfile } from 'src/tenant-profile/entities/tenant-profile.entity';

@@ -1,6 +1,6 @@
 import { Entity, Column, Unique, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { BaseEntity } from '../../common/base/base.entity';
+import { BaseEntity } from '../../common/entities/base.entity';
 
 /**
  * @description Entidad encargada de gestionar los contadores de facturación por empresa.

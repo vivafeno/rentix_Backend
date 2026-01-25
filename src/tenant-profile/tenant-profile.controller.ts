@@ -52,7 +52,7 @@ export class TenantProfileController {
     @Body() createDto: CreateTenantProfileDto,
     @GetUser() user: ActiveUserData, // 🚩 Solución: Tipado estricto en lugar de any
   ) {
-    const companyId = user.companyId;
+    const companyId = user.activeCompanyId;
 
     if (!companyId) {
       throw new BadRequestException(
@@ -70,7 +70,7 @@ export class TenantProfileController {
   @Get()
   @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
   @ApiOperation({ summary: 'Listar clientes de mi empresa' })
-  findAll(@GetUser('companyId') companyId: string) {
+  findAll(@GetUser('activeCompanyId') companyId: string) {
     return this.clientProfileService.findAll(companyId);
   }
 
@@ -83,7 +83,7 @@ export class TenantProfileController {
   @ApiOperation({ summary: 'Obtener detalle de un cliente' })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ) {
     return this.clientProfileService.findOne(id, companyId);
   }
@@ -98,7 +98,7 @@ export class TenantProfileController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: UpdateTenantProfileDto,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ) {
     return this.clientProfileService.update(id, companyId, updateDto);
   }
@@ -112,7 +112,7 @@ export class TenantProfileController {
   @ApiOperation({ summary: 'Desactivar cliente (Soft delete)' })
   remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @GetUser('companyId') companyId: string,
+    @GetUser('activeCompanyId') companyId: string,
   ) {
     return this.clientProfileService.remove(id, companyId);
   }

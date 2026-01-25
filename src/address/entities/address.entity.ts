@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { BaseEntity } from 'src/common/base/base.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 import { Property } from 'src/property/entities/property.entity';
 import { TenantProfile } from 'src/tenant-profile/entities/tenant-profile.entity';
 import { AddressStatus } from '../enums/address-status.enum';
