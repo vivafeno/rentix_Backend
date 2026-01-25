@@ -11,7 +11,7 @@ import {
 
 import { FiscalService } from './fiscal.service';
 import { CreateFiscalDto } from './dto/create-fiscal.dto';
-import { FiscalEntity } from './entities/fiscalEntity';
+import { FiscalEntity } from './entities/fiscal.entity';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 
 /**

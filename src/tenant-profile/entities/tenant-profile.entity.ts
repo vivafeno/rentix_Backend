@@ -12,7 +12,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntity } from 'src/common/base/base.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { Address } from 'src/address/entities/address.entity';
-import { FiscalEntity } from 'src/fiscal/entities/fiscalEntity';
+import { FiscalEntity } from 'src/fiscal/entities/fiscal.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Contract } from 'src/contract/entities/contract.entity';
 import { Tenant } from './../../tenant/entities/tenant.entity';

@@ -9,7 +9,7 @@ import { DataSource, Repository, EntityManager } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Company } from './entities/company.entity';
-import { FiscalEntity } from 'src/fiscal/entities/fiscalEntity';
+import { FiscalEntity } from 'src/fiscal/entities/fiscal.entity';
 import { Address } from 'src/address/entities/address.entity';
 import { CreateCompanyLegalDto, UpdateCompanyDto } from './dto';
 import { CompanyRoleEntity } from '../user-company-role/entities/user-company-role.entity';

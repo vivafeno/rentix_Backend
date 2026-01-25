@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, DeepPartial } from 'typeorm';
-import { FiscalEntity } from './entities/fiscalEntity';
+import { FiscalEntity } from './entities/fiscal.entity';
 import { CreateFiscalDto } from './dto/create-fiscal.dto';
 
 @Injectable()

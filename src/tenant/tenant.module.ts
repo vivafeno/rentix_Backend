@@ -7,7 +7,7 @@ import { TenantController } from './tenant.controller';
 // Entidades necesarias para la integridad referencial del Tenant
 import { Tenant } from './entities/tenant.entity';
 import { Address } from 'src/address/entities/address.entity';
-import { FiscalEntity } from 'src/fiscal/entities/fiscalEntity';
+import { FiscalEntity } from 'src/fiscal/entities/fiscal.entity';
 
 /**
  * @class TenantModule

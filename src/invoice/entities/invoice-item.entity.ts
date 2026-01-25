@@ -16,7 +16,7 @@ export class InvoiceItem extends BaseEntity {
   invoiceId: string;
 
   @ManyToOne(() => Invoice, (invoice) => invoice.items, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'invoiceId' })
+  @JoinColumn({ name: 'invoice_id' })
   invoice: Invoice;
 
   /* ─────────────────────────────────────────────────────────────────

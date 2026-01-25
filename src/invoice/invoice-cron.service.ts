@@ -13,24 +13,33 @@ export class InvoiceCronService {
   constructor(
     private readonly invoiceService: InvoiceService,
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  //@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  // @Cron('*/30 * * * * *')
+
+  // Explicación de la expresión:
+  // 01 -> Minuto 1
+  // 00 -> Hora 00 (medianoche)
+  // 1  -> Día 1 del mes
+  // * -> Todos los meses
+  // * -> Todos los días de la semana
+  @Cron('01 00 1 * *')
   async handleAutoBilling() {
     this.logger.log('Iniciando ciclo de facturación automática - Rentix 2026');
 
     const contractRepo = this.dataSource.getRepository(Contract);
-    
+
     const contracts = await contractRepo.find({
-      where: { 
+      where: {
         status: ContractStatus.ACTIVE,
-        isActive: true 
+        isActive: true
       },
       relations: [
-        'tenants', 
+        'tenants',
         'property', // Ahora conocemos sus campos internos
-        'taxIva',   
-        'taxIrpf'   
+        'taxIva',
+        'taxIrpf'
       ],
     });
 
@@ -77,7 +86,7 @@ export class InvoiceCronService {
           periodMonth: month,
           periodYear: year,
           discountPercentage: 0,
-          applyTax: true, 
+          applyTax: true,
           taxPercentage: ivaRate,
           applyRetention: irpfRate > 0,
           retentionPercentage: irpfRate,

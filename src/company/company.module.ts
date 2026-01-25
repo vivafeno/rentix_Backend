@@ -6,7 +6,7 @@ import { CompanyController } from './company.controller';
 
 // 🛡️ Entidades: Requeridas para la persistencia atómica (Rentix 2026)
 import { Company } from './entities/company.entity';
-import { FiscalEntity } from 'src/fiscal/entities/fiscalEntity';
+import { FiscalEntity } from 'src/fiscal/entities/fiscal.entity';
 import { Address } from 'src/address/entities/address.entity';
 import { CompanyRoleEntity } from 'src/user-company-role/entities/user-company-role.entity';
 

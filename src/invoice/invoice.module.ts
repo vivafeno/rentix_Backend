@@ -5,6 +5,7 @@ import { InvoiceController } from './invoice.controller';
 import { Invoice } from './entities/invoice.entity';
 import { InvoiceItem } from './entities/invoice-item.entity';
 import { InvoiceSequence } from './entities/invoice-sequence.entity';
+import { InvoiceCronService } from './invoice-cron.service';
 
 /**
  * @description Módulo de Facturación de Rentix 2026.
@@ -15,16 +16,19 @@ import { InvoiceSequence } from './entities/invoice-sequence.entity';
   imports: [
     // Registro de las entidades en TypeORM para habilitar la inyección de repositorios
     TypeOrmModule.forFeature([
-      Invoice, 
-      InvoiceItem, 
+      Invoice,
+      InvoiceItem,
       InvoiceSequence
     ]),
   ],
   controllers: [InvoiceController],
-  providers: [InvoiceService],
+  providers: [
+    InvoiceService,
+    InvoiceCronService,
+  ],
   exports: [
     InvoiceService, // Exportamos el servicio por si otros módulos (ej. Contracts) necesitan generar facturas
     TypeOrmModule,   // Exportamos TypeORM para facilitar tests o integraciones
   ],
 })
-export class InvoiceModule {}
+export class InvoiceModule { }

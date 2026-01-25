@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { FiscalIdentityController } from './fiscal.controller';
 import { FiscalService } from './fiscal.service';
-import { FiscalEntity } from './entities/fiscalEntity';
+import { FiscalEntity } from './entities/fiscal.entity';
 
 /**
  * FacturaeModule
