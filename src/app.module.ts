@@ -31,6 +31,8 @@ import { ContractModule } from './contract/contract.module';
 import { TaxModule } from './tax/tax.module';
 import { BillingConceptModule } from './billing-concept/billing-concept.module';
 import { FacturaeModule } from './fiscal/fiscal.module';
+import { InvoiceModule } from './invoice/invoice.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 /**
  * @class AppModule
@@ -86,16 +88,19 @@ import { FacturaeModule } from './fiscal/fiscal.module';
       ),
     }),
 
-    // 4. MÓDULOS DE SISTEMA
+    // 4. CRON FACTURACION DRAFT AUTOMATICA
+    ScheduleModule.forRoot(),
+
+    // 5. MÓDULOS DE SISTEMA
     SeederModule,
     HealthModule,
 
-    // 5. MÓDULOS DE SEGURIDAD
+    // 6. MÓDULOS DE SEGURIDAD
     AuthModule,
     UserModule,
     UserCompanyRoleModule,
 
-    // 6. MÓDULOS DE DOMINIO OPERATIVO
+    // 7. MÓDULOS DE DOMINIO OPERATIVO
     CompanyModule,
     AddressModule,
     ContactModule,
@@ -106,6 +111,7 @@ import { FacturaeModule } from './fiscal/fiscal.module';
     TaxModule,
     BillingConceptModule,
     FacturaeModule,
+    InvoiceModule,
   ],
 })
 export class AppModule {}
