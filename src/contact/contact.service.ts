@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Contact } from './entities/contact.entity';
@@ -7,10 +7,8 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 
 /**
  * @class ContactService
- * @description Gestión de la agenda de contactos corporativos.
- * Implementa borrado lógico y recuperación de estados para el CRM de Rentix.
- * @version 2026.1.18
- * @author Rentix
+ * @description Gestión de lógica de negocio para contactos (Empresas y Tenants).
+ * Implementa protocolo de Soft Delete manual mediante isActive y deletedAt.
  */
 @Injectable()
 export class ContactService {
@@ -20,73 +18,63 @@ export class ContactService {
   ) {}
 
   /**
-   * @method create
-   * @description Registra un nuevo contacto en el sistema.
-   * @param {CreateContactDto} createContactDto Datos del contacto.
-   * @returns {Promise<Contact>} Entidad persistida.
+   * Crea un nuevo contacto validando que tenga una asignación paterna.
+   * @param createContactDto Datos del contacto
+   * @returns Contacto creado
    */
   async create(createContactDto: CreateContactDto): Promise<Contact> {
-    const contact = this.contactRepository.create(createContactDto);
-    return await this.contactRepository.save(contact);
+    // Regla Rentix: Un contacto debe pertenecer a una empresa O a un tenant.
+    if (!createContactDto.companyId && !createContactDto.tenantId) {
+      throw new BadRequestException('exception.contact.no_parent_assigned');
+    }
+
+    const newContact = this.contactRepository.create({
+      ...createContactDto,
+      isActive: true, // Por defecto activo
+      deletedAt: null,
+    });
+
+    return await this.contactRepository.save(newContact);
   }
 
   /**
-   * @method findAll
-   * @description Lista todos los contactos operativos (isActive: true).
+   * Obtiene todos los contactos activos.
    */
   async findAll(): Promise<Contact[]> {
     return await this.contactRepository.find({
       where: { isActive: true },
-      order: { createdAt: 'DESC' },
+      relations: ['company', 'tenant'],
     });
   }
 
   /**
-   * @method findOne
-   * @description Localiza un contacto activo por su UUID.
-   * @throws {NotFoundException} Si el contacto no existe o está desactivado.
+   * Obtiene un contacto por ID si está activo.
    */
   async findOne(id: string): Promise<Contact> {
     const contact = await this.contactRepository.findOne({
       where: { id, isActive: true },
+      relations: ['company', 'tenant'],
     });
 
     if (!contact) {
-      throw new NotFoundException(`Contacto con ID ${id} no encontrado.`);
+      throw new NotFoundException(`exception.contact.not_found`);
     }
     return contact;
   }
 
   /**
-   * @method findInactive
-   * @description Recupera el histórico de contactos desactivados.
+   * Actualiza un contacto y gestiona el estado de activación/desactivación.
    */
-  async findInactive(): Promise<Contact[]> {
-    // 🚩 Solución linter: Añadido await para evitar promesa flotante
-    return await this.contactRepository.find({
-      where: { isActive: false },
-      order: { deletedAt: 'DESC' },
-    });
-  }
+  async update(id: string, updateContactDto: UpdateContactDto): Promise<Contact> {
+    const contact = await this.findOne(id);
 
-  /**
-   * @method update
-   * @description Actualiza datos de contacto y permite la reactivación.
-   */
-  async update(
-    id: string,
-    updateContactDto: UpdateContactDto,
-  ): Promise<Contact> {
-    // Buscamos sin filtro de isActive para permitir reactivación desde la papelera
-    const contact = await this.contactRepository.findOne({ where: { id } });
-
-    if (!contact) {
-      throw new NotFoundException(`Contacto con ID ${id} no encontrado.`);
-    }
-
-    if (updateContactDto.isActive === true) {
-      contact.isActive = true;
-      contact.deletedAt = null;
+    // Lógica personalizada de Soft Delete / Reactivación
+    if (updateContactDto.isActive !== undefined) {
+      if (updateContactDto.isActive === false) {
+        contact.deletedAt = new Date();
+      } else {
+        contact.deletedAt = null;
+      }
     }
 
     Object.assign(contact, updateContactDto);
@@ -94,15 +82,32 @@ export class ContactService {
   }
 
   /**
-   * @method remove
-   * @description Ejecuta el borrado lógico del contacto.
+   * Desactiva un contacto (Soft Delete manual).
    */
-  async remove(id: string): Promise<Contact> {
+  async remove(id: string): Promise<void> {
     const contact = await this.findOne(id);
-
+    
     contact.isActive = false;
     contact.deletedAt = new Date();
+    
+    await this.contactRepository.save(contact);
+  }
 
+  /**
+   * Restaura un contacto desactivado.
+   */
+  async restore(id: string): Promise<Contact> {
+    const contact = await this.contactRepository.findOne({
+      where: { id, isActive: false },
+    });
+
+    if (!contact) {
+      throw new NotFoundException('exception.contact.not_found_in_trash');
+    }
+
+    contact.isActive = true;
+    contact.deletedAt = null;
+    
     return await this.contactRepository.save(contact);
   }
 }

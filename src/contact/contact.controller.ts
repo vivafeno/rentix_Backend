@@ -6,110 +6,67 @@ import {
   Patch,
   Param,
   Delete,
-  NotFoundException,
-  UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBody,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ContactService } from './contact.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 import { Contact } from './entities/contact.entity';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
-@ApiTags('Contact')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
+/**
+ * @class ContactController
+ * @description Endpoint para la gestión de contactos vinculados a empresas o inquilinos.
+ */
+@ApiTags('Contacts')
 @Controller('contact')
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 
-  @ApiOperation({ summary: 'Crear nuevo contacto' })
-  @ApiBody({ type: CreateContactDto })
-  @ApiResponse({
-    status: 201,
-    description: 'Contacto creado correctamente',
-    type: Contact,
-  })
   @Post()
-  async create(@Body() createContactDto: CreateContactDto) {
+  @ApiOperation({ summary: 'Crear un nuevo contacto' })
+  @ApiResponse({ status: 201, description: 'Contacto creado con éxito.', type: Contact })
+  @ApiResponse({ status: 400, description: 'Error de validación o falta de asignación paterna.' })
+  create(@Body() createContactDto: CreateContactDto) {
     return this.contactService.create(createContactDto);
   }
 
-  @ApiOperation({ summary: 'Listar contactos activos' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de contactos activos',
-    type: [Contact],
-  })
   @Get()
-  async findAll() {
+  @ApiOperation({ summary: 'Listar todos los contactos activos' })
+  @ApiResponse({ status: 200, type: [Contact] })
+  findAll() {
     return this.contactService.findAll();
   }
 
-  @ApiOperation({ summary: 'Listar contactos inactivos' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de contactos inactivos',
-    type: [Contact],
-  })
-  @Get('inactive')
-  async findInactive() {
-    return this.contactService.findInactive();
-  }
-
-  @ApiOperation({ summary: 'Buscar contacto por id' })
-  @ApiParam({ name: 'id', type: String, required: true })
-  @ApiResponse({
-    status: 200,
-    description: 'Contacto encontrado',
-    type: Contact,
-  })
-  @ApiResponse({ status: 404, description: 'No encontrado' })
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const contact = await this.contactService.findOne(id);
-    if (!contact) throw new NotFoundException('Contacto no encontrado');
-    return contact;
+  @ApiOperation({ summary: 'Obtener un contacto por ID' })
+  @ApiResponse({ status: 200, type: Contact })
+  @ApiResponse({ status: 404, description: 'Contacto no encontrado o inactivo.' })
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.contactService.findOne(id);
   }
 
-  @ApiOperation({ summary: 'Actualizar contacto por id' })
-  @ApiParam({ name: 'id', type: String, required: true })
-  @ApiBody({ type: UpdateContactDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Contacto actualizado',
-    type: Contact,
-  })
-  @ApiResponse({ status: 404, description: 'No encontrado' })
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
+  @ApiOperation({ summary: 'Actualizar un contacto / Cambiar estado isActive' })
+  @ApiResponse({ status: 200, type: Contact })
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateContactDto: UpdateContactDto,
   ) {
     return this.contactService.update(id, updateContactDto);
   }
 
-  @ApiOperation({ summary: 'Eliminar contacto (soft delete)' })
-  @ApiParam({ name: 'id', type: String, required: true })
-  @ApiResponse({
-    status: 200,
-    description: 'Contacto eliminado',
-    type: Contact,
-  })
-  @ApiResponse({ status: 404, description: 'No encontrado' })
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const deleted = await this.contactService.remove(id);
-    if (!deleted) throw new NotFoundException('Contacto no encontrado');
-    return deleted;
+  @ApiOperation({ summary: 'Desactivar un contacto (Soft Delete)' })
+  @ApiResponse({ status: 204, description: 'Contacto desactivado.' })
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.contactService.remove(id);
+  }
+
+  @Patch(':id/restore')
+  @ApiOperation({ summary: 'Restaurar un contacto desactivado' })
+  @ApiResponse({ status: 200, type: Contact })
+  restore(@Param('id', ParseUUIDPipe) id: string) {
+    return this.contactService.restore(id);
   }
 }

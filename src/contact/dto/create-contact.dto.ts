@@ -1,60 +1,102 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
-import { TipoContactoInterno } from '../entities/contact.entity';
+import { 
+  IsEmail, 
+  IsEnum, 
+  IsNotEmpty, 
+  IsOptional, 
+  IsString, 
+  IsUUID, 
+  MaxLength, 
+  MinLength 
+} from 'class-validator';
+import { ContactType } from '../enums/contact-type.enum';
 
+/**
+ * @class CreateContactDto
+ * @description DTO para el alta de contactos. El estado 'isActive' no se incluye
+ * ya que el sistema lo inicializa automáticamente como true.
+ */
 export class CreateContactDto {
-  @ApiProperty({
-    example: 'Ana López',
-    description: 'Nombre completo del contacto interno',
-  })
-  @IsString()
-  nombre: string;
 
   @ApiProperty({
-    enum: TipoContactoInterno,
-    example: TipoContactoInterno.DIRECCION,
-    description: 'Tipo de contacto interno',
+    description: 'Nombre completo del contacto',
+    example: 'Ana López Martínez',
+    minLength: 3,
+    maxLength: 150
   })
-  @IsEnum(TipoContactoInterno)
-  tipoContacto: TipoContactoInterno;
+  @IsString({ message: 'validation.IS_STRING' })
+  @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
+  @MinLength(3, { message: 'validation.MIN_LENGTH' })
+  @MaxLength(150, { message: 'validation.MAX_LENGTH' })
+  fullName: string;
+
+  @ApiProperty({
+    description: 'Tipo o categoría del contacto',
+    enum: ContactType,
+    example: ContactType.MAINTENANCE
+  })
+  @IsEnum(ContactType, { message: 'validation.IS_ENUM' })
+  @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
+  type: ContactType;
 
   @ApiPropertyOptional({
-    example: 'ana.lopez@ejemplo.com',
-    description: 'Correo electrónico del contacto (opcional)',
+    description: 'Correo electrónico de contacto',
+    example: 'ana.lopez@empresa.com'
   })
-  @IsString()
   @IsOptional()
+  @IsEmail({}, { message: 'validation.IS_EMAIL' })
+  @MaxLength(150, { message: 'validation.MAX_LENGTH' })
   email?: string;
 
   @ApiPropertyOptional({
-    example: '612345678',
-    description: 'Teléfono del contacto (opcional)',
+    description: 'Teléfono de contacto',
+    example: '+34 600 000 000'
   })
-  @IsString()
   @IsOptional()
-  telefono?: string;
+  @IsString({ message: 'validation.IS_STRING' })
+  @MaxLength(20, { message: 'validation.MAX_LENGTH' })
+  phone?: string;
 
   @ApiPropertyOptional({
-    example: 'Directora técnica',
-    description: 'Cargo en la empresa (opcional)',
+    description: 'Cargo o posición en la empresa',
+    example: 'Gerente de Cuentas'
   })
-  @IsString()
   @IsOptional()
-  cargo?: string;
+  @IsString({ message: 'validation.IS_STRING' })
+  @MaxLength(100, { message: 'validation.MAX_LENGTH' })
+  position?: string;
 
   @ApiPropertyOptional({
-    example: 'Calle Falsa 123',
-    description: 'Dirección postal del contacto (opcional)',
+    description: 'Dirección física específica',
+    example: 'Calle Mayor 1, Madrid'
   })
-  @IsString()
   @IsOptional()
-  direccion?: string;
+  @IsString({ message: 'validation.IS_STRING' })
+  address?: string;
 
   @ApiPropertyOptional({
-    example: true,
-    description: 'Activo/inactivo (opcional, por defecto activo)',
+    description: 'Notas adicionales sobre el contacto',
+    example: 'No llamar después de las 18:00'
   })
-  @IsBoolean()
   @IsOptional()
-  isActive?: boolean;
+  @IsString({ message: 'validation.IS_STRING' })
+  notes?: string;
+
+  // --- VINCULACIONES ---
+
+  @ApiPropertyOptional({
+    description: 'UUID de la empresa asociada',
+    example: '550e8400-e29b-41d4-a716-446655440000'
+  })
+  @IsOptional()
+  @IsUUID('4', { message: 'validation.IS_UUID' })
+  companyId?: string;
+
+  @ApiPropertyOptional({
+    description: 'UUID del inquilino asociado',
+    example: '550e8400-e29b-41d4-a716-446655440000'
+  })
+  @IsOptional()
+  @IsUUID('4', { message: 'validation.IS_UUID' })
+  tenantId?: string;
 }
