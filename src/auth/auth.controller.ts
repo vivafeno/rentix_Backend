@@ -1,20 +1,18 @@
 import { Controller, Post, UseGuards, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiOkResponse, ApiUnauthorizedResponse, ApiBody } from '@nestjs/swagger';
 
-import { AuthService } from './auth.service';
+import { AuthService, AuthSession } from './auth.service'; // Inyectamos la nueva interfaz
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GetUser } from './decorators/get-user.decorator';
 
-// Imports verificados contra nackend.txt
 import { User } from '../user/entities/user.entity'; 
-import { TokensDto, SelectCompanyDto, RefreshTokenDto, LoginDto } from './dto';
+import { SelectCompanyDto, RefreshTokenDto, LoginDto } from './dto';
 
 /**
  * @class AuthController
- * @description Controlador principal de Identidad y Acceso.
- * Gestiona el ciclo de vida de los JWT (Emisión, Rotación, Revocación) y el contexto de Tenant.
- * * @standards Rentix 2026 (Security & Documentation)
+ * @description Controlador de Identidad y Acceso.
+ * Gestiona el ciclo de vida de la sesión bajo el estándar Rentix 2026.
  */
 @ApiTags('Authentication')
 @Controller('auth')
@@ -23,32 +21,26 @@ export class AuthController {
 
   /**
    * @method login
-   * @description Autentica credenciales (Email/Pass) y emite par de tokens iniciales.
-   * El guard `LocalAuthGuard` valida las credenciales antes de entrar aquí.
-   * * @param user Entidad de usuario inyectada por el Guard tras validar.
-   * @returns {Promise<TokensDto>} Access Token + Refresh Token.
+   * @description Emite la sesión inicial (User + Context + Tokens).
    */
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login con credenciales locales' })
-  @ApiBody({ type: LoginDto }) // Documentación para Swagger (aunque el Guard lee el body)
+  @ApiBody({ type: LoginDto })
   @ApiOkResponse({ 
-    type: TokensDto, 
-    description: 'Autenticación exitosa. Tokens emitidos.' 
+    description: 'Sesión iniciada con éxito. Datos listos para Signals.',
+    // Nota: Swagger mostrará el esquema de AuthSession
   })
   @ApiUnauthorizedResponse({ description: 'Credenciales incorrectas o usuario inactivo.' })
-  async login(@GetUser() user: User): Promise<TokensDto> {
+  async login(@GetUser() user: User): Promise<AuthSession> {
+    // El AuthService ya devuelve AuthSession, ahora el controlador lo reconoce
     return this.authService.login(user);
   }
 
   /**
    * @method selectCompany
-   * @description Realiza el cambio de contexto (Tenant Switch).
-   * Emite nuevos tokens firmados específicamente con el `companyId` seleccionado.
-   * * @param userId UUID del usuario autenticado (extraído del JWT actual).
-   * @param dto Objeto con el ID de la empresa destino.
-   * @returns {Promise<TokensDto>} Nuevos tokens con claims actualizados.
+   * @description Realiza el Tenant Switch y refresca el estado de la sesión.
    */
   @UseGuards(JwtAuthGuard)
   @Post('select-company')
@@ -56,41 +48,32 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cambiar contexto de empresa (Tenant Switch)' })
   @ApiOkResponse({ 
-    type: TokensDto, 
-    description: 'Nuevos tokens válidos para el contexto de la empresa seleccionada.'
+    description: 'Sesión actualizada para la nueva empresa seleccionada.'
   })
   async selectCompany(
     @GetUser('id') userId: string, 
     @Body() dto: SelectCompanyDto
-  ): Promise<TokensDto> {
+  ): Promise<AuthSession> {
     return this.authService.selectCompany(userId, dto.companyId);
   }
 
   /**
    * @method refresh
-   * @description Mecanismo de rotación de tokens (RTR).
-   * Genera un nuevo Access Token usando un Refresh Token válido.
-   * * @param dto Contiene el Refresh Token actual.
-   * @returns {Promise<TokensDto>} Nuevo par de tokens.
+   * @description Rotación de tokens con refresco de perfil de usuario.
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Rotación de Tokens (Refresh)' })
   @ApiOkResponse({ 
-    type: TokensDto,
     description: 'Sesión renovada exitosamente.'
   })
-  @ApiUnauthorizedResponse({ description: 'Refresh Token inválido, caducado o revocado.' })
-  async refresh(@Body() dto: RefreshTokenDto): Promise<TokensDto> {
+  async refresh(@Body() dto: RefreshTokenDto): Promise<AuthSession> {
     return this.authService.refresh(dto.refreshToken);
   }
 
   /**
    * @method logout
-   * @description Finaliza la sesión del usuario.
-   * Invalida el Refresh Token en base de datos para prevenir reutilización.
-   * * @param userId UUID del usuario.
-   * @returns Confirmación de cierre.
+   * @description Invalida la sesión actual.
    */
   @UseGuards(JwtAuthGuard)
   @Post('logout')

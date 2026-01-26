@@ -16,5 +16,5 @@ export class SelectCompanyDto {
   @IsUUID('4', { message: 'El identificador de la empresa debe ser un UUID v4 válido.' })
   @IsNotEmpty({ message: 'El ID de la empresa es obligatorio para cambiar de contexto.' })
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  readonly companyId: string; // 🚩 Rigor: Inmutable para evitar contaminación durante el ciclo de vida
+  readonly companyId!: string; // 🚩 Rigor: Inmutable para evitar contaminación durante el ciclo de vida
 }

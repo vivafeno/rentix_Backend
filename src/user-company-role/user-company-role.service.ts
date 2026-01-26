@@ -5,63 +5,97 @@ import {
   InternalServerErrorException 
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { plainToInstance } from 'class-transformer';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 
 import { CompanyRoleEntity } from './entities/user-company-role.entity';
 import { CreateUserCompanyRoleDto } from './dto/create-user-comany-role.dto';
 import { UpdateUserCompanyRoleDto } from './dto/update-user-company-role.dto';
 
+/**
+ * @class UserCompanyRoleService
+ * @description Gestor de identidades y accesos Multi-tenant.
+ * Garantiza que el cambio de contexto (Empresa Primaria) sea atómico.
+ */
 @Injectable()
 export class UserCompanyRoleService {
   constructor(
     @InjectRepository(CompanyRoleEntity)
     private readonly roleRepo: Repository<CompanyRoleEntity>,
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
    * @method create
-   * @description Vincula un usuario a una empresa. Valida duplicados incluso en registros borrados.
+   * @description Vinculación atómica de usuario a empresa con reset de primarios.
    */
   async create(dto: CreateUserCompanyRoleDto): Promise<CompanyRoleEntity> {
-    const { userId, companyId, isPrimary } = dto;
+    return await this.dataSource.transaction(async (manager: EntityManager) => {
+      const { userId, companyId, isPrimary } = dto;
 
-    // 1. Verificar si ya existe (incluyendo los borrados mediante soft delete)
-    const existing = await this.roleRepo.findOne({
-      where: { userId, companyId },
-      withDeleted: true,
-    });
+      const existing = await manager.findOne(CompanyRoleEntity, {
+        where: { userId, companyId },
+        withDeleted: true,
+      });
 
-    if (existing) {
-      if (!existing.deletedAt) {
-        throw new ConflictException('El usuario ya tiene un rol activo en esta empresa.');
+      if (existing) {
+        throw new ConflictException(
+          existing.deletedAt 
+            ? 'Existe un registro inactivo para este vínculo. Use el protocolo restore.' 
+            : 'El usuario ya posee un rol activo en esta organización.'
+        );
       }
-      throw new ConflictException('Existe un registro borrado para este vínculo. Use el método "restore".');
-    }
 
-    // 2. Si se marca como primario, resetear los otros roles del usuario
-    if (isPrimary) await this.setAllPrimaryFalse(userId);
+      // Rigor: Si es primario, se ejecuta dentro de la misma transacción
+      if (isPrimary) await this.setAllPrimaryFalse(userId, manager);
 
-    const newRole = this.roleRepo.create(dto);
-    return await this.roleRepo.save(newRole);
+      const newRole = manager.create(CompanyRoleEntity, {
+        ...dto,
+        isActive: true
+      });
+
+      try {
+        return await manager.save(newRole);
+      } catch (e) {
+        throw new InternalServerErrorException('Fallo en la vinculación Multi-tenant.');
+      }
+    });
+  }
+
+  /**
+   * @method update
+   * @description Actualiza el rol o la preferencia de empresa primaria de forma atómica.
+   */
+  async update(id: string, dto: UpdateUserCompanyRoleDto): Promise<CompanyRoleEntity> {
+    return await this.dataSource.transaction(async (manager: EntityManager) => {
+      const role = await manager.findOne(CompanyRoleEntity, { where: { id } });
+      if (!role) throw new NotFoundException('Vínculo de identidad no localizado.');
+
+      if (dto.isPrimary) {
+        await this.setAllPrimaryFalse(role.userId, manager);
+      }
+
+      manager.merge(CompanyRoleEntity, role, dto);
+      return await manager.save(role);
+    });
   }
 
   /**
    * @method remove
-   * @description Soft Delete Rentix 2026: isActive a false y llenado de deletedAt.
+   * @description Soft Delete con blindaje operativo.
    */
   async remove(id: string): Promise<void> {
     const role = await this.roleRepo.findOne({ where: { id } });
-    if (!role) throw new NotFoundException('Vínculo de rol no encontrado.');
+    if (!role) throw new NotFoundException('Vínculo no encontrado.');
 
-    // Bloqueo operativo + Borrado lógico de TypeORM
-    await this.roleRepo.update(id, { isActive: false });
-    await this.roleRepo.softDelete(id);
+    // Ejecutamos en bloque para asegurar consistencia
+    await this.roleRepo.manager.transaction(async (manager) => {
+      await manager.update(CompanyRoleEntity, id, { isActive: false });
+      await manager.softDelete(CompanyRoleEntity, id);
+    });
   }
 
   /**
    * @method restore
-   * @description Reactiva un rol previamente borrado.
    */
   async restore(id: string): Promise<CompanyRoleEntity> {
     const role = await this.roleRepo.findOne({ 
@@ -69,46 +103,32 @@ export class UserCompanyRoleService {
       withDeleted: true 
     });
 
-    if (!role) throw new NotFoundException('No se encontró el registro para restaurar.');
-    if (!role.deletedAt) return role; // Ya está activo
+    if (!role) throw new NotFoundException('Registro no localizado en el histórico.');
+    if (!role.deletedAt) return role;
 
-    // 1. Restaurar en TypeORM (limpia deletedAt)
     await this.roleRepo.restore(id);
-    
-    // 2. Reactivación operativa
     role.isActive = true;
     return await this.roleRepo.save(role);
   }
 
   /**
-   * @method update
-   * @description Actualiza el rol o la preferencia de empresa primaria.
+   * @method findByUser
+   * @description Proporciona la lista de empresas para el selector (Select) de Angular 21.
    */
-  async update(id: string, dto: UpdateUserCompanyRoleDto): Promise<CompanyRoleEntity> {
-    const role = await this.roleRepo.findOne({ where: { id } });
-    if (!role) throw new NotFoundException('Vínculo no encontrado.');
-
-    if (dto.isPrimary) {
-      await this.setAllPrimaryFalse(role.userId);
-    }
-
-    Object.assign(role, dto);
-    return await this.roleRepo.save(role);
+  async findByUser(userId: string): Promise<CompanyRoleEntity[]> {
+    return await this.roleRepo.find({
+      where: { userId, isActive: true },
+      relations: ['company', 'company.fiscalIdentity'],
+      order: { isPrimary: 'DESC', createdAt: 'ASC' }
+    });
   }
 
   /* --- MÉTODOS PRIVADOS DE RIGOR --- */
 
   /**
-   * @description Asegura que solo una empresa sea la 'Primaria' para el Dashboard del usuario.
+   * @description Garantiza la exclusividad de la empresa primaria bajo el manager de la transacción.
    */
-  private async setAllPrimaryFalse(userId: string): Promise<void> {
-    await this.roleRepo.update({ userId }, { isPrimary: false });
-  }
-
-  async findByUser(userId: string): Promise<CompanyRoleEntity[]> {
-    return await this.roleRepo.find({
-      where: { userId, isActive: true },
-      relations: ['company', 'company.fiscalIdentity'],
-    });
+  private async setAllPrimaryFalse(userId: string, manager: EntityManager): Promise<void> {
+    await manager.update(CompanyRoleEntity, { userId }, { isPrimary: false });
   }
 }

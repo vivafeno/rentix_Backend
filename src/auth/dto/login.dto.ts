@@ -16,7 +16,7 @@ export class LoginDto {
   @IsNotEmpty()
   // 🚩 Sanitización: Evita que el login falle por un espacio accidental o mayúsculas.
   @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase().trim() : value))
-  readonly email: string;
+  readonly email!: string;
 
   @ApiProperty({
     description: 'Contraseña de acceso',
@@ -28,5 +28,5 @@ export class LoginDto {
   @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres.' })
   // 🛡️ Protección DoS: Evita ataques de "Long Password" que saturan el CPU al hashear.
   @MaxLength(72, { message: 'La contraseña excede el límite de seguridad permitido.' })
-  readonly password: string;
+  readonly password!: string;
 }

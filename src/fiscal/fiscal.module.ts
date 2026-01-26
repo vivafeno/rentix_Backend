@@ -23,4 +23,4 @@ import { FiscalEntity } from './entities/fiscal.entity';
   providers: [FiscalService],
   exports: [TypeOrmModule, FiscalService],
 })
-export class FacturaeModule {}
+export class FiscalModule {}

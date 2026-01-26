@@ -25,35 +25,35 @@ export class CompanyRoleEntity extends BaseEntity {
     enum: CompanyRole,
     default: CompanyRole.VIEWER,
   })
-  role: CompanyRole;
+  role!: CompanyRole;
 
   /* --- CONTEXTO DE IDENTIDAD --- */
 
   @Column({ name: 'user_id', type: 'uuid' })
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, (user) => user.companyRoles, {
     onDelete: 'CASCADE',
     nullable: false,
   })
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user!: User;
 
   /* --- CONTEXTO PATRIMONIAL --- */
 
   @Column({ name: 'company_id', type: 'uuid' })
-  companyId: string;
+  companyId!: string;
 
   @ManyToOne(() => Company, (company) => company.companyRoles, {
     onDelete: 'CASCADE',
     nullable: false,
   })
   @JoinColumn({ name: 'company_id' })
-  company: Company;
+  company!: Company;
 
   /* --- METADATOS OPERATIVOS --- */
 
   @Column({ name: 'is_primary', type: 'boolean', default: false })
   @ApiProperty({ description: 'Define si es la empresa por defecto al hacer login' })
-  isPrimary: boolean;
+  isPrimary!: boolean;
 }

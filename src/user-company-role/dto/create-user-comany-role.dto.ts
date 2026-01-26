@@ -18,7 +18,7 @@ export class CreateUserCompanyRoleDto {
   })
   @IsUUID('4')
   @IsNotEmpty()
-  userId: string;
+  userId!: string;
 
   /* --- CONTEXTO (EMPRESA) --- */
 
@@ -29,7 +29,7 @@ export class CreateUserCompanyRoleDto {
   })
   @IsUUID('4')
   @IsNotEmpty()
-  companyId: string;
+  companyId!: string;
 
   /* --- AUTORIDAD (ROL) --- */
 
@@ -40,7 +40,7 @@ export class CreateUserCompanyRoleDto {
   })
   @IsEnum(CompanyRole)
   @IsNotEmpty()
-  role: CompanyRole;
+  role!: CompanyRole;
 
   /* --- CONFIGURACIÓN DE ACCESO --- */
 

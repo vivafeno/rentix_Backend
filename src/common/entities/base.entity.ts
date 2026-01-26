@@ -8,63 +8,65 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
- * Entidad base abstracta para la persistencia de datos.
+ * @class BaseEntity
+ * @description Entidad base abstracta para la persistencia de datos.
+ * Establece el estándar de auditoría y trazabilidad para todo el ecosistema Rentix.
  * * Estándares Blueprint 2026:
- * - Implementación de Soft-Delete nativo mediante decoradores de TypeORM.
- * - Tipado de precisión temporal 'timestamptz' para cumplimiento de estándares ISO.
- * - Visibilidad de campos de auditoría para lógica de negocio en Services.
- * * @version 1.1.0
- * @author Rentix
+ * - Soft-Delete nativo para integridad referencial.
+ * - Precisión 'timestamptz' para soporte multi-zona horaria.
+ * - Aserción de asignación (!) para cumplimiento de TS Strict.
  */
 export abstract class BaseEntity {
   /**
-   * Identificador único universal (v4).
+   * @description Identificador único universal (v4).
+   * Generado automáticamente por la base de datos.
    */
-  @ApiProperty({ description: 'ID único (UUID v4)' })
+  @ApiProperty({ description: 'ID único (UUID v4)', example: '550e8400-e29b-41d4-a716-446655440000' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string; // 🚩 Rigor Rentix: ! porque la DB siempre lo genera
 
   /**
-   * Marca temporal de inserción del registro.
+   * @description Marca temporal de inserción del registro (ISO 8601).
    */
-  @ApiProperty({ description: 'Fecha de creación' })
+  @ApiProperty({ description: 'Fecha de creación de registro' })
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamptz',
   })
-  createdAt: Date;
+  createdAt!: Date; // 🚩 Rigor Rentix: ! asignado automáticamente en el insert
 
   /**
-   * Marca temporal de la última actualización del registro.
+   * @description Marca temporal de la última actualización del registro.
    */
   @ApiProperty({ description: 'Fecha de última modificación' })
   @UpdateDateColumn({
     name: 'updated_at',
     type: 'timestamptz',
   })
-  updatedAt: Date;
+  updatedAt!: Date; // 🚩 Rigor Rentix: ! gestionado por TypeORM
 
   /**
-   * Sello de auditoría para borrado lógico.
-   * La propiedad select se mantiene en true para permitir validaciones de estado en la capa de servicio.
+   * @description Sello de auditoría para borrado lógico.
+   * Si tiene valor, el registro se considera "eliminado" pero permanece en DB para integridad fiscal.
    */
-  @ApiPropertyOptional({ description: 'Sello de auditoría de borrado' })
+  @ApiPropertyOptional({ description: 'Sello de auditoría de borrado (Soft Delete)' })
   @DeleteDateColumn({
     name: 'deleted_at',
     type: 'timestamptz',
     nullable: true,
     select: true,
   })
-  deletedAt?: Date | null;
+  deletedAt?: Date | null; // 🚩 Se mantiene ? porque es opcional por diseño
 
   /**
-   * Indicador de disponibilidad operativa para lógica de filtrado rápido.
+   * @description Indicador de disponibilidad operativa.
+   * Permite desactivar entidades sin borrarlas (ej. suspender una cuenta).
    */
-  @ApiProperty({ description: 'Indicador de visibilidad operativa' })
+  @ApiProperty({ description: 'Indicador de visibilidad y estado operativo', default: true })
   @Column({
     name: 'is_active',
     type: 'boolean',
     default: true,
   })
-  isActive: boolean;
+  isActive!: boolean; // 🚩 Rigor Rentix: ! tiene un default: true
 }

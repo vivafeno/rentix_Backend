@@ -17,12 +17,12 @@ export class CreateTenantDto {
   @ApiProperty({ example: 'Juan Pérez' })
   @IsString()
   @IsNotEmpty({ message: 'El nombre es obligatorio.' })
-  name: string;
+  name!: string;
 
   @ApiProperty({ example: 'inquilino@email.com' })
   @IsEmail({}, { message: 'El formato del email no es válido.' })
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @ApiPropertyOptional({ enum: TenantStatus, default: TenantStatus.ACTIVE })
   @IsOptional()
@@ -33,5 +33,5 @@ export class CreateTenantDto {
   @ValidateNested()
   @Type(() => CreateTenantProfileDto) // 🚩 Crucial para hidratar el sub-objeto
   @IsNotEmpty()
-  profile: CreateTenantProfileDto;
+  profile!: CreateTenantProfileDto;
 }

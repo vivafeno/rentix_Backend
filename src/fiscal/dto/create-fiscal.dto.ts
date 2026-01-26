@@ -6,29 +6,29 @@ import {
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PersonType } from '../enums/personType.enum';
-import { TaxIdType } from '../enums/taxIdType.enum';
-import { ResidenceType } from '../enums/residenceType.enum';
+import { PersonType } from '../enums/person-type.enum';
+import { TaxIdType } from '../enums/taxId-type.enum';
+import { ResidenceType } from '../enums/residence-type.enum';
 
 export class CreateFiscalDto {
   @ApiProperty({ enum: PersonType })
   @IsEnum(PersonType)
-  tipoPersona: PersonType;
+  tipoPersona!: PersonType;
 
   @ApiProperty({ enum: TaxIdType })
   @IsEnum(TaxIdType)
-  tipoIdFiscal: TaxIdType;
+  tipoIdFiscal!: TaxIdType;
 
   @ApiProperty({ example: 'B12345678' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(20)
-  nif: string;
+  nif!: string;
 
   @ApiProperty({ example: 'Rentix Solutions S.L.' })
   @IsString()
   @IsNotEmpty()
-  nombreRazonSocial: string;
+  nombreRazonSocial!: string;
 
   @ApiPropertyOptional({ example: 'Rentix App' })
   @IsOptional()
@@ -37,11 +37,11 @@ export class CreateFiscalDto {
 
   @ApiProperty({ enum: ResidenceType })
   @IsEnum(ResidenceType)
-  tipoResidencia: ResidenceType;
+  tipoResidencia!: ResidenceType;
 
   @ApiProperty({ example: 'ESP' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(3)
-  codigoPais: string;
+  codigoPais!: string;
 }

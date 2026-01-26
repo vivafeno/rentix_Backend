@@ -28,18 +28,18 @@ export class TenantProfile extends BaseEntity {
   /* --- EMPRESA PROPIETARIA (Aislamiento Multi-tenant) --- */
   @ManyToOne(() => Company, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'company_id' })
-  company: Company;
+  company!: Company;
 
   @Column({ name: 'company_id', type: 'uuid' })
-  companyId: string;
+  companyId!: string;
 
   /* --- VÍNCULO CON LA IDENTIDAD (Core) --- */
   @OneToOne(() => Tenant, (tenant) => tenant.profile, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tenant_id' })
-  tenant: Tenant;
+  tenant!: Tenant;
 
   @Column({ name: 'tenant_id', type: 'uuid' })
-  tenantId: string;
+  tenantId!: string;
 
   /* --- IDENTIDAD FISCAL (Veri*factu Ready) --- */
   @ApiProperty({ description: 'Datos fiscales validados (NIF, Razón Social)' })
@@ -49,15 +49,15 @@ export class TenantProfile extends BaseEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'fiscal_identity_id' })
-  fiscalIdentity: FiscalEntity;
+  fiscalIdentity!: FiscalEntity;
 
   @Column({ name: 'fiscal_identity_id', type: 'uuid', nullable: true })
-  fiscalIdentityId: string;
+  fiscalIdentityId!: string;
 
   /* --- DATOS DE GESTIÓN CRM --- */
   @ApiProperty({ example: 'CLI-001' })
   @Column({ name: 'internal_code', length: 50, nullable: true })
-  internalCode: string;
+  internalCode!: string;
 
   @ApiPropertyOptional({ example: 'facturacion@arrendatario.es' })
   @Column({ name: 'billing_email', nullable: true })
@@ -78,11 +78,11 @@ export class TenantProfile extends BaseEntity {
 
   @ApiProperty({ description: 'Días de vencimiento', default: 0 })
   @Column({ name: 'payment_days', type: 'int', default: 0 })
-  paymentDays: number;
+  paymentDays!: number;
 
   @ApiPropertyOptional({ description: 'Código residencia (1=ES, 2=UE, 3=EXT)' })
   @Column({ name: 'tax_residence_code', length: 1, default: '1' })
-  taxResidenceCode: string;
+  taxResidenceCode!: string;
 
   /* --- VÍNCULO CON EL PORTAL --- */
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
@@ -95,8 +95,8 @@ export class TenantProfile extends BaseEntity {
   @OneToMany(() => Address, (address) => address.tenant, {
     cascade: true,
   })
-  addresses: Address[];
+  addresses!: Address[];
 
   @OneToMany(() => Contract, (contract) => contract.tenants)
-  contracts: Contract[];
+  contracts!: Contract[];
 }

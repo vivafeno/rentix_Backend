@@ -3,45 +3,32 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { TenantService } from './tenant.service';
 import { TenantController } from './tenant.controller';
-
-// Entidades necesarias para la integridad referencial del Tenant
 import { Tenant } from './entities/tenant.entity';
-import { Address } from 'src/address/entities/address.entity';
-import { FiscalEntity } from 'src/fiscal/entities/fiscal.entity';
+
+// 🛡️ Rigor 2026: Importamos los MÓDULOS, no las entidades sueltas 
+// para evitar el error de "Repository not found" o duplicidad.
+import { AddressModule } from 'src/address/address.module';
+import { FiscalModule } from 'src/fiscal/fiscal.module';
 
 /**
  * @class TenantModule
- * @description Módulo de gestión de Arrendatarios (Tenants).
- * Centraliza la relación entre empresas, identidades fiscales y direcciones.
- * @version 2026.01.22
- * @author Rentix 2026
+ * @description Módulo base de Arrendatarios.
+ * Gestiona la cuenta y la vinculación con perfiles extendidos.
  */
 @Module({
   imports: [
-    /** * 📦 Persistencia: Registramos Tenant, Address y FiscalEntity.
-     * Esto permite que el TenantService gestione la creación atómica y 
-     * las relaciones cargadas (eager/lazy) sin fallos de metadatos.
-     */
-    TypeOrmModule.forFeature([
-      Tenant, 
-      Address, 
-      FiscalEntity
-    ]),
+    // 📦 Solo registramos la entidad propia del módulo
+    TypeOrmModule.forFeature([Tenant]),
+    
+    // 🔌 Importamos la lógica de otros dominios de forma limpia
+    AddressModule,
+    FiscalModule,
   ],
-  controllers: [
-    /** 📡 API Endpoints para el CRM de inquilinos */
-    TenantController,
-  ],
-  providers: [
-    /** ⚙️ Motor de lógica y blindaje Multi-tenant */
-    TenantService,
-  ],
+  controllers: [TenantController],
+  providers: [TenantService],
   exports: [
-    /** * 📤 Exportamos el Service para que el módulo de 'Contract'
-     * pueda validar la solvencia y datos fiscales del inquilino.
-     */
-    TenantService,
-    TypeOrmModule // Exportamos para compartir acceso a repositorios si es necesario
+    TenantService, 
+    TypeOrmModule // Permite que TenantProfile use el repositorio de Tenant
   ],
 })
 export class TenantModule {}

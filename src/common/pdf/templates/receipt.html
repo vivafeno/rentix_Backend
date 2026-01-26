@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; padding: 40px; }
+        .header { border-bottom: 3px solid #2c3e50; margin-bottom: 30px; padding-bottom: 10px; display: flex; justify-content: space-between; }
+        .title { font-size: 24px; font-weight: bold; color: #2c3e50; text-transform: uppercase; }
+        .meta { text-align: right; font-size: 14px; color: #7f8c8d; }
+        
+        .content { margin: 50px 0; font-size: 18px; text-align: justify; background: #f9f9f9; padding: 30px; border-radius: 8px; border-left: 5px solid #bdc3c7; }
+        .highlight { font-weight: bold; text-decoration: underline; }
+        
+        .signatures { margin-top: 80px; display: table; width: 100%; }
+        .sig-box { display: table-cell; width: 50%; text-align: center; }
+        .line { border-top: 1px solid #333; width: 80%; margin: 0 auto 10px auto; }
+        
+        .footer { margin-top: 100px; font-size: 11px; color: #95a5a6; border-top: 1px solid #eee; padding-top: 10px; text-align: center; }
+        .watermark { position: absolute; top: 40%; left: 20%; font-size: 80px; color: rgba(0,0,0,0.03); transform: rotate(-45deg); z-index: -1; }
+    </style>
+</head>
+<body>
+    <div class="watermark">RENTIX 2026</div>
+
+    <div class="header">
+        <div class="title">{{title}}</div>
+        <div class="meta">
+            <div>Nº Documento: <strong>{{number}}</strong></div>
+            <div>Fecha: {{date}}</div>
+        </div>
+    </div>
+
+    <div class="content">
+        {{#if isDeposit}}
+            Yo, <strong>{{emisor}}</strong>, recibo de <strong>{{receptor}}</strong> la cantidad de <span class="highlight">{{amount}}</span> en concepto de: <em>{{concept}}</em>.
+        {{else}}
+            Yo, <strong>{{receptor}}</strong>, declaro haber recibido de <strong>{{emisor}}</strong> la cantidad de <span class="highlight">{{amount}}</span> en concepto de devolución de: <em>{{concept}}</em>.
+        {{/if}}
+    </div>
+
+    <div class="signatures">
+        <div class="sig-box">
+            <div class="line"></div>
+            <strong>Firma del Emisor</strong>
+            <br>{{emisor}}
+        </div>
+        <div class="sig-box">
+            <div class="line"></div>
+            <strong>Firma del Receptor</strong>
+            <br>{{receptor}}
+        </div>
+    </div>
+
+    <div class="footer">
+        Este documento es un comprobante de tesorería y no tiene validez como factura comercial ni deducción de IVA.<br>
+        Generado automáticamente por el Sistema de Gestión Rentix 2026.
+    </div>
+</body>
+</html>

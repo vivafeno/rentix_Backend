@@ -16,75 +16,84 @@ enum Environment {
  * @class EnvironmentVariables
  * @description Esquema de validación para las variables de entorno (.env).
  * Define el blindaje de la infraestructura y los requisitos mínimos de seguridad.
+ * * Rigor 2026: Se usa el operador '!' para indicar que las variables serán 
+ * inyectadas por el validador antes del arranque del sistema.
  */
 class EnvironmentVariables {
   @IsEnum(Environment, { message: 'NODE_ENV debe ser: development, production o test.' })
-  NODE_ENV: Environment;
+  NODE_ENV!: Environment;
 
   @IsNumber({}, { message: 'PORT debe ser un número.' })
   PORT: number = 3000;
 
-  /* --- 🗄️ DATABASE CONFIGURATION --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 🗄️ DATABASE CONFIGURATION (Core Persistence)
+   * ───────────────────────────────────────────────────────────────── */
 
   @IsString()
   @IsNotEmpty({ message: 'DATABASE_HOST es obligatorio para la conexión.' })
-  DATABASE_HOST: string;
+  DATABASE_HOST!: string;
 
   @IsNumber()
-  DATABASE_PORT: number;
+  DATABASE_PORT!: number;
 
   @IsString()
   @IsNotEmpty()
-  DATABASE_USER: string;
+  DATABASE_USER!: string;
 
   @IsString()
   @IsNotEmpty({ message: 'DATABASE_PASS no puede estar vacío por seguridad.' })
-  DATABASE_PASS: string;
+  DATABASE_PASS!: string;
 
   @IsString()
   @IsNotEmpty()
-  DATABASE_NAME: string;
+  DATABASE_NAME!: string;
 
-  /* --- 🔐 SECURITY & IDENTITY --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 🔐 SECURITY & IDENTITY (Cryptography)
+   * ───────────────────────────────────────────────────────────────── */
 
   @IsString()
   @IsNotEmpty()
   @MinLength(32, { message: 'JWT_ACCESS_SECRET debe tener un rigor mínimo de 32 caracteres.' })
-  JWT_ACCESS_SECRET: string;
+  JWT_ACCESS_SECRET!: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(32, { message: 'JWT_REFRESH_SECRET debe tener un rigor mínimo de 32 caracteres.' })
-  JWT_REFRESH_SECRET: string;
+  JWT_REFRESH_SECRET!: string;
 }
 
 /**
  * @function validate
  * @description Validador atómico de configuración. 
- * Se ejecuta antes de la instanciación de cualquier módulo para prevenir estados de error en runtime.
- * @param config Record de variables de entorno cargadas.
- * @returns Objeto de configuración validado y tipado.
- * @throws Error si alguna variable crítica falta o es inválida.
+ * Bloquea el arranque del servidor si la infraestructura no es segura.
+ * * @param config Record de variables de entorno cargadas desde el .env
+ * @returns Instancia validada y tipada de EnvironmentVariables
+ * @throws Error crítico de configuración con desglose de fallos
  */
 export function validate(config: Record<string, unknown>) {
-  // Transforma el objeto plano del .env a una instancia de la clase EnvironmentVariables
+  // Transformación con conversión implícita (Strings de env -> Numbers de clase)
   const validatedConfig = plainToInstance(EnvironmentVariables, config, {
-    enableImplicitConversion: true, // Crucial: convierte strings del .env a tipos Number/Boolean
+    enableImplicitConversion: true,
   });
 
-  // Ejecuta la validación síncrona de class-validator
+  // Validación síncrona estricta
   const errors = validateSync(validatedConfig, {
-    skipMissingProperties: false, // Rigor 2026: No se permiten omisiones
+    skipMissingProperties: false,
   });
 
   if (errors.length > 0) {
-    // Formateo de errores para lectura rápida en logs de despliegue
     const errorMessages = errors.map(err => 
       `   - [${err.property}]: ${Object.values(err.constraints || {}).join(', ')}`
     );
 
+    // Formateo visual para logs de DevOps
     throw new Error(
-      `\n❌ [RENTIX CONFIG ERROR] Fallo en la validación de infraestructura:\n${errorMessages.join('\n')}\n`
+      `\n❌ [RENTIX 2026 - CONFIG ERROR]\n` +
+      `Se han detectado fallos en la configuración de infraestructura:\n` +
+      `${errorMessages.join('\n')}\n` +
+      `Revise su archivo .env o las variables de entorno del sistema.\n`
     );
   }
 

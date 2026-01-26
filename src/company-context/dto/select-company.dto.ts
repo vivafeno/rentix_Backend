@@ -8,5 +8,5 @@ export class SelectCompanyDto {
     example: '8e2c4cae-5a4f-4264-befe-2a406fa4adcb',
   })
   @IsUUID()
-  companyId: string;
+  companyId!: string;
 }

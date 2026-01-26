@@ -8,59 +8,80 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Tax } from '../../tax/entities/tax.entity';
 
+/**
+ * @class BillingConcept
+ * @description Catálogo maestro de conceptos facturables (Renta, Suministros, Fianzas).
+ * Define el comportamiento por defecto de cada línea de factura para automatizar el cálculo fiscal.
+ */
 @Entity('billing_concepts')
 export class BillingConcept {
-  @ApiProperty({ example: 'uuid-concept' })
+
+  @ApiProperty({ description: 'Identificador único del concepto', example: '550e8400-e29b-41d4-a716-446655440000' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string; // 🚩 Rigor Rentix: !
 
-  @ApiProperty({ example: 'RENTA' })
+  @ApiProperty({ description: 'Código interno (único)', example: 'RENTA_LOCAL' })
   @Column({ unique: true })
-  name: string;
+  name!: string; // 🚩 Rigor Rentix: !
 
-  @ApiProperty({ example: 'Arrendamiento mensual local' })
+  @ApiProperty({ description: 'Etiqueta descriptiva para el usuario', example: 'Arrendamiento mensual local comercial' })
   @Column()
-  label: string;
+  label!: string; // 🚩 Rigor Rentix: !
 
-  @ApiProperty({ example: 1000.0 })
-  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
-  defaultPrice: number;
+  @ApiProperty({ description: 'Precio base sugerido', example: 1000.00 })
+  @Column({ 
+    type: 'decimal', 
+    precision: 12, 
+    scale: 2, 
+    default: 0,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) } 
+  })
+  defaultPrice!: number; // 🚩 Rigor Rentix: !
 
-  @ApiProperty({ example: true })
+  @ApiProperty({ description: 'Permite modificar el precio al facturar' })
   @Column({ default: true })
-  isPriceEditable: boolean;
+  isPriceEditable!: boolean; // 🚩 Rigor Rentix: !
 
-  @ApiProperty({ example: true })
+  @ApiProperty({ description: 'Exige indicar mes y año (ej: para Rentas)' })
   @Column({ default: false })
-  requiresPeriod: boolean;
+  requiresPeriod!: boolean; // 🚩 Rigor Rentix: !
 
-  @ApiProperty({ example: true })
+  @ApiProperty({ description: 'Evita duplicar este concepto en el mismo periodo' })
   @Column({ default: false })
-  isUniquePerPeriod: boolean;
+  isUniquePerPeriod!: boolean; // 🚩 Rigor Rentix: !
 
-  @ApiProperty({ example: 'S', enum: ['P', 'S'] })
+  @ApiProperty({ description: 'Tipo: P (Producto) / S (Servicio)', enum: ['P', 'S'] })
   @Column({ type: 'varchar', length: 1, default: 'S' })
-  itemType: string;
+  itemType!: string; // 🚩 Rigor Rentix: !
 
-  // Relaciones con Eager Loading para que el Front reciba el objeto Tax completo
+  /* ─────────────────────────────────────────────────────────────────
+   * ⚖️ CONFIGURACIÓN FISCAL POR DEFECTO
+   * ───────────────────────────────────────────────────────────────── */
+
+  @ApiProperty({ type: () => Tax, description: 'Impuesto (IVA) asociado por defecto' })
   @ManyToOne(() => Tax, { eager: true, nullable: false })
   @JoinColumn({ name: 'default_tax_id' })
-  defaultTax: Tax;
+  defaultTax!: Tax; // 🚩 Rigor Rentix: !
 
+  @ApiPropertyOptional({ type: () => Tax, description: 'Retención (IRPF) asociada por defecto' })
   @ManyToOne(() => Tax, { eager: true, nullable: true })
   @JoinColumn({ name: 'default_retention_id' })
-  defaultRetention: Tax;
+  defaultRetention?: Tax; // 🚩 Rigor Rentix: ? porque puede no llevar retención
 
-  @CreateDateColumn()
-  createdAt: Date;
+  /* ─────────────────────────────────────────────────────────────────
+   * 🕒 AUDITORÍA Y TRAZABILIDAD
+   * ───────────────────────────────────────────────────────────────── */
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt!: Date;
 
-  @ApiProperty({ description: 'Fecha de borrado lógico' })
-  @DeleteDateColumn()
-  deletedAt: Date;
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  updatedAt!: Date;
+
+  @ApiPropertyOptional({ description: 'Fecha de borrado lógico' })
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  deletedAt?: Date; // 🚩 Rigor Rentix: ?
 }

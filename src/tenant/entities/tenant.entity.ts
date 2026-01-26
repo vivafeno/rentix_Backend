@@ -28,11 +28,11 @@ export class Tenant extends BaseEntity {
 
   @ApiProperty({ description: 'Nombre completo o Razón Social del arrendatario', example: 'Juan Pérez' })
   @Column()
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Email principal para notificaciones legales', example: 'notificaciones@arrendatario.es' })
   @Column()
-  email: string;
+  email!: string;
 
   @ApiProperty({ description: 'Estado operativo del arrendatario en el sistema', enum: TenantStatus })
   @Column({ 
@@ -40,16 +40,16 @@ export class Tenant extends BaseEntity {
     enum: TenantStatus, 
     default: TenantStatus.ACTIVE 
   })
-  status: TenantStatus;
+  status!: TenantStatus;
 
   /* --- VÍNCULOS DE INFRAESTRUCTURA --- */
 
   @Column({ name: 'company_id', type: 'uuid' })
-  companyId: string;
+  companyId!: string;
 
   @ManyToOne(() => Company, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'company_id' })
-  company: Company;
+  company!: Company;
 
   /* --- CAPA OPERATIVA (Rigor 2026) --- */
 
@@ -61,14 +61,14 @@ export class Tenant extends BaseEntity {
     cascade: true, 
     eager: true 
   })
-  profile: TenantProfile;
+  profile!: TenantProfile;
 
   @ApiPropertyOptional({ 
     type: () => [Contract], 
     description: 'Contratos de alquiler asociados a este arrendatario' 
   })
   @ManyToMany(() => Contract, (contract) => contract.tenants)
-  contracts: Contract[];
+  contracts!: Contract[];
 
   /**
    * Relación Inversa: Directorio de Contactos
@@ -79,5 +79,5 @@ export class Tenant extends BaseEntity {
     description: 'Agenda de contactos vinculados (avalistas, representantes, familiares)' 
   })
   @OneToMany(() => Contact, (contact) => contact.tenant)
-  contacts: Contact[];
+  contacts!: Contact[];
 }

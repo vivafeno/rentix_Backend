@@ -32,7 +32,7 @@ export class CreateAddressDto {
   @ApiProperty({ enum: AddressType, enumName: 'AddressType' })
   @IsEnum(AddressType)
   @IsNotEmpty()
-  type: AddressType;
+  type!: AddressType;
 
   @ApiPropertyOptional({ default: false })
   @IsBoolean()
@@ -45,7 +45,7 @@ export class CreateAddressDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
-  street: string;
+  street!: string;
 
   @ApiProperty({ 
     description: 'Código postal (5 dígitos para ES, hasta 10 para internacional)', 
@@ -58,12 +58,12 @@ export class CreateAddressDto {
    * Validamos formato alfanumérico para compatibilidad con UK/PT/ES.
    */
   @Matches(/^[a-zA-Z0-9 -]{2,10}$/, { message: 'El código postal no tiene un formato válido' })
-  zipCode: string;
+  zipCode!: string;
 
   @ApiProperty({ example: 'Madrid' })
   @IsString()
   @IsNotEmpty()
-  city: string;
+  city!: string;
 
   @ApiPropertyOptional({ example: 'Madrid' })
   @IsString()
@@ -78,5 +78,5 @@ export class CreateAddressDto {
   @IsString()
   @Length(2, 2)
   @Matches(/^[A-Z]{2}$/, { message: 'El código de país debe ser de 2 letras en mayúsculas' })
-  countryCode: string;
+  countryCode!: string;
 }

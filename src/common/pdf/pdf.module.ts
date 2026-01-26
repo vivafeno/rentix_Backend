@@ -1,7 +1,12 @@
 import { Module, Global } from '@nestjs/common';
 import { PdfService } from './pdf.service';
 
-@Global() // Lo hacemos global para que cualquier módulo pueda imprimir PDFs
+/**
+ * @class PdfModule
+ * @description Módulo global de generación de documentos.
+ * El uso de @Global() permite que Invoice, Contract y Receipt accedan al Singleton de Puppeteer.
+ */
+@Global()
 @Module({
   providers: [PdfService],
   exports: [PdfService],

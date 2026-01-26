@@ -1,132 +1,92 @@
-import { Column, Entity, Index, OneToOne } from 'typeorm';
+import { Entity, Column, Index, OneToOne } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { Company } from '../../company/entities/company.entity';
-import { PersonType } from '../enums/personType.enum';
-import { TaxIdType } from '../enums/taxIdType.enum';
-import { ResidenceType } from '../enums/residenceType.enum';
+import { PersonType, TaxIdType, ResidenceType } from '../enums'; 
 import { Expose } from 'class-transformer';
 
 /**
- * @description Entidad de Identidad Fiscal alineada con Veri*factu y FacturaE.
- * Centraliza la identificación legal para el encadenamiento de facturas.
+ * @class FiscalEntity
+ * @description Identidad Fiscal Legal (AEAT Standard).
+ * Soporta validación de NIF/CIF, tipos de residencia y razonamiento social.
  * @version 2026.2.0
  */
 @Entity('fiscal_entities')
 @Index('IDX_FISCAL_ENTITY_GLOBAL', ['nif'], {
   unique: true,
-  where: 'company_id IS NULL',
+  where: 'company_id IS NULL', // Identidades maestras de la plataforma
 })
 @Index('IDX_FISCAL_ENTITY_TENANT', ['nif', 'companyId'], {
   unique: true,
-  where: 'company_id IS NOT NULL',
+  where: 'company_id IS NOT NULL', // Identidades de clientes por empresa
 })
 export class FiscalEntity extends BaseEntity {
-  /* ------------------------------------------------------------------
-   * CONTEXTO MULTI-TENANT
-   * ------------------------------------------------------------------ */
 
-  @ApiPropertyOptional({
-    description: 'ID de la empresa propietaria (Null si es global)',
-  })
+  @ApiPropertyOptional({ description: 'Owner company ID (Null for global entities)' })
+  @Expose()
   @Column({ name: 'company_id', type: 'uuid', nullable: true })
   companyId?: string;
 
-  /* ------------------------------------------------------------------
-   * IDENTIFICACIÓN LEGAL (ESTÁNDAR AEAT)
-   * ------------------------------------------------------------------ */
-
-  @ApiProperty({
-    description: 'F (Física) o J (Jurídica)',
-    enum: PersonType,
-  })
+  @ApiProperty({ enum: PersonType, description: 'F=Physical, J=Legal' })
+  @Expose()
   @Column({
-    name: 'tipo_persona',
+    name: 'person_type', // 🚩 Normalizado a inglés en DB para rigor 2026
     type: 'enum',
     enum: PersonType,
     default: PersonType.LEGAL_ENTITY,
   })
-  tipoPersona: PersonType;
+  personType!: PersonType;
 
-  @ApiProperty({
-    description: 'Tipo de documento (01: NIF, 02: Pasaporte...)',
-    enum: TaxIdType,
-  })
+  @ApiProperty({ enum: TaxIdType, description: '01=NIF/CIF, 02=Passport...' })
+  @Expose()
   @Column({
-    name: 'tipo_id_fiscal',
+    name: 'tax_id_type',
     type: 'enum',
     enum: TaxIdType,
     default: TaxIdType.NIF,
   })
-  tipoIdFiscal: TaxIdType;
+  taxIdType!: TaxIdType;
 
-  @ApiProperty({
-    description: 'NIF/CIF del obligado tributario',
-    example: 'B12345678',
-  })
+  @ApiProperty({ example: 'B12345678', description: 'NIF/CIF Number' })
+  @Expose()
   @Column({ name: 'nif', length: 20 })
-  nif: string;
+  nif!: string;
 
-  /* ------------------------------------------------------------------
-   * NOMBRES Y RAZÓN SOCIAL (UNIFICADO VERI*FACTU)
-   * ------------------------------------------------------------------ */
+  @ApiProperty({ example: 'Rentix Solutions S.L.', description: 'Legal Entity Name' })
+  @Expose()
+  @Column({ name: 'full_name' }) // 🚩 Mapeado a full_name para consistencia CRM
+  fullName!: string;
 
-  @ApiProperty({
-    description: 'Nombre y Apellidos o Razón Social Completa',
-    example: 'Rentix Solutions S.L.',
-  })
-  @Column({ name: 'nombre_razon_social' })
-  nombreRazonSocial: string;
+  @ApiPropertyOptional({ example: 'Rentix', description: 'Trade name' })
+  @Expose()
+  @Column({ name: 'trade_name', nullable: true })
+  tradeName?: string;
 
-  @ApiPropertyOptional({
-    description: 'Nombre comercial (informativo)',
-    example: 'Rentix App',
-  })
-  @Column({ name: 'nombre_comercial', nullable: true })
-  nombreComercial?: string;
-
-  /* ------------------------------------------------------------------
-   * RESIDENCIA FISCAL
-   * ------------------------------------------------------------------ */
-
-  @ApiProperty({
-    description: 'Residente (R), UE (U), Extra-UE (E)',
-    enum: ResidenceType,
-    default: ResidenceType.RESIDENT,
-  })
+  @ApiProperty({ enum: ResidenceType, default: ResidenceType.RESIDENT })
+  @Expose()
   @Column({
-    name: 'tipo_residencia',
+    name: 'residence_type',
     type: 'enum',
     enum: ResidenceType,
     default: ResidenceType.RESIDENT,
   })
-  tipoResidencia: ResidenceType;
+  residenceType!: ResidenceType;
 
-  @ApiProperty({
-    description: 'Código ISO país (ESP)',
-    example: 'ESP',
-    default: 'ESP',
-  })
-  @Column({ name: 'codigo_pais', length: 3, default: 'ESP' })
-  codigoPais: string;
-
-  /* ------------------------------------------------------------------
-   * RELACIONES
-   * ------------------------------------------------------------------ */
+  @ApiProperty({ example: 'ES', default: 'ES', description: 'ISO 3166-1 alpha-2 country code' })
+  @Expose()
+  @Column({ name: 'country_code', length: 2, default: 'ES' })
+  countryCode!: string;
 
   @OneToOne(() => Company, (company) => company.fiscalEntity)
-  company: Company;
-
-  /* ------------------------------------------------------------------
-   * GETTERS DE NORMALIZACIÓN
-   * ------------------------------------------------------------------ */
+  company!: Company;
 
   /**
-   * @description Retorna el nombre sanitizado para el nodo <NombreRazonSocial> del XML.
+   * @description Nombre sanitizado para Veri*factu.
+   * El Frontend lo usará para mostrar nombres en mayúsculas en las facturas.
    */
   @Expose()
-  @ApiProperty({ description: 'Nombre formateado para Veri*factu' })
-  get nombreOficial(): string {
-    return (this.nombreRazonSocial || 'DESCONOCIDO').trim().toUpperCase();
+  @ApiProperty({ description: 'Normalized name for tax reporting' })
+  get officialName(): string {
+    return (this.fullName || 'UNKNOWN').trim().toUpperCase();
   }
 }

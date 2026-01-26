@@ -1,113 +1,138 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { Contact } from './entities/contact.entity';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
+import { CompanyRole } from 'src/user-company-role/enums/user-company-role.enum';
 
 /**
  * @class ContactService
- * @description Gestión de lógica de negocio para contactos (Empresas y Tenants).
- * Implementa protocolo de Soft Delete manual mediante isActive y deletedAt.
+ * @description Gestión de contactos Multi-tenant.
+ * Roles soportados: OWNER (Escritura), TENANT/VIEWER (Lectura).
  */
 @Injectable()
 export class ContactService {
   constructor(
     @InjectRepository(Contact)
-    private readonly contactRepository: Repository<Contact>,
+    private readonly contactRepo: Repository<Contact>,
   ) {}
 
   /**
-   * Crea un nuevo contacto validando que tenga una asignación paterna.
-   * @param createContactDto Datos del contacto
-   * @returns Contacto creado
+   * @method create
+   * @description Crea un contacto vinculado a la empresa activa.
    */
-  async create(createContactDto: CreateContactDto): Promise<Contact> {
-    // Regla Rentix: Un contacto debe pertenecer a una empresa O a un tenant.
-    if (!createContactDto.companyId && !createContactDto.tenantId) {
-      throw new BadRequestException('exception.contact.no_parent_assigned');
-    }
+  async create(
+    companyId: string,
+    dto: CreateContactDto,
+    role: CompanyRole,
+  ): Promise<Contact> {
+    this.checkWriteAccess(role);
 
-    const newContact = this.contactRepository.create({
-      ...createContactDto,
-      isActive: true, // Por defecto activo
+    const contact = this.contactRepo.create({
+      ...dto,
+      companyId,
+      isActive: true,
       deletedAt: null,
     });
 
-    return await this.contactRepository.save(newContact);
-  }
-
-  /**
-   * Obtiene todos los contactos activos.
-   */
-  async findAll(): Promise<Contact[]> {
-    return await this.contactRepository.find({
-      where: { isActive: true },
-      relations: ['company', 'tenant'],
-    });
-  }
-
-  /**
-   * Obtiene un contacto por ID si está activo.
-   */
-  async findOne(id: string): Promise<Contact> {
-    const contact = await this.contactRepository.findOne({
-      where: { id, isActive: true },
-      relations: ['company', 'tenant'],
-    });
-
-    if (!contact) {
-      throw new NotFoundException(`exception.contact.not_found`);
+    try {
+      return await this.contactRepo.save(contact);
+    } catch (error) {
+      throw new InternalServerErrorException('Fallo al persistir el contacto patrimonial.');
     }
+  }
+
+  /**
+   * @method findAll
+   * @description Lista los contactos del tenant actual.
+   */
+  async findAll(companyId: string): Promise<Contact[]> {
+    return await this.contactRepo.find({
+      where: { companyId, isActive: true },
+      // 🚩 CORRECCIÓN: Ordenamos por createdAt ya que 'name' no existe en la entidad
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  /**
+   * @method findOne
+   * @description Localiza un contacto asegurando aislamiento.
+   */
+  async findOne(id: string, companyId: string): Promise<Contact> {
+    const contact = await this.contactRepo.findOne({
+      where: { id, companyId, isActive: true },
+    });
+
+    if (!contact) throw new NotFoundException('Contacto no localizado.');
     return contact;
   }
 
   /**
-   * Actualiza un contacto y gestiona el estado de activación/desactivación.
+   * @method update
    */
-  async update(id: string, updateContactDto: UpdateContactDto): Promise<Contact> {
-    const contact = await this.findOne(id);
+  async update(
+    id: string,
+    companyId: string,
+    dto: UpdateContactDto,
+    role: CompanyRole,
+  ): Promise<Contact> {
+    this.checkWriteAccess(role);
+    const contact = await this.findOne(id, companyId);
 
-    // Lógica personalizada de Soft Delete / Reactivación
-    if (updateContactDto.isActive !== undefined) {
-      if (updateContactDto.isActive === false) {
-        contact.deletedAt = new Date();
-      } else {
-        contact.deletedAt = null;
-      }
-    }
+    const updated = this.contactRepo.merge(contact, dto);
+    
+    if (dto.isActive === false) updated.deletedAt = new Date();
+    if (dto.isActive === true) updated.deletedAt = null;
 
-    Object.assign(contact, updateContactDto);
-    return await this.contactRepository.save(contact);
+    return await this.contactRepo.save(updated);
   }
 
   /**
-   * Desactiva un contacto (Soft Delete manual).
+   * @method remove
    */
-  async remove(id: string): Promise<void> {
-    const contact = await this.findOne(id);
-    
+  async remove(id: string, companyId: string, role: CompanyRole): Promise<void> {
+    this.checkWriteAccess(role);
+    const contact = await this.findOne(id, companyId);
+
     contact.isActive = false;
     contact.deletedAt = new Date();
-    
-    await this.contactRepository.save(contact);
+    await this.contactRepo.save(contact);
   }
 
   /**
-   * Restaura un contacto desactivado.
+   * @method restore
    */
-  async restore(id: string): Promise<Contact> {
-    const contact = await this.contactRepository.findOne({
-      where: { id, isActive: false },
+  async restore(id: string, companyId: string, role: CompanyRole): Promise<Contact> {
+    this.checkWriteAccess(role);
+    
+    const contact = await this.contactRepo.findOne({
+      where: { id, companyId, isActive: false },
     });
 
-    if (!contact) {
-      throw new NotFoundException('exception.contact.not_found_in_trash');
-    }
+    if (!contact) throw new NotFoundException('Contacto no recuperable.');
 
     contact.isActive = true;
     contact.deletedAt = null;
-    
-    return await this.contactRepository.save(contact);
+
+    return await this.contactRepo.save(contact);
+  }
+
+  /* --- MÉTODOS PRIVADOS DE RIGOR --- */
+
+  /**
+   * @description Valida privilegios basados en el enum real: OWNER, TENANT, VIEWER.
+   */
+  private checkWriteAccess(role: CompanyRole): void {
+    if (role !== CompanyRole.OWNER) {
+      throw new ForbiddenException('Operación restringida: Solo el propietario puede gestionar contactos.');
+    }
   }
 }

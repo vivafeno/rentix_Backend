@@ -20,11 +20,11 @@ export class User extends BaseEntity {
   @ApiProperty({ example: 'admin@rentix.com' })
   @Index({ unique: true }) // Rigor: Índice único a nivel de DB
   @Column({ type: 'varchar', length: 255 })
-  email: string;
+  email!: string;
 
   @Column({ type: 'varchar', select: false }) 
   @Exclude()
-  password: string;
+  password!: string;
 
   @ApiProperty({ enum: AppRole, default: AppRole.USER })
   @Column({
@@ -33,10 +33,10 @@ export class User extends BaseEntity {
     enum: AppRole,
     default: AppRole.USER,
   })
-  appRole: AppRole;
+  appRole!: AppRole;
 
   @Column({ name: 'is_email_verified', type: 'boolean', default: false })
-  isEmailVerified: boolean;
+  isEmailVerified!: boolean;
 
   // 🚩 SOLUCIÓN AL ERROR: Forzamos 'text' para evitar la inferencia 'Object'
   @Column({ name: 'refresh_token_hash', type: 'text', nullable: true, select: false })
@@ -63,10 +63,10 @@ export class User extends BaseEntity {
   /* --- 🌍 LOCALIZACIÓN & PREFERENCIAS (Rigor 2026) --- */
 
   @Column({ type: 'varchar', length: 5, default: 'es' })
-  language: string;
+  language!: string;
 
   @Column({ name: 'timezone', type: 'varchar', length: 50, default: 'Europe/Madrid' })
-  timezone: string;
+  timezone!: string;
 
   /* --- 📈 AUDITORÍA & ONBOARDING --- */
 
@@ -74,7 +74,7 @@ export class User extends BaseEntity {
   lastLoginAt?: Date;
 
   @Column({ name: 'onboarding_step', type: 'int', default: 1 })
-  onboardingStep: number;
+  onboardingStep!: number;
 
   @Column({ name: 'accepted_terms_at', type: 'timestamp', nullable: true })
   acceptedTermsAt?: Date;
@@ -83,11 +83,11 @@ export class User extends BaseEntity {
 
   @ApiPropertyOptional({ type: () => [CompanyRoleEntity] })
   @OneToMany(() => CompanyRoleEntity, (ucr) => ucr.user, { cascade: true })
-  companyRoles: CompanyRoleEntity[];
+  companyRoles!: CompanyRoleEntity[];
 
   @ApiPropertyOptional({ type: () => [TenantProfile] })
   @OneToMany(() => TenantProfile, (tp) => tp.user, { cascade: true })
-  tenantProfiles: TenantProfile[];
+  tenantProfiles!: TenantProfile[];
 
   /* --- 🛠️ VIRTUALS --- */
 

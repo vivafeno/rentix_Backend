@@ -1,25 +1,42 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ForbiddenException,
-  Logger,
+import { 
+  Injectable, 
+  UnauthorizedException, 
+  ForbiddenException, 
+  Logger 
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 
 import { UserService } from '../user/user.service';
-import { TokensDto } from './dto/tokens.dto';
-import { User } from 'src/user/entities/user.entity';
-import type { ActiveUserData } from './interfaces/jwt-payload.interface';
+import { User } from '../user/entities/user.entity';
+import { CompanyRole } from '../user-company-role/enums/user-company-role.enum';
 import { AppRole } from './enums/user-global-role.enum';
-import { CompanyRole } from 'src/user-company-role/enums/user-company-role.enum';
+import { ActiveUserData } from './interfaces/jwt-payload.interface';
 
 /**
- * @class AuthService
- * @description Orquestador central de identidad y contexto multi-tenant.
- * Implementa rotación de tokens, validación de hashes y blindaje de jerarquías.
+ * @interface AuthSession
+ * @description Contrato inmutable para la Store de Angular 21.
  */
+export interface AuthSession {
+  user: {
+    id: string;
+    email: string;
+    appRole: AppRole;
+    firstName?: string; // Añadido para UX en el Front
+    lastName?: string;
+  };
+  context: {
+    activeCompanyId: string;
+    companyRole: CompanyRole | null;
+  };
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+    tokenType: string;
+  };
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -32,48 +49,51 @@ export class AuthService {
 
   /**
    * @method validateUser
-   * @description Validación de identidad primaria.
+   * @description Validación de hash con bcrypt.
    */
   async validateUser(email: string, pass: string): Promise<User> {
     const user = await this.usersService.findByEmailForAuth(email);
     
     if (!user || !user.isActive) {
-      this.logger.warn(`Intento de login fallido o cuenta inactiva: ${email}`);
-      throw new UnauthorizedException('Credenciales de acceso no válidas.');
+      throw new UnauthorizedException('Acceso denegado: Usuario inexistente o inactivo.');
     }
 
     const isMatch = await bcrypt.compare(pass, user.password);
-    if (!isMatch) throw new UnauthorizedException('Credenciales de acceso no válidas.');
+    if (!isMatch) throw new UnauthorizedException('Las credenciales no coinciden.');
 
     return user;
   }
 
   /**
    * @method login
-   * @description Genera el par de tokens (Access/Refresh) inyectando el contexto patrimonial.
-   * Resuelve Error 2741: Inclusión obligatoria de tokenType.
+   * @description Orquestador de sesión. Garantiza que siempre haya un activeCompanyId válido.
    */
   async login(
     user: User,
     companyContext?: { id: string; role: CompanyRole },
-  ): Promise<TokensDto> {
-    let context = companyContext;
+  ): Promise<AuthSession> {
     
-    // Gema Rentix: Auto-selección de empresa primaria (isPrimary) o primera disponible
-    if (!context && user.companyRoles?.length > 0) {
+    // 1. Lógica de Contexto Atómica
+    let activeId = companyContext?.id ?? '';
+    let activeRole = companyContext?.role ?? null;
+
+    // Si no hay contexto previo, buscamos la empresa primaria o la primera disponible
+    if (!activeId && user.companyRoles?.length > 0) {
       const primary = user.companyRoles.find(r => r.isPrimary) || user.companyRoles[0];
-      context = { id: primary.companyId, role: primary.role };
+      activeId = primary.companyId;
+      activeRole = primary.role;
     }
 
+    // 2. Payload para el Interceptor del Front
     const payload: ActiveUserData = {
       id: user.id,
       email: user.email,
       appRole: user.appRole,
-      activeCompanyId: context?.id ?? '',
-      companyRole: context?.role,
+      activeCompanyId: activeId,
+      companyRole: activeRole as CompanyRole,
     };
 
-    // Generación paralela de tokens para optimizar latencia
+    // 3. Generación de Tokens Determinista
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(
@@ -85,79 +105,75 @@ export class AuthService {
       ),
     ]);
 
-    // Persistencia del hash del Refresh Token para rotación segura
-    await this.usersService.updateRefreshToken(
-      user.id,
-      await bcrypt.hash(refreshToken, 10),
-    );
+    // 4. Persistencia del Hash de refresco (Seguridad)
+    const hashedRT = await bcrypt.hash(refreshToken, 10);
+    await this.usersService.updateRefreshToken(user.id, hashedRT);
 
-    return { 
-      accessToken, 
-      refreshToken, 
-      tokenType: 'Bearer' // ✅ Corregido: Propiedad requerida por TokensDto
+    // 5. Estructura para Signals (Angular 21)
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        appRole: user.appRole,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      context: {
+        activeCompanyId: activeId,
+        companyRole: activeRole,
+      },
+      tokens: {
+        accessToken,
+        refreshToken,
+        tokenType: 'Bearer',
+      },
     };
   }
 
   /**
    * @method selectCompany
-   * @description Intercambio de contexto (Switch Tenant).
-   * Resuelve Error 2367: Comparación segura contra AppRole enum.
+   * @description El motor del "Switch" de empresa. Regenera el JWT con el nuevo contexto.
    */
-  async selectCompany(userId: string, companyId: string): Promise<TokensDto> {
+  async selectCompany(userId: string, companyId: string): Promise<AuthSession> {
     const user = await this.usersService.findByIdForAuth(userId);
-
-    if (!user) throw new UnauthorizedException('Identidad no encontrada.');
+    if (!user) throw new UnauthorizedException('Sesión corrupta.');
 
     const roleInCompany = user.companyRoles?.find(r => r.companyId === companyId);
-    
-    // ✅ Corregido: Comparación lógica estricta contra el Enum
     const isSuperAdmin = user.appRole === AppRole.SUPERADMIN;
 
     if (!roleInCompany && !isSuperAdmin) {
-      throw new ForbiddenException('No tiene permisos en este patrimonio.');
+      throw new ForbiddenException('No tiene acceso al patrimonio solicitado.');
     }
 
-    return this.login(user, {
+    return await this.login(user, {
       id: companyId,
       role: roleInCompany?.role || CompanyRole.VIEWER,
     });
   }
 
-  /**
-   * @method refresh
-   * @description Rotación de tokens con validación de persistencia.
-   */
-  async refresh(refreshToken: string): Promise<TokensDto> {
+  async refresh(refreshToken: string): Promise<AuthSession> {
     try {
       const { id } = await this.jwtService.verifyAsync(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
 
       const user = await this.usersService.findByIdForAuth(id);
-
       if (!user?.refreshTokenHash || !user.isActive) {
-        throw new UnauthorizedException('Sesión expirada o cuenta inactiva.');
+        throw new UnauthorizedException('Usuario inhabilitado.');
       }
 
       const isValid = await bcrypt.compare(refreshToken, user.refreshTokenHash);
-      
       if (!isValid) {
-        // Alerta de seguridad: Si el token no coincide, revocamos todo (posible robo)
         await this.logout(user.id);
-        throw new UnauthorizedException('Token de refresco inválido o comprometido.');
+        throw new UnauthorizedException('Token de refresco comprometido.');
       }
 
-      return this.login(user);
-    } catch (error) {
-      if (error instanceof UnauthorizedException) throw error;
-      throw new UnauthorizedException('Error de refresco de sesión.');
+      return await this.login(user);
+    } catch (e) {
+      throw new UnauthorizedException('Sesión expirada.');
     }
   }
 
-  /**
-   * @method logout
-   * @description Revoca el token de refresco del usuario.
-   */
   async logout(userId: string): Promise<void> {
     await this.usersService.updateRefreshToken(userId, null);
   }

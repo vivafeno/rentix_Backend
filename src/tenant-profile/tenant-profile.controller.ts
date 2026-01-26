@@ -1,119 +1,57 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseUUIDPipe,
-  BadRequestException,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TenantProfileService } from './tenant-profile.service';
-import { CreateTenantProfileDto } from './dto/create-tenant-profile.dto';
-import { UpdateTenantProfileDto } from './dto/update-tenant-profile.dto';
+import { CreateTenantProfileDto, UpdateTenantProfileDto } from './dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
-import { AppRole } from 'src/auth/enums/user-global-role.enum';
-import type { ActiveUserData } from 'src/auth/interfaces/jwt-payload.interface';
 
-/**
- * @class TenantProfileController
- * @description Gestión de perfiles de clientes y arrendatarios (CRM).
- * Implementa validación de contexto multi-tenant obligatoria para todas las operaciones.
- * @version 2026.1.19
- */
-@ApiTags('Tenant Profiles (CRM)')
+@ApiTags('CRM - Tenant Profiles')
 @ApiBearerAuth()
-@Controller('client-profiles')
+@Controller('tenant-profiles')
+@Auth()
 export class TenantProfileController {
-  constructor(private readonly clientProfileService: TenantProfileService) {}
+  constructor(private readonly profileService: TenantProfileService) {}
 
-  /**
-   * @method create
-   * @description Registra un nuevo perfil bajo el contexto de la empresa activa.
-   * Resuelve errores 41 y 47 mediante el uso de ActiveUserData.
-   */
   @Post()
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({
-    summary: 'Crear cliente',
-    description:
-      'Crea un cliente CRM + Identidad Fiscal + Dirección Fiscal en una sola operación.',
-  })
-  @ApiResponse({ status: 201, description: 'Cliente creado correctamente.' })
-  create(
-    @Body() createDto: CreateTenantProfileDto,
-    @GetUser() user: ActiveUserData, // 🚩 Solución: Tipado estricto en lugar de any
+  @ApiOperation({ summary: 'Crear perfil de cliente' })
+  async create(
+    @Body() dto: CreateTenantProfileDto,
+    @GetUser('activeCompanyId') companyId: string,
   ) {
-    const companyId = user.activeCompanyId;
-
-    if (!companyId) {
-      throw new BadRequestException(
-        'No has seleccionado ninguna empresa. Usa el contexto patrimonial para operar.',
-      );
-    }
-
-    return this.clientProfileService.create(companyId, createDto);
+    return await this.profileService.create(companyId, dto);
   }
 
-  /**
-   * @method findAll
-   * @description Lista clientes filtrados por el ID de empresa del token.
-   */
   @Get()
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Listar clientes de mi empresa' })
-  findAll(@GetUser('activeCompanyId') companyId: string) {
-    return this.clientProfileService.findAll(companyId);
+  @ApiOperation({ summary: 'Listar todos los clientes de la empresa' })
+  async findAll(@GetUser('activeCompanyId') companyId: string) {
+    return await this.profileService.findAll(companyId);
   }
 
-  /**
-   * @method findOne
-   * @description Detalle de cliente con validación de pertenencia.
-   */
   @Get(':id')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
   @ApiOperation({ summary: 'Obtener detalle de un cliente' })
-  findOne(
+  async findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('activeCompanyId') companyId: string,
   ) {
-    return this.clientProfileService.findOne(id, companyId);
+    return await this.profileService.findOne(id, companyId);
   }
 
-  /**
-   * @method update
-   * @description Actualización parcial de datos del cliente.
-   */
   @Patch(':id')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN, AppRole.USER)
-  @ApiOperation({ summary: 'Actualizar datos CRM del cliente' })
-  update(
+  @ApiOperation({ summary: 'Actualizar perfil fiscal' })
+  async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateDto: UpdateTenantProfileDto,
     @GetUser('activeCompanyId') companyId: string,
+    @Body() dto: UpdateTenantProfileDto,
   ) {
-    return this.clientProfileService.update(id, companyId, updateDto);
+    return await this.profileService.update(id, companyId, dto);
   }
 
-  /**
-   * @method remove
-   * @description Desactivación lógica restringida a roles de gestión.
-   */
   @Delete(':id')
-  @Auth(AppRole.SUPERADMIN, AppRole.ADMIN)
-  @ApiOperation({ summary: 'Desactivar cliente (Soft delete)' })
-  remove(
+  @ApiOperation({ summary: 'Baja lógica de cliente' })
+  async remove(
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser('activeCompanyId') companyId: string,
   ) {
-    return this.clientProfileService.remove(id, companyId);
+    return await this.profileService.remove(id, companyId);
   }
 }

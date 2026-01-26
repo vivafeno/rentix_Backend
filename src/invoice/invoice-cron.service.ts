@@ -3,9 +3,16 @@ import { Cron } from '@nestjs/schedule';
 import { InvoiceService } from './invoice.service';
 import { DataSource } from 'typeorm';
 import { Contract } from '../contract/entities/contract.entity';
-import { Invoice, InvoiceType } from './entities/invoice.entity';
+import { InvoiceType } from './enums';
+import { Invoice } from './entities/invoice.entity';
 import { ContractStatus } from '../contract/enums';
 
+/**
+ * @class InvoiceCronService
+ * @description Rentix 2026 Automation Engine.
+ * Manages the monthly billing cycle ensuring Multi-tenant integrity.
+ * Normalized to English Tax Entity properties.
+ */
 @Injectable()
 export class InvoiceCronService {
   private readonly logger = new Logger(InvoiceCronService.name);
@@ -13,108 +20,90 @@ export class InvoiceCronService {
   constructor(
     private readonly invoiceService: InvoiceService,
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   /**
-   * @description Disparador mensual: Día 1 a las 00:01 AM.
-   * Punto de control para la generación masiva de borradores.
-   * Blindado contra duplicados para permitir re-ejecuciones seguras.
+   * @method handleAutoBilling
+   * @description Monthly cron job (1st day of month at 00:01).
    */
   @Cron('01 00 1 * *')
   async handleAutoBilling() {
-    this.logger.log('📅 [Cron] Iniciando ciclo de facturación mensual Rentix 2026');
-
+    this.logger.log('📅 [Cron] Starting monthly billing cycle');
     const contractRepo = this.dataSource.getRepository(Contract);
     const invoiceRepo = this.dataSource.getRepository(Invoice);
 
-    // Al ejecutarse el día 1, el mes actual es el objetivo de cobro (pago por adelantado)
     const now = new Date();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
 
-    // 1. Buscamos todos los contratos que deben facturar hoy
+    // RIGOR: Loading relations with English naming convention
     const contracts = await contractRepo.find({
-      where: {
-        status: ContractStatus.ACTIVE,
-        isActive: true
-      },
-      relations: ['tenants', 'property', 'taxIva', 'taxIrpf'],
+      where: { status: ContractStatus.ACTIVE, isActive: true },
+      relations: ['tenants', 'tenants.profile', 'property', 'taxIva', 'taxIrpf'],
     });
-
-    if (contracts.length === 0) {
-      this.logger.log('ℹ️ No hay contratos activos para procesar este mes.');
-      return;
-    }
 
     for (const contract of contracts) {
       try {
-        if (!contract.tenants?.length) {
-          this.logger.warn(`⚠️ Saltando contrato ${contract.id}: No tiene titulares vinculados.`);
+        if (!contract.tenants?.length) continue;
+        
+        const mainTenant = contract.tenants[0];
+        if (!mainTenant.profile) {
+          this.logger.warn(`⚠️ Contract [${contract.id}]: Tenant missing fiscal profile. Skipping...`);
           continue;
         }
 
-        // 2. RIGOR: Validar que no exista ya un borrador o factura emitida para este contrato/periodo/renta
-        // Esto permite crear facturas manuales anticipadas sin que el cron las duplique.
+        // Duplicity check: Does rent exist for this contract/period?
         const exists = await invoiceRepo.createQueryBuilder('invoice')
           .innerJoin('invoice.items', 'item')
           .where('invoice.contractId = :contractId', { contractId: contract.id })
           .andWhere('item.category = :category', { category: 'RENT' })
           .andWhere('item.periodMonth = :month', { month })
           .andWhere('item.periodYear = :year', { year })
+          .andWhere('invoice.status != :status', { status: 'CANCELLED' })
           .getOne();
 
-        if (exists) {
-          this.logger.log(`✅ Contrato ${contract.id} ya cuenta con factura para ${month}/${year}.`);
-          continue;
-        }
+        if (exists) continue;
 
-        // 3. Generar el borrador con datos reales y actualizados
         await this.generateMonthlyDraft(contract, month, year);
-
-      } catch (error) {
-        this.logger.error(`❌ Error en automatización de contrato [${contract.id}]: ${error.message}`);
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+        this.logger.error(`❌ Error in contract [${contract.id}]: ${errorMessage}`);
       }
     }
-    this.logger.log('🏁 Ciclo de facturación mensual completado.');
   }
 
+  /**
+   * @method generateMonthlyDraft
+   * @description Atomic draft generation logic.
+   */
   private async generateMonthlyDraft(contract: Contract, month: number, year: number) {
     const mainTenant = contract.tenants[0];
-    const property = contract.property;
+    const profileId = mainTenant.profile.id;
 
-    // Normalización de tipos (Postgres Decimal -> JS Number)
-    const ivaRate = contract.taxIva ? Number(contract.taxIva.porcentaje) : 0;
-    const irpfRate = contract.taxIrpf ? Number(contract.taxIrpf.porcentaje) : 0;
-
-    // Construcción de descripción profesional según Rigor Rentix
-    const floorInfo = property?.floorNumber ? ` (Planta: ${property.floorNumber})` : '';
-    const itemDescription = `Renta mensual ${month.toString().padStart(2, '0')}/${year} - Ref: ${property?.internalCode || 'S/N'}${floorInfo}`;
+    // 🚩 RIGOR: Sincronizado con la Entidad Tax en inglés (percentage)
+    const ivaRate = contract.taxIva ? Number(contract.taxIva.percentage || 0) : 0;
+    const irpfRate = contract.taxIrpf ? Number(contract.taxIrpf.percentage || 0) : 0;
 
     await this.invoiceService.create({
-      type: InvoiceType.ORDINARY, // Equivale a F1
-      issueDate: new Date().toISOString(),
-      clientId: mainTenant.id,
+      type: InvoiceType.ORDINARY,
+      issueDate: new Date().toISOString().split('T')[0],
+      clientId: profileId,
       propertyId: contract.propertyId,
       contractId: contract.id,
-      items: [
-        {
-          category: 'RENT',
-          description: itemDescription,
-          unitPrice: Number(contract.baseRent),
-          periodMonth: month,
-          periodYear: year,
-          discountPercentage: 0,
-          // Dinamismo Fiscal: Solo aplicamos si el porcentaje es > 0
-          applyTax: ivaRate > 0,
-          taxPercentage: ivaRate,
-          applyRetention: irpfRate > 0,
-          retentionPercentage: irpfRate,
-          currentInstallment: 1,
-          totalInstallments: 1
-        }
-      ]
+      items: [{
+        category: 'RENT',
+        description: `Monthly Rent ${month}/${year}`,
+        unitPrice: Number(contract.baseRent),
+        periodMonth: month,
+        periodYear: year,
+        discountPercentage: 0,
+        applyTax: ivaRate > 0,
+        taxPercentage: ivaRate,
+        applyRetention: irpfRate > 0,
+        retentionPercentage: irpfRate
+      }]
     }, contract.companyId);
 
-    this.logger.log(`✨ Draft generado: [${property?.internalCode}] -> ${mainTenant.name} (${month}/${year})`);
+    this.logger.log(`✅ Draft generated: Contract ${contract.id} -> Client ${profileId}`);
   }
 }

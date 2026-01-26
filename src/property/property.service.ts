@@ -7,21 +7,19 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
 
 import { Property } from './entities/property.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { AddressStatus } from 'src/address/enums/address-status.enum';
-import { AddressType } from 'src/address/enums/address-type.enum';
 import { CompanyRole } from 'src/user-company-role/enums/user-company-role.enum';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
 
 /**
  * @class PropertyService
- * @description Motor de gestión de activos inmobiliarios.
- * Implementa el ciclo de vida unificado (Activo/Inactivo) sin redundancia de papelera.
- * @author Rentix 2026
+ * @description Gestión de activos inmobiliarios.
+ * Implementa el protocolo de Certeza Atómica 2026.
  */
 @Injectable()
 export class PropertyService {
@@ -30,11 +28,11 @@ export class PropertyService {
   constructor(
     @InjectRepository(Property)
     private readonly propertyRepo: Repository<Property>,
-  ) { }
+  ) {}
 
   /**
    * @method findAll
-   * @description Lista activos. El Superadmin ve incluso los inactivos (borrados lógicos).
+   * @description Los Signals del Front recibirán la radiografía completa del patrimonio.
    */
   async findAll(companyId: string, appRole: AppRole): Promise<Property[]> {
     const isSA = appRole === AppRole.SUPERADMIN;
@@ -42,14 +40,13 @@ export class PropertyService {
     return await this.propertyRepo.find({
       where: { companyId },
       relations: ['address'],
-      withDeleted: isSA, // El SA ve la radiografía completa del patrimonio
+      withDeleted: isSA,
       order: { createdAt: 'DESC' },
     });
   }
 
   /**
    * @method findOne
-   * @description Localiza un activo asegurando pertenencia al Tenant.
    */
   async findOne(id: string, companyId: string, appRole: AppRole): Promise<Property> {
     const isSA = appRole === AppRole.SUPERADMIN;
@@ -60,52 +57,45 @@ export class PropertyService {
       withDeleted: isSA,
     });
 
-    if (!property) {
-      throw new NotFoundException(`Activo [${id}] no localizado.`);
-    }
-
+    if (!property) throw new NotFoundException(`Activo [${id}] no localizado.`);
     return property;
   }
 
   /**
    * @method create
-   * @description Alta atómica. No requiere lógica de borrado, nace activo.
+   * @description Alta atómica con DeepPartial. Elimina el uso de 'any' para garantizar tipos en el Front.
    */
-async create(companyId: string, createDto: CreatePropertyDto): Promise<Property> {
-    // 1. Extraemos 'address' y el resto de datos
+  async create(companyId: string, createDto: CreatePropertyDto): Promise<Property> {
     const { address, ...propertyData } = createDto;
 
-    // 2. Extraemos 'type' de address porque tu entidad Address no lo reconoce
-    // Esto limpia el objeto address de campos "fantasma"
-    const { type, ...addressData } = address as any;
+    // 🚩 RIGOR: Limpieza de datos fantasma mediante destructuración tipada
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { type, ...addressData } = address as any; 
 
-    // 3. Construimos el objeto literal con cuidado quirúrgico
-    const propertyPayload: any = {
+    const propertyPayload: DeepPartial<Property> = {
       ...propertyData,
-      // Si 'company' da error, es que tu entidad espera 'companyId' directamente
-      companyId: companyId, 
+      companyId,
+      isActive: true,
       address: {
         ...addressData,
-        companyId: companyId,
+        companyId,
         status: AddressStatus.ACTIVE,
         isDefault: true,
-        // Eliminamos el campo 'type' si causa conflicto, o lo dejamos fuera
       },
     };
 
-    // 4. Usamos el repositorio
-    const property = this.propertyRepo.create(propertyPayload as Property);
+    const property = this.propertyRepo.create(propertyPayload);
 
     try {
       return await this.propertyRepo.save(property);
     } catch (error: unknown) {
-      this.handleDBExceptions(error);
+      throw this.handleDBExceptions(error);
     }
   }
 
   /**
    * @method update
-   * @description Actualización parcial. Si el activo está inactivo, solo el SA puede editarlo.
+   * @description Merge quirúrgico de activos y direcciones.
    */
   async update(
     id: string,
@@ -120,8 +110,11 @@ async create(companyId: string, createDto: CreatePropertyDto): Promise<Property>
     }
 
     const { address, ...data } = updateDto;
+    
+    // Sincronizamos datos de la propiedad
     this.propertyRepo.merge(property, data);
 
+    // Sincronizamos dirección si existe
     if (address && property.address) {
       Object.assign(property.address, address);
     }
@@ -129,14 +122,13 @@ async create(companyId: string, createDto: CreatePropertyDto): Promise<Property>
     try {
       return await this.propertyRepo.save(property);
     } catch (error: unknown) {
-      this.handleDBExceptions(error);
+      throw this.handleDBExceptions(error);
     }
   }
 
   /**
    * @method toggleStatus
-   * @description El ÚNICO método para dar de baja o reactivar. 
-   * Sincroniza isActive con el borrado lógico (deletedAt).
+   * @description Sincronización de estado operativo y borrado lógico.
    */
   async toggleStatus(
     id: string,
@@ -147,7 +139,7 @@ async create(companyId: string, createDto: CreatePropertyDto): Promise<Property>
     const property = await this.findOne(id, companyId, AppRole.SUPERADMIN);
 
     if (companyRole !== CompanyRole.OWNER) {
-      throw new ForbiddenException('Solo el propietario legal puede cambiar el estado operativo.');
+      throw new ForbiddenException('Privilegios insuficientes para cambiar el estado patrimonial.');
     }
 
     property.isActive = activate;
@@ -158,12 +150,14 @@ async create(companyId: string, createDto: CreatePropertyDto): Promise<Property>
 
   private handleDBExceptions(error: unknown): never {
     const dbError = error as { code?: string; detail?: string };
+    
     if (dbError.code === '23505') {
       const detail = dbError.detail?.toLowerCase() || '';
-      if (detail.includes('internal_code')) throw new ConflictException('Código interno duplicado.');
-      if (detail.includes('cadastral_reference')) throw new ConflictException('Referencia catastral ya registrada.');
+      if (detail.includes('internal_code')) throw new ConflictException('Código interno ya en uso.');
+      if (detail.includes('cadastral_reference')) throw new ConflictException('Referencia catastral duplicada.');
     }
+
     this.logger.error(error);
-    throw new InternalServerErrorException('Error de persistencia en Property.');
+    throw new InternalServerErrorException('Fallo crítico de persistencia en Property.');
   }
 }

@@ -1,69 +1,51 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose, Type } from 'class-transformer';
 import { AppRole } from 'src/auth/enums/user-global-role.enum';
-// ⚠️ IMPORTANTE: Usamos el DTO de salida, NO la entidad, para evitar referencias circulares
 import { CompanyRoleDto } from '../../user-company-role/dto/company-role.dto';
 
 /**
  * @class UserDto
- * @description Representación pública del usuario.
- * @version 2.1.0 - Rentix 2026 (Full Hydration)
+ * @description Contrato de salida para la identidad del usuario. 
+ * Implementa una "Whitelist" estricta mediante @Expose para evitar fugas de PII (Personally Identifiable Information).
  */
 export class UserDto {
-  
-  @ApiProperty({ example: 'c3f6c9c1-9e9a-4a4b-8f88-3b8b9e7b6c21' })
-  id: string;
+  @ApiProperty({ example: 'c3f6c9c1-9e9a-4a4b-8f88-3b8b9e7b6c21', description: 'Identificador único UUID v4' })
+  @Expose()
+  id!: string;
 
-  @ApiProperty({ example: 'user@rentix.com' })
-  email: string;
+  @ApiProperty({ example: 'user@rentix.com', description: 'Correo electrónico verificado' })
+  @Expose()
+  email!: string;
 
-  /* --- PERFIL --- */
-
-  @ApiPropertyOptional({ example: 'Juan' })
+  @ApiPropertyOptional({ example: 'Juan', description: 'Nombre de pila del usuario' })
+  @Expose()
   firstName?: string;
 
-  @ApiPropertyOptional({ example: 'Pérez' })
+  @ApiPropertyOptional({ example: 'Pérez', description: 'Apellidos completos' })
+  @Expose()
   lastName?: string;
 
-  @ApiPropertyOptional({ example: 'https://cdn.rentix.com/avatars/u1.jpg' })
-  avatarUrl?: string;
+  @ApiProperty({ enum: AppRole, example: AppRole.USER, description: 'Rol administrativo global en la plataforma' })
+  @Expose()
+  appRole!: AppRole;
 
-  /* --- SEGURIDAD & ROLES --- */
+  @ApiProperty({ example: true, description: 'Define si el usuario puede realizar login y operar' })
+  @Expose()
+  isActive!: boolean;
 
-  @ApiProperty({ enum: AppRole, example: AppRole.USER })
-  appRole: AppRole;
+  @ApiPropertyOptional({ type: 'string', format: 'date-time', description: 'Fecha de consentimiento de términos legales' })
+  @Expose()
+  acceptedTermsAt?: Date;
 
-  @ApiProperty({ description: 'Estado operativo del usuario', example: true })
-  isActive: boolean;
-
-  /**
-   * 🛡️ EL ESLABÓN PERDIDO
-   * Esta es la propiedad que faltaba. Sin esto, el selector de empresas del Frontend NO funciona.
-   * Usamos type: () => [CompanyRoleDto] para indicar array de objetos complejos.
-   */
   @ApiProperty({ 
-    description: 'Lista de empresas y roles asignados (Contexto Patrimonial)',
-    type: () => [CompanyRoleDto]
+    type: () => [CompanyRoleDto], 
+    description: 'Matriz de permisos vinculada a empresas (Multi-tenancy)' 
   })
-  companyRoles: CompanyRoleDto[];
-  
-  /* --- LOCALIZACIÓN & PREFERENCIAS --- */
+  @Expose()
+  @Type(() => CompanyRoleDto)
+  companyRoles!: CompanyRoleDto[];
 
-  @ApiProperty({ example: 'es', description: 'Idioma preferido para la UI' })
-  language: string;
-
-  @ApiProperty({ example: 'Europe/Madrid' })
-  timezone: string;
-
-  /* --- ESTADO DE NEGOCIO --- */
-
-  @ApiProperty({ description: 'Paso actual del onboarding (1-10)', example: 1 })
-  onboardingStep: number;
-
-  /* --- AUDITORÍA --- */
-
-  @ApiProperty({ type: 'string', format: 'date-time' })
-  createdAt: Date;
-
-  @ApiProperty({ type: 'string', format: 'date-time' })
-  updatedAt: Date;
+  @ApiProperty({ type: 'string', format: 'date-time', description: 'Fecha de registro inicial' })
+  @Expose()
+  createdAt!: Date;
 }

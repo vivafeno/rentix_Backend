@@ -7,20 +7,15 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, Not } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 
 import { Tax } from './entities/tax.entity';
-import { CreateTaxDto } from './dto/create-tax.dto';
-import { UpdateTaxDto } from './dto/update-tax.dto';
-import { TaxType } from './enums/tax-type.enum';
+import { CreateTaxDto, UpdateTaxDto } from './dto'; // Importación vía barril
 import { CompanyRole } from 'src/user-company-role/enums/user-company-role.enum';
 
 /**
  * @class TaxService
- * @description Gestión de tipos impositivos con validación Veri*factu.
- * Controla la lógica de impuestos (IVA, IRPF, IGIC) y su integridad fiscal.
- * @version 2026.2.2
- * @author Rentix
+ * @description Gestión de tipos impositivos alineada con Verifactu.
  */
 @Injectable()
 export class TaxService {
@@ -29,164 +24,95 @@ export class TaxService {
     private readonly taxRepo: Repository<Tax>,
   ) {}
 
-  /**
-   * @method create
-   * @description Registra un nuevo impuesto validando coherencia fiscal.
-   */
-  async create(companyId: string, dto: CreateTaxDto): Promise<Tax> {
-    if (dto.porcentaje === 0 && !dto.causaExencion) {
+  async create(companyId: string, dto: CreateTaxDto, role: CompanyRole): Promise<Tax> {
+    this.checkWriteAccess(role);
+
+    if (dto.percentage === 0 && !dto.exemptionCause) {
       throw new BadRequestException(
-        'Las facturas con 0% de IVA requieren especificar una Causa de Exención según Veri*factu.',
+        'Las normativas de Verifactu exigen una causa de exención para impuestos al 0%.',
       );
     }
 
-    const taxType = dto.tipo as TaxType;
-    const codigoFacturae = dto.codigoFacturae || this.mapFacturaECode(taxType);
-    const esRetencion =
-      taxType === TaxType.IRPF ? true : (dto.esRetencion ?? false);
-
     const tax = this.taxRepo.create({
       ...dto,
-      tipo: taxType,
       companyId,
-      codigoFacturae,
-      esRetencion,
+      isActive: true,
     });
 
     try {
       return await this.taxRepo.save(tax);
     } catch (error: unknown) {
-      return this.handleDBExceptions(error);
+      throw this.handleDBExceptions(error);
     }
   }
 
-  /**
-   * @method findAll
-   * @description Lista impuestos operativos filtrados por empresa.
-   */
   async findAll(companyId: string): Promise<Tax[]> {
     return await this.taxRepo.find({
       where: { companyId, deletedAt: IsNull() },
-      order: { porcentaje: 'ASC' },
+      order: { percentage: 'ASC' },
     });
   }
 
-  /**
-   * @method findAllDeleted
-   * @description Recupera el histórico de impuestos eliminados (Papelera).
-   */
-  async findAllDeleted(companyId: string): Promise<Tax[]> {
-    return await this.taxRepo.find({
-      where: { companyId, deletedAt: Not(IsNull()) },
-      withDeleted: true,
-      order: { deletedAt: 'DESC' },
-    });
-  }
-
-  /**
-   * @method findOne
-   * @description Localiza un impuesto por ID con aislamiento de datos.
-   */
   async findOne(id: string, companyId: string): Promise<Tax> {
     const tax = await this.taxRepo.findOne({
       where: { id, companyId },
       withDeleted: true,
     });
 
-    if (!tax)
-      throw new NotFoundException(`Impuesto con ID ${id} no localizado.`);
+    if (!tax) throw new NotFoundException(`El registro fiscal [${id}] no existe.`);
     return tax;
   }
 
-  /**
-   * @method update
-   * @description Actualización parcial de impuestos.
-   */
-  async update(id: string, companyId: string, dto: UpdateTaxDto): Promise<Tax> {
+  async update(id: string, companyId: string, dto: UpdateTaxDto, role: CompanyRole): Promise<Tax> {
+    this.checkWriteAccess(role);
     const tax = await this.findOne(id, companyId);
-
-    if (dto.tipo) {
-      tax.tipo = dto.tipo as TaxType;
-    }
-
-    Object.assign(tax, dto);
-
+    
+    const updated = this.taxRepo.merge(tax, dto);
+    
     try {
-      return await this.taxRepo.save(tax);
+      return await this.taxRepo.save(updated);
     } catch (error: unknown) {
-      return this.handleDBExceptions(error);
+      throw this.handleDBExceptions(error);
     }
-  }
-
-  /**
-   * @method remove
-   * @description Soft-delete restringido al OWNER del patrimonio.
-   */
-  async remove(id: string, companyId: string, role: CompanyRole): Promise<Tax> {
-    if (role !== CompanyRole.OWNER) {
-      throw new ForbiddenException(
-        'Privilegios insuficientes: Solo el OWNER gestiona la política fiscal.',
-      );
-    }
-
-    const tax = await this.findOne(id, companyId);
-    tax.deletedAt = new Date();
-    return await this.taxRepo.save(tax);
   }
 
   /**
    * @method restore
-   * @description Reactiva un impuesto eliminado.
+   * @description Reactiva un impuesto borrado lógicamente.
    */
-  async restore(
-    id: string,
-    companyId: string,
-    role: CompanyRole,
-  ): Promise<Tax> {
-    if (role !== CompanyRole.OWNER) {
-      throw new ForbiddenException(
-        'Operación denegada: Se requiere rol OWNER.',
-      );
-    }
-
+  async restore(id: string, companyId: string, role: CompanyRole): Promise<Tax> {
+    this.checkWriteAccess(role);
+    
     const tax = await this.findOne(id, companyId);
+    if (!tax.deletedAt) return tax;
+
     tax.deletedAt = null;
+    tax.isActive = true;
+
     return await this.taxRepo.save(tax);
   }
 
-  /**
-   * @private
-   * @method mapFacturaECode
-   * @description Mapeo de códigos oficiales de la AEAT para FacturaE.
-   */
-  private mapFacturaECode(type: TaxType): string {
-    const mapping: Record<TaxType, string> = {
-      [TaxType.IVA]: '01',
-      [TaxType.IRPF]: '02',
-      [TaxType.IGIC]: '03',
-      [TaxType.IPSI]: '04',
-      [TaxType.OTRO]: '05',
-    };
-    return mapping[type] || '01';
+  async remove(id: string, companyId: string, role: CompanyRole): Promise<Tax> {
+    this.checkWriteAccess(role);
+    const tax = await this.findOne(id, companyId);
+    
+    tax.deletedAt = new Date();
+    tax.isActive = false;
+    
+    return await this.taxRepo.save(tax);
   }
 
-  /**
-   * @private
-   * @method handleDBExceptions
-   * @description Procesa excepciones de integridad con tipado seguro.
-   * Resuelve el error de linter en la línea 151.
-   */
+  private checkWriteAccess(role: CompanyRole): void {
+    if (role !== CompanyRole.OWNER) {
+      throw new ForbiddenException('Acceso Denegado: Solo el OWNER gestiona impuestos.');
+    }
+  }
+
   private handleDBExceptions(error: unknown): never {
     const dbError = error as { code?: string };
-
     if (dbError.code === '23505') {
-      throw new ConflictException(
-        'Ya existe un impuesto registrado con esos parámetros para esta empresa.',
-      );
+      throw new ConflictException('Ya existe una regla fiscal idéntica.');
     }
-
-    throw new InternalServerErrorException(
-      'Error de persistencia en el módulo fiscal.',
-    );
+    throw new InternalServerErrorException('Error de persistencia fiscal.');
   }
 }

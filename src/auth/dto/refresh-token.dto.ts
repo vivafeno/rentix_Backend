@@ -14,5 +14,5 @@ export class RefreshTokenDto {
   })
   @IsJWT({ message: 'El token de refresco no tiene una estructura JWT válida.' })
   @IsNotEmpty({ message: 'El token de refresco es obligatorio.' })
-  readonly refreshToken: string; // 🚩 Rigor: Inmutable para proteger la integridad del flujo
+  readonly refreshToken!: string; // 🚩 Rigor: Inmutable para proteger la integridad del flujo
 }

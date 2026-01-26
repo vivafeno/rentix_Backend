@@ -4,17 +4,17 @@ import { CreateTaxDto } from './create-tax.dto';
 
 /**
  * @class UpdateTaxDto
- * @description DTO para la modificación parcial de tipos impositivos.
- * Hereda la validación estricta y el tipado Veri*factu del CreateTaxDto.
- * @version 2026.2.0
+ * @description DTO for partial modification of tax types.
+ * Inherits strict validation and English naming convention from CreateTaxDto.
+ * @version 2026.2.1
  */
 export class UpdateTaxDto extends PartialType(CreateTaxDto) {
   /**
-   * @description Control de disponibilidad operativa.
-   * Si es false, el impuesto no aparecerá en el selector de contratos/facturas.
+   * @description Operational availability control.
+   * If false, the tax will be hidden from contract and invoice selectors in the Frontend.
    */
   @ApiPropertyOptional({
-    description: 'Estado de disponibilidad operativa del impuesto',
+    description: 'Operational status of the tax',
     example: true,
   })
   @IsBoolean()

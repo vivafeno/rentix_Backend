@@ -1,25 +1,36 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "resolvePackageJsonExports": true,
+    /* Estándar de Módulos 2026 */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    
+    /* Configuración de Tipos (Soluciona lo de Multer) */
+    "types": ["node", "multer"], 
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    
+    /* Rigor y Calidad de Código */
+    "strict": true, // Activamos el modo estricto global
+    "strictNullChecks": true,
     "isolatedModules": true,
-    "declaration": true,
-    "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "ES2023",
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true, // Vital para evitar errores en librerías externas
+    
+    /* Rendimiento de Compilación */
+    "incremental": true,
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    "incremental": true,
-    "skipLibCheck": true,
-    "strictNullChecks": true,
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "removeComments": true,
+    
+    /* Rutas de Acceso Rápido (Opcional pero recomendado) */
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

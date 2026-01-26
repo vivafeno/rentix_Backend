@@ -9,30 +9,31 @@ import {
   BeforeInsert 
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BaseEntity } from 'src/common/entities/base.entity';
-import { FiscalEntity } from 'src/fiscal/entities/fiscal.entity';
-import { Address } from 'src/address/entities/address.entity';
-import { User } from 'src/user/entities/user.entity';
-import { CompanyRoleEntity } from 'src/user-company-role/entities/user-company-role.entity';
-import { Property } from 'src/property/entities/property.entity';
-import { PersonType } from 'src/fiscal/enums/personType.enum';
-import { Contact } from 'src/contact/entities/contact.entity';
+import { BaseEntity } from '../../common/entities/base.entity';
+import { FiscalEntity } from '../../fiscal/entities/fiscal.entity';
+import { Address } from '../../address/entities/address.entity';
+import { User } from '../../user/entities/user.entity';
+import { CompanyRoleEntity } from '../../user-company-role/entities/user-company-role.entity';
+import { Property } from '../../property/entities/property.entity';
+import { PersonType } from '../../fiscal/enums/person-type.enum';
+import { Contact } from '../../contact/entities/contact.entity';
 
 /**
  * @class Company
  * @description Entidad Núcleo de Patrimonio (Contexto de Negocio).
  * Representa la unidad operativa y fiscal mínima para la segregación de datos,
- * gestión patrimonial y cumplimiento con Veri*factu.
- * @version 2026.2.2
+ * gestión patrimonial y cumplimiento con Veri*factu 2026.
  */
 @Entity('companies')
 export class Company extends BaseEntity {
 
-  /* --- IDENTIDAD FISCAL (CORE) --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * ⚖️ IDENTIDAD FISCAL (CORE)
+   * ───────────────────────────────────────────────────────────────── */
 
   @ApiProperty({ description: 'ID de referencia fiscal', format: 'uuid' })
   @Column({ name: 'fiscal_entity_id', type: 'uuid' })
-  fiscalEntityId: string;
+  fiscalEntityId!: string;
 
   @ApiProperty({ 
     type: () => FiscalEntity, 
@@ -44,13 +45,15 @@ export class Company extends BaseEntity {
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'fiscal_entity_id' })
-  fiscalEntity: FiscalEntity;
+  fiscalEntity!: FiscalEntity;
 
-  /* --- LOCALIZACIÓN OPERATIVA --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 📍 LOCALIZACIÓN OPERATIVA
+   * ───────────────────────────────────────────────────────────────── */
 
   @ApiProperty({ description: 'ID de la dirección fiscal obligatoria', format: 'uuid' })
   @Column({ name: 'fiscal_address_id', type: 'uuid' })
-  fiscalAddressId: string;
+  fiscalAddressId!: string;
 
   @ApiProperty({ 
     type: () => Address, 
@@ -62,9 +65,11 @@ export class Company extends BaseEntity {
     nullable: false, 
   })
   @JoinColumn({ name: 'fiscal_address_id' })
-  fiscalAddress: Address;
+  fiscalAddress!: Address;
 
-  /* --- NATURALEZA JURÍDICA --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 🧬 NATURALEZA JURÍDICA
+   * ───────────────────────────────────────────────────────────────── */
 
   @ApiProperty({ 
     enum: PersonType, 
@@ -77,27 +82,28 @@ export class Company extends BaseEntity {
     default: PersonType.LEGAL_ENTITY,
     name: 'person_type'
   })
-  personType: PersonType;
+  personType!: PersonType;
 
-  /* --- TRAZABILIDAD Y PROPIEDAD --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 🛡️ TRAZABILIDAD Y PROPIEDAD
+   * ───────────────────────────────────────────────────────────────── */
 
   @ApiProperty({ description: 'Usuario que originó el alta de la empresa (Inmutable)' })
   @Column({ name: 'created_by_user_id', type: 'uuid', update: false })
-  createdByUserId: string;
+  createdByUserId!: string;
 
   @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: 'created_by_user_id' })
-  createdBy: User;
+  @ApiProperty({ type: () => User })
+  createdBy!: User;
 
-  /* --- LÓGICA DE ESTADO (PROTOCOLOS RENTIX) --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 🔄 LÓGICA DE ESTADO (PROTOCOLOS RENTIX)
+   * ───────────────────────────────────────────────────────────────── */
 
-  /**
-   * Sincroniza automáticamente la fecha de borrado lógico basándose en el estado activo.
-   * Rigor 2026: No dependemos de softDelete() nativo para control total del estado.
-   */
   @BeforeUpdate()
   @BeforeInsert()
-  syncStatusAudit() {
+  syncStatusAudit(): void {
     if (this.isActive === false) {
       this.deletedAt = this.deletedAt || new Date();
     } else {
@@ -105,30 +111,28 @@ export class Company extends BaseEntity {
     }
   }
 
-  /* --- RELACIONES ESTRUCTURALES --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 🔗 RELACIONES ESTRUCTURALES (COLECCIONES)
+   * ───────────────────────────────────────────────────────────────── */
 
   @ApiPropertyOptional({ 
     type: () => [CompanyRoleEntity], 
     description: 'Matriz de roles y permisos de usuarios en esta empresa' 
   })
   @OneToMany(() => CompanyRoleEntity, (ucr) => ucr.company)
-  companyRoles: CompanyRoleEntity[];
+  companyRoles?: CompanyRoleEntity[];
 
   @ApiPropertyOptional({ 
     type: () => [Property], 
     description: 'Inventario de activos inmobiliarios gestionados por la empresa' 
   })
   @OneToMany(() => Property, (property) => property.company)
-  properties: Property[];
+  properties?: Property[];
 
-  /**
-   * Relación Inversa: Agenda de Contactos
-   * @description Puntos de contacto humanos (gestores, técnicos, dirección) vinculados a esta empresa.
-   */
   @ApiPropertyOptional({ 
     type: () => [Contact], 
     description: 'Directorio humano asociado para gestiones operativas y técnicas' 
   })
   @OneToMany(() => Contact, (contact) => contact.company)
-  contacts: Contact[];
+  contacts?: Contact[];
 }

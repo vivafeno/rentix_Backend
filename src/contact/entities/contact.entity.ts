@@ -14,7 +14,9 @@ import { Tenant } from '../../tenant/entities/tenant.entity';
 @Entity('contacts')
 export class Contact extends BaseEntity {
 
-  // --- DATOS PRINCIPALES ---
+  /* ─────────────────────────────────────────────────────────────────
+   * 👤 DATOS PRINCIPALES
+   * ───────────────────────────────────────────────────────────────── */
 
   @ApiProperty({
     description: 'Nombre completo y apellidos del contacto',
@@ -23,7 +25,7 @@ export class Contact extends BaseEntity {
     maxLength: 150,
   })
   @Column({ name: 'full_name', length: 150, nullable: false })
-  fullName: string;
+  fullName!: string;
 
   @ApiProperty({
     description: 'Categoría funcional del contacto dentro de la organización',
@@ -37,9 +39,11 @@ export class Contact extends BaseEntity {
     default: ContactType.OTHER,
     name: 'type',
   })
-  type: ContactType;
+  type!: ContactType;
 
-  // --- DATOS DE CONTACTO ---
+  /* ─────────────────────────────────────────────────────────────────
+   * 📞 DATOS DE CONTACTO (OPCIONALES)
+   * ───────────────────────────────────────────────────────────────── */
 
   @ApiPropertyOptional({
     description: 'Correo electrónico corporativo o personal',
@@ -47,42 +51,43 @@ export class Contact extends BaseEntity {
     format: 'email',
   })
   @Column({ length: 150, nullable: true })
-  email: string;
+  email?: string;
 
   @ApiPropertyOptional({
     description: 'Teléfono de contacto principal (Móvil o Fijo)',
     example: '+34 600 123 456',
   })
   @Column({ length: 20, nullable: true })
-  phone: string;
+  phone?: string;
 
   @ApiPropertyOptional({
     description: 'Cargo o posición laboral (ej. Gerente, Fontanero Jefe)',
     example: 'Directora Técnica',
   })
   @Column({ length: 100, nullable: true })
-  position: string;
+  position?: string;
 
   @ApiPropertyOptional({
     description: 'Dirección física específica si difiere de la sede principal',
     example: 'Av. Diagonal 123, Planta 2',
   })
   @Column({ type: 'text', nullable: true })
-  address: string;
+  address?: string;
 
   @ApiPropertyOptional({
     description: 'Notas internas o instrucciones de contacto (ej. Horarios)',
     example: 'Llamar solo en horario de mañanas de 8:00 a 14:00',
   })
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  notes?: string;
 
-  // --- RELACIONES CONTEXTUALES ---
+  /* ─────────────────────────────────────────────────────────────────
+   * 🔗 RELACIONES CONTEXTUALES (POLIMORFISMO LÓGICO)
+   * ───────────────────────────────────────────────────────────────── */
 
   /**
    * @property company
    * @description Empresa a la que pertenece este contacto (Si aplica).
-   * Relación: Many-to-One.
    */
   @ApiPropertyOptional({ type: () => Company })
   @ManyToOne(() => Company, (company) => company.contacts, {
@@ -90,16 +95,15 @@ export class Contact extends BaseEntity {
     nullable: true,
   })
   @JoinColumn({ name: 'company_id' })
-  company: Company;
+  company?: Company;
 
-  @ApiPropertyOptional({ description: 'ID de la empresa vinculada' })
+  @ApiPropertyOptional({ description: 'ID de la empresa vinculada', example: 'uuid-v4' })
   @Column({ name: 'company_id', type: 'uuid', nullable: true })
-  companyId: string;
+  companyId?: string;
 
   /**
    * @property tenant
    * @description Inquilino al que pertenece este contacto (Si aplica).
-   * Relación: Many-to-One.
    */
   @ApiPropertyOptional({ type: () => Tenant })
   @ManyToOne(() => Tenant, (tenant) => tenant.contacts, {
@@ -107,9 +111,9 @@ export class Contact extends BaseEntity {
     nullable: true,
   })
   @JoinColumn({ name: 'tenant_id' })
-  tenant: Tenant;
+  tenant?: Tenant;
 
-  @ApiPropertyOptional({ description: 'ID del inquilino vinculado' })
+  @ApiPropertyOptional({ description: 'ID del inquilino vinculado', example: 'uuid-v4' })
   @Column({ name: 'tenant_id', type: 'uuid', nullable: true })
-  tenantId: string;
+  tenantId?: string;
 }

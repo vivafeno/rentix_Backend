@@ -28,20 +28,20 @@ export class CreateContractDto {
 
   @ApiProperty({ description: 'ID del inmueble' })
   @IsUUID('4')
-  propertyId: string;
+  propertyId!: string;
 
   @ApiProperty({ type: [String], description: 'IDs de inquilinos' })
   @IsArray()
   @IsUUID('4', { each: true })
   @ArrayMinSize(1)
-  tenantIds: string[]; // 🚩 Sincronizado con la relación "tenants" de la entidad
+  tenantIds!: string[]; // 🚩 Sincronizado con la relación "tenants" de la entidad
 
   /* --- ECONOMÍA --- */
 
   @ApiProperty({ example: 1200.0, description: 'Renta base' })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  baseRent: number; // 🚩 Coincide con @Column({ name: 'base_rent' })
+  baseRent!: number; // 🚩 Coincide con @Column({ name: 'base_rent' })
 
   @ApiPropertyOptional({ example: 1200.0 })
   @IsOptional()
@@ -59,7 +59,7 @@ export class CreateContractDto {
 
   @ApiProperty({ description: 'ID del IVA aplicable' })
   @IsUUID('4')
-  taxIvaId: string; // 🚩 Coincide con @JoinColumn({ name: 'tax_iva_id' })
+  taxIvaId!: string; // 🚩 Coincide con @JoinColumn({ name: 'tax_iva_id' })
 
   @ApiPropertyOptional({ description: 'ID del IRPF' })
   @IsOptional()
@@ -70,27 +70,27 @@ export class CreateContractDto {
 
   @ApiProperty({ enum: PaymentFrequency })
   @IsEnum(PaymentFrequency)
-  paymentFrequency: PaymentFrequency; // 🚩 Sincronizado con el tipo de la entidad
+  paymentFrequency!: PaymentFrequency; // 🚩 Sincronizado con el tipo de la entidad
 
   @ApiProperty({ enum: PaymentMethod })
   @IsEnum(PaymentMethod)
-  paymentMethod: PaymentMethod;
+  paymentMethod!: PaymentMethod;
 
   @ApiProperty({ example: 5 })
   @IsInt()
   @Min(1)
   @Max(28) // 🚩 Límite de rigor para seguridad en febrero
-  billingDay: number;
+  billingDay!: number;
 
   /* --- TEMPORALIDAD --- */
 
   @ApiProperty({ example: '2026-02-01' })
   @IsDateString()
-  startDate: string;
+  startDate!: string;
 
   @ApiProperty({ example: '2027-01-31' })
   @IsDateString()
-  endDate: string; // 🚩 Eliminamos 'duracionMeses' para usar fecha de fin explícita
+  endDate!: string; // 🚩 Eliminamos 'duracionMeses' para usar fecha de fin explícita
 
   @ApiPropertyOptional({ example: 0 })
   @IsOptional()

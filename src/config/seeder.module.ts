@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SeederService } from './seeder.service';
 import { User } from '../user/entities/user.entity';
+import { InvoiceModule } from '@/invoice/invoice.module';
 
 /**
  * @class SeederModule
@@ -15,6 +16,7 @@ import { User } from '../user/entities/user.entity';
     TypeOrmModule.forFeature([
       User,
     ]),
+    InvoiceModule,
   ],
   providers: [SeederService],
   exports: [SeederService], // Permite que la AppModule lo use en el arranque

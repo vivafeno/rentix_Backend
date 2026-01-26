@@ -6,42 +6,77 @@ import {
   IsEnum,
   IsOptional,
   IsUUID,
+  IsNotEmpty,
 } from 'class-validator';
 
+/**
+ * @class CreateBillingConceptDto
+ * @description DTO para la creación de conceptos maestros de facturación.
+ * Define la lógica de comportamiento (IVA/IRPF) para automatizar líneas de factura.
+ */
 export class CreateBillingConceptDto {
-  @ApiProperty({ example: 'RENTA' })
+  @ApiProperty({ 
+    description: 'Código identificador único (Slug)', 
+    example: 'RENTA_MENSUAL' 
+  })
   @IsString()
-  name: string;
+  @IsNotEmpty()
+  name!: string; // 🚩 Rigor Rentix: !
 
-  @ApiProperty({ example: 'Alquiler mensual' })
+  @ApiProperty({ 
+    description: 'Texto descriptivo que aparecerá en la factura', 
+    example: 'Alquiler mensual de vivienda/local' 
+  })
   @IsString()
-  label: string;
+  @IsNotEmpty()
+  label!: string; // 🚩 Rigor Rentix: !
 
-  @ApiPropertyOptional({ example: 1200.0 })
+  @ApiPropertyOptional({ 
+    description: 'Precio base sugerido para el concepto', 
+    example: 1200.0 
+  })
   @IsNumber()
   @IsOptional()
   defaultPrice?: number;
 
-  @ApiPropertyOptional({ example: true })
+  @ApiPropertyOptional({ 
+    description: 'Obliga a especificar mes/año al usar este concepto', 
+    example: true 
+  })
   @IsBoolean()
   @IsOptional()
   requiresPeriod?: boolean;
 
-  @ApiPropertyOptional({ example: true })
+  @ApiPropertyOptional({ 
+    description: 'Impide cobrar este concepto dos veces en el mismo mes/año', 
+    example: true 
+  })
   @IsBoolean()
   @IsOptional()
   isUniquePerPeriod?: boolean;
 
-  @ApiProperty({ example: 'S', enum: ['P', 'S'] })
-  @IsEnum(['P', 'S'])
-  itemType: string;
+  @ApiProperty({ 
+    description: 'Naturaleza del ítem: P (Producto) / S (Servicio)', 
+    enum: ['P', 'S'],
+    example: 'S' 
+  })
+  @IsEnum(['P', 'S'], { message: 'itemType debe ser P (Producto) o S (Servicio)' })
+  @IsNotEmpty()
+  itemType!: string; // 🚩 Rigor Rentix: !
 
-  @ApiProperty({ example: 'uuid-del-iva' })
-  @IsUUID()
-  defaultTaxId: string;
+  @ApiProperty({ 
+    description: 'ID del impuesto (IVA) por defecto para este concepto', 
+    example: '550e8400-e29b-41d4-a716-446655440000' 
+  })
+  @IsUUID('4')
+  @IsNotEmpty()
+  defaultTaxId!: string; // 🚩 Rigor Rentix: !
 
-  @ApiPropertyOptional({ example: 'uuid-del-irpf' })
-  @IsUUID()
+  @ApiPropertyOptional({ 
+    description: 'ID de la retención (IRPF) por defecto si aplica', 
+    example: '661f9511-f30c-52e5-b827-557766551111' 
+  })
+  @IsUUID('4')
   @IsOptional()
   defaultRetentionId?: string;
 }

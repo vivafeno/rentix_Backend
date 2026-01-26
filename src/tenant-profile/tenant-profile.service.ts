@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,22 +14,26 @@ import { UpdateTenantProfileDto } from './dto/update-tenant-profile.dto';
 
 /**
  * @class TenantProfileService
- * @description Gestión de perfiles de cliente (CRM) con aislamiento por empresa.
- * Implementa la lógica de negocio para la hidratación de perfiles legales.
- * @version 2026.1.19
- * @author Rentix
+ * @description Gestión de perfiles legales y fiscales de clientes (CRM).
+ * Implementa el estándar Rentix 2026 para el aislamiento Multi-tenant.
+ * Este servicio garantiza que cada factura tenga un receptor legalmente válido.
+ * @version 2.2.0
  */
 @Injectable()
 export class TenantProfileService {
+  private readonly logger = new Logger(TenantProfileService.name);
+
   constructor(
     @InjectRepository(TenantProfile)
     private readonly profileRepo: Repository<TenantProfile>,
   ) {}
 
   /**
-   * @method create
-   * @description Registra un nuevo perfil de cliente.
-   * Resuelve errores 36, 46 y 48 del linter mediante tipado seguro de excepciones.
+   * Registra un nuevo perfil de cliente en el contexto de la empresa activa.
+   * @param companyId UUID de la empresa emisora.
+   * @param dto Datos del perfil (Identidad fiscal, dirección, contacto).
+   * @throws {ConflictException} Si el CIF/NIF ya existe en la empresa.
+   * @returns El perfil persistido.
    */
   async create(
     companyId: string,
@@ -37,29 +42,19 @@ export class TenantProfileService {
     const profile = this.profileRepo.create({
       ...dto,
       companyId,
+      isActive: true,
     });
 
     try {
       return await this.profileRepo.save(profile);
     } catch (error: unknown) {
-      // 🛡️ Solución linter: Casting seguro para evitar 'unsafe member access'
-      const dbError = error as { code?: string; detail?: string };
-
-      if (dbError.code === '23505') {
-        throw new ConflictException(
-          `Conflicto de duplicidad: El registro ya existe. ${dbError.detail || ''}`,
-        );
-      }
-
-      throw new InternalServerErrorException(
-        'Error de infraestructura al crear el perfil de cliente.',
-      );
+      this.handleDBExceptions(error);
     }
   }
 
   /**
-   * @method findAll
-   * @description Lista perfiles operativos de una empresa específica.
+   * Lista todos los perfiles operativos de la empresa.
+   * @param companyId Contexto patrimonial activo.
    */
   async findAll(companyId: string): Promise<TenantProfile[]> {
     return await this.profileRepo.find({
@@ -69,8 +64,9 @@ export class TenantProfileService {
   }
 
   /**
-   * @method findOne
-   * @description Recupera un perfil validando el contexto de la empresa.
+   * Localiza un perfil específico validando la propiedad de la empresa.
+   * @param id UUID del perfil.
+   * @param companyId Contexto de seguridad Multi-tenant.
    */
   async findOne(id: string, companyId: string): Promise<TenantProfile> {
     const profile = await this.profileRepo.findOne({
@@ -78,15 +74,14 @@ export class TenantProfileService {
     });
 
     if (!profile) {
-      throw new NotFoundException(`Perfil de cliente ${id} no encontrado.`);
+      throw new NotFoundException(`Perfil de cliente [${id}] no localizado.`);
     }
 
     return profile;
   }
 
   /**
-   * @method update
-   * @description Actualización parcial de datos del perfil.
+   * Actualización parcial del perfil fiscal.
    */
   async update(
     id: string,
@@ -94,14 +89,20 @@ export class TenantProfileService {
     dto: UpdateTenantProfileDto,
   ): Promise<TenantProfile> {
     const profile = await this.findOne(id, companyId);
-
+    
+    // Mezcla de datos atómica conservando el ID y companyId original
     const updatedProfile = this.profileRepo.merge(profile, dto);
-    return await this.profileRepo.save(updatedProfile);
+    
+    try {
+      return await this.profileRepo.save(updatedProfile);
+    } catch (error: unknown) {
+      this.handleDBExceptions(error);
+    }
   }
 
   /**
-   * @method remove
-   * @description Borrado lógico (Soft delete) del perfil.
+   * Borrado lógico (Soft Delete) del perfil.
+   * El registro se marca como inactivo para preservar la integridad histórica de las facturas.
    */
   async remove(id: string, companyId: string): Promise<TenantProfile> {
     const profile = await this.findOne(id, companyId);
@@ -113,12 +114,30 @@ export class TenantProfileService {
   }
 
   /**
-   * @method generateInternalCode
-   * @description Genera un código secuencial para uso administrativo.
-   * Resuelve error 135: Eliminado async si no hay operaciones de base de datos asíncronas aún.
+   * Genera un código de referencia interno para el CRM.
+   * @param prefix Prefijo administrativo (ej: 'CL').
    */
   generateInternalCode(prefix: string): string {
     const timestamp = Date.now().toString().slice(-6);
     return `${prefix.toUpperCase()}-${timestamp}`;
+  }
+
+  /**
+   * Procesador centralizado de excepciones de base de datos.
+   * @private
+   */
+  private handleDBExceptions(error: unknown): never {
+    const dbError = error as { code?: string; detail?: string };
+
+    if (dbError.code === '23505') {
+      throw new ConflictException(
+        `Restricción de duplicidad: Ya existe un registro con estos datos fiscales.`,
+      );
+    }
+
+    this.logger.error(`[TenantProfileService] Error crítico: ${dbError.detail || 'Error desconocido'}`);
+    throw new InternalServerErrorException(
+      'Fallo de infraestructura en el módulo CRM de clientes.',
+    );
   }
 }

@@ -17,14 +17,14 @@ export class InvoiceSequence extends BaseEntity {
     description: 'ID de la empresa propietaria del contador (Aislamiento Multi-tenant)',
     example: '550e8400-e29b-41d4-a716-446655440000' 
   })
-  companyId: string;
+  companyId!: string;
 
   @Column({ type: 'int' })
   @ApiProperty({ 
     description: 'Año fiscal de la serie',
     example: 2026 
   })
-  year: number;
+  year!: number;
 
   @Column({ 
     type: 'varchar', 
@@ -36,7 +36,7 @@ export class InvoiceSequence extends BaseEntity {
     description: 'Prefijo identificador de la serie',
     example: 'R' 
   })
-  prefix: string;
+  prefix!: string;
 
   @Column({ 
     type: 'int', 
@@ -47,5 +47,5 @@ export class InvoiceSequence extends BaseEntity {
     description: 'Valor actual del contador secuencial',
     example: 155 
   })
-  lastNumber: number;
+  lastNumber!: number;
 }

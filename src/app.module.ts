@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { ResponseTransformMiddleware } from './common/middleware/response-transform.middleware';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
@@ -20,6 +21,7 @@ import { UserModule } from './user/user.module';
 import { UserCompanyRoleModule } from './user-company-role/user-company-role.module';
 // 🛡️ Eliminado CompanyContextModule por error TS2307 (Módulo inexistente o refactorizado)
 
+
 // --- DOMINIO / NEGOCIO (Rentix 2026) ---
 import { CompanyModule } from './company/company.module';
 import { AddressModule } from './address/address.module';
@@ -30,9 +32,11 @@ import { TenantProfileModule } from './tenant-profile/tenant-profile.module';
 import { ContractModule } from './contract/contract.module';
 import { TaxModule } from './tax/tax.module';
 import { BillingConceptModule } from './billing-concept/billing-concept.module';
-import { FacturaeModule } from './fiscal/fiscal.module';
+import { FiscalModule } from './fiscal/fiscal.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ReceiptModule } from './receipt/receipt.module';
+import { StorageModule } from './common/storage/storage.module';
 
 /**
  * @class AppModule
@@ -110,8 +114,16 @@ import { ScheduleModule } from '@nestjs/schedule';
     ContractModule,
     TaxModule,
     BillingConceptModule,
-    FacturaeModule,
+    FiscalModule,
     InvoiceModule,
+    ReceiptModule,
+    StorageModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(ResponseTransformMiddleware)
+      .forRoutes('*'); // Aplica a toda la API de forma imperativa
+  }
+}

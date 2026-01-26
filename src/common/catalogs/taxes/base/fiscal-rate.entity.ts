@@ -6,54 +6,89 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
+/**
+ * @class FiscalRateEntity
+ * @description Entidad base abstracta para la gestión de tipos impositivos (IVA/IRPF).
+ * Rigor Rentix 2026: Implementa el estándar de precisión decimal y auditoría temporal.
+ */
 export abstract class FiscalRateEntity {
-  @ApiProperty({ format: 'uuid' })
+  /**
+   * @description Identificador único universal.
+   */
+  @ApiProperty({ description: 'ID único de la tasa fiscal', format: 'uuid' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string; // 🚩 Rigor Rentix: !
 
+  /**
+   * @description Código identificador del tipo fiscal.
+   */
   @ApiProperty({
     description: 'Tipo fiscal (ej: IVA_GENERAL, IRPF)',
     example: 'IVA_GENERAL',
   })
   @Column()
-  tipo: string;
+  tipo!: string; // 🚩 Rigor Rentix: !
 
+  /**
+   * @description Nombre descriptivo para visualización en facturas y recibos.
+   */
   @ApiProperty({
-    description: 'Descripción legible',
-    example: 'IVA general',
+    description: 'Descripción legible del impuesto',
+    example: 'IVA general (21%)',
   })
   @Column()
-  descripcion: string;
+  descripcion!: string; // 🚩 Rigor Rentix: !
 
+  /**
+   * @description Valor porcentual de la tasa.
+   */
   @ApiProperty({
-    description: 'Porcentaje aplicado',
+    description: 'Porcentaje aplicado (0.00 a 100.00)',
     example: 21,
   })
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
-  porcentaje: number;
+  @Column({ 
+    type: 'decimal', 
+    precision: 5, 
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) } // Evita strings en el retorno de decimales
+  })
+  porcentaje!: number; // 🚩 Rigor Rentix: !
 
+  /**
+   * @description Código de país según estándar ISO para exportación Veri*factu.
+   */
   @ApiProperty({
-    description: 'País (ISO-3166-1 alpha-2)',
+    description: 'País de aplicación (ISO-3166-1 alpha-2)',
     example: 'ES',
   })
   @Column({ name: 'country_code', length: 2 })
-  countryCode: string;
+  countryCode!: string; // 🚩 Rigor Rentix: !
 
+  /**
+   * @description Marca de configuración predeterminada.
+   */
   @ApiProperty({
-    description: 'Indica si es el valor por defecto',
+    description: 'Indica si es el valor seleccionado por defecto en el sistema',
   })
   @Column({ name: 'is_default', default: false })
-  isDefault: boolean;
+  isDefault!: boolean; // 🚩 Rigor Rentix: !
 
+  /**
+   * @description Estado de visibilidad operativa.
+   */
   @ApiProperty({
-    description: 'Indica si está activo',
+    description: 'Indica si la tasa está habilitada para su uso',
   })
   @Column({ name: 'is_active', default: true })
-  isActive: boolean;
+  isActive!: boolean; // 🚩 Rigor Rentix: !
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  /* ─────────────────────────────────────────────────────────────────
+   * 🕒 AUDITORÍA TEMPORAL
+   * ───────────────────────────────────────────────────────────────── */
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  updatedAt!: Date;
 }

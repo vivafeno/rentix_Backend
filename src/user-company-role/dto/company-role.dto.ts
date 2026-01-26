@@ -14,7 +14,7 @@ export class CompanyRoleDto {
     example: 'aa04f32e-6dba-43af-9363-579e00a53c8b'
   })
   @IsUUID()
-  id: string;
+  id!: string;
 
   /* 🛡️ PROPIEDAD CLAVE PARA EL FRONTEND */
   @ApiProperty({ 
@@ -23,7 +23,7 @@ export class CompanyRoleDto {
     example: 'f54e632a-91be-4bcd-8f40-3ae5cdc3b9e2'
   })
   @IsUUID()
-  companyId: string;
+  companyId!: string;
 
   /* 🛡️ PROPIEDAD CLAVE PARA LA UI */
   @ApiProperty({ 
@@ -31,7 +31,7 @@ export class CompanyRoleDto {
     example: 'Inmobiliaria Rentix S.L.' 
   })
   @IsString()
-  companyName: string;
+  companyName!: string;
 
   @ApiProperty({ 
     description: 'Rol ejercido en esta empresa', 
@@ -39,12 +39,12 @@ export class CompanyRoleDto {
     example: CompanyRole.OWNER 
   })
   @IsEnum(CompanyRole)
-  role: CompanyRole;
+  role!: CompanyRole;
 
   @ApiProperty({ 
     description: 'Indica si es la empresa por defecto al hacer login', 
     example: true 
   })
   @IsBoolean()
-  isPrimary: boolean;
+  isPrimary!: boolean;
 }

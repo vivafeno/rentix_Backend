@@ -13,7 +13,7 @@ export class TokensDto {
   })
   @IsJWT()
   @IsNotEmpty()
-  readonly accessToken: string;
+  readonly accessToken!: string;
 
   @ApiProperty({
     description: 'Token de refresco de larga duración para rotación de sesión',
@@ -21,7 +21,7 @@ export class TokensDto {
   })
   @IsJWT()
   @IsNotEmpty()
-  readonly refreshToken: string;
+  readonly refreshToken!: string;
 
   @ApiProperty({
     description: 'Tipo de token emitido',

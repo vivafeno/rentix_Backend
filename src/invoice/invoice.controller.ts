@@ -3,7 +3,7 @@ import {
   ParseUUIDPipe, Res, HttpStatus, UseGuards 
 } from '@nestjs/common';
 import { 
-  ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody 
+  ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody, ApiProduces 
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 
@@ -15,6 +15,11 @@ import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { Invoice } from './entities/invoice.entity';
 
+/**
+ * @class InvoiceController
+ * @description Gestión del ciclo de vida de facturación (Borradores, Emisión legal y Exportación).
+ * Implementa blindaje Multi-tenant mediante 'activeCompanyId'.
+ */
 @ApiTags('Invoices')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -25,46 +30,56 @@ export class InvoiceController {
     private readonly pdfService: PdfService
   ) {}
 
+  /**
+   * @method getPdf
+   * @description Genera un documento PDF bajo estándares Verifactu.
+   * El nombre del archivo sigue el patrón: [FECHA]_[NUM_FACTURA]_[EMPRESA].pdf
+   */
   @Get(':id/pdf')
+  @ApiProduces('application/pdf') // 🚩 RIGOR: Indica al generador de Angular que es un binario
   @ApiOperation({ 
     summary: 'Generar y descargar PDF de factura',
-    description: 'Genera un documento PDF legal con nomenclatura YYYYMMDD_Referencia_Empresa. Requiere que la factura pertenezca a la empresa activa del usuario.'
+    description: 'Genera un documento PDF legal. Requiere que la factura pertenezca a la empresa activa.'
   })
   @ApiParam({ name: 'id', description: 'UUID de la factura', example: '9f3c60e9-9c64-4442-8818-34528dca4943' })
-  @ApiResponse({ status: 200, description: 'Archivo PDF generado con éxito.' })
-  @ApiResponse({ status: 401, description: 'No autorizado - Token JWT ausente o inválido.' })
-  @ApiResponse({ status: 404, description: 'Factura no encontrada o no pertenece a la empresa.' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Archivo PDF generado.',
+    content: { 'application/pdf': { schema: { type: 'string', format: 'binary' } } } // 🚩 RIGOR: Tipado para OpenAPI
+  })
+  @ApiResponse({ status: 404, description: 'Factura no localizada o acceso denegado entre tenants.' })
   async getPdf(
     @Param('id', ParseUUIDPipe) id: string, 
     @GetUser('activeCompanyId') companyId: string,
     @Res() res: Response
   ) {
     const data = await this.invoiceService.getInvoiceDataForPdf(id, companyId);
-    const buffer = await this.pdfService.generateInvoicePdf(data);
-
+    const buffer = await this.pdfService.generateFromTemplate('invoice', data);
+    
+    // Normalización de metadatos del archivo
     const dateObj = new Date();
-    const dateStamp = `${dateObj.getFullYear()}${String(dateObj.getMonth() + 1).padStart(2, '0')}${String(dateObj.getDate()).padStart(2, '0')}`;
+    const dateStamp = dateObj.toISOString().slice(0,10).replace(/-/g, '');
     const invoiceRef = data.invoiceNumber !== 'BORRADOR' 
       ? data.invoiceNumber.replace(/\//g, '-') 
       : `B-${Date.now().toString().slice(-4)}`;
-    const companyClean = data.companyName.replace(/[<>:"/\\|?*]/g, '').trim();
-
+    
+    const companyClean = data.companyName.replace(/[<>:"/\\|?*]/g, '').trim() || 'Rentix_Empresa';
     const fileName = `${dateStamp}_${invoiceRef}_${companyClean}.pdf`;
 
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${fileName}"`,
       'Content-Length': buffer.length,
+      'x-invoice-id': id // Header personalizado para trazabilidad en el Front
     });
     
     res.status(HttpStatus.OK).send(buffer);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Crear borrador de factura', description: 'Crea un registro en estado DRAFT para la empresa activa.' })
+  @ApiOperation({ summary: 'Crear borrador', description: 'Crea registro DRAFT vinculado a la empresa activa.' })
   @ApiBody({ type: CreateInvoiceDto })
-  @ApiResponse({ status: 201, description: 'Borrador creado correctamente.', type: Invoice })
-  @ApiResponse({ status: 409, description: 'Conflicto: Ya existe un cargo para ese periodo.' })
+  @ApiResponse({ status: 201, type: Invoice })
   create(
     @Body() dto: CreateInvoiceDto, 
     @GetUser('activeCompanyId') companyId: string
@@ -73,16 +88,15 @@ export class InvoiceController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar facturas', description: 'Obtiene todas las facturas vinculadas a la empresa activa del token.' })
-  @ApiResponse({ status: 200, description: 'Listado de facturas.', type: [Invoice] })
+  @ApiOperation({ summary: 'Listar facturas de la empresa' })
+  @ApiResponse({ status: 200, type: [Invoice] })
   findAll(@GetUser('activeCompanyId') companyId: string): Promise<Invoice[]> {
     return this.invoiceService.findAll(companyId);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener detalle de factura' })
+  @ApiOperation({ summary: 'Detalle de factura' })
   @ApiResponse({ status: 200, type: Invoice })
-  @ApiResponse({ status: 404, description: 'Factura no encontrada.' })
   findOne(
     @Param('id', ParseUUIDPipe) id: string, 
     @GetUser('activeCompanyId') companyId: string
@@ -91,9 +105,8 @@ export class InvoiceController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Actualizar borrador', description: 'Permite modificar datos de la factura siempre que esté en estado DRAFT.' })
+  @ApiOperation({ summary: 'Actualizar borrador' })
   @ApiResponse({ status: 200, type: Invoice })
-  @ApiResponse({ status: 400, description: 'No se puede modificar una factura ya emitida.' })
   update(
     @Param('id', ParseUUIDPipe) id: string, 
     @Body() dto: UpdateInvoiceDto, 
@@ -103,11 +116,8 @@ export class InvoiceController {
   }
 
   @Post(':id/emit')
-  @ApiOperation({ 
-    summary: 'Emitir factura legalmente', 
-    description: 'Asigna número de serie, genera fingerprint y bloquea la factura para cumplir con Verifactu.' 
-  })
-  @ApiResponse({ status: 200, description: 'Factura emitida con éxito.', type: Invoice })
+  @ApiOperation({ summary: 'Sellar y emitir factura (Verifactu)' })
+  @ApiResponse({ status: 200, type: Invoice })
   emit(
     @Param('id', ParseUUIDPipe) id: string, 
     @GetUser('activeCompanyId') companyId: string
@@ -116,8 +126,8 @@ export class InvoiceController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar borrador', description: 'Realiza un borrado lógico (soft-delete) de un borrador.' })
-  @ApiResponse({ status: 204, description: 'Factura eliminada.' })
+  @ApiOperation({ summary: 'Anular/Eliminar borrador' })
+  @ApiResponse({ status: 204 })
   remove(
     @Param('id', ParseUUIDPipe) id: string, 
     @GetUser('activeCompanyId') companyId: string

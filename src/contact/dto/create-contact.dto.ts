@@ -28,7 +28,7 @@ export class CreateContactDto {
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   @MinLength(3, { message: 'validation.MIN_LENGTH' })
   @MaxLength(150, { message: 'validation.MAX_LENGTH' })
-  fullName: string;
+  fullName!: string;
 
   @ApiProperty({
     description: 'Tipo o categoría del contacto',
@@ -37,7 +37,7 @@ export class CreateContactDto {
   })
   @IsEnum(ContactType, { message: 'validation.IS_ENUM' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
-  type: ContactType;
+  type!: ContactType;
 
   @ApiPropertyOptional({
     description: 'Correo electrónico de contacto',

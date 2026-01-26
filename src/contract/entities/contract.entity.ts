@@ -10,11 +10,11 @@ import {
   BeforeUpdate,
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BaseEntity } from 'src/common/entities/base.entity';
-import { Company } from 'src/company/entities/company.entity';
-import { Property } from 'src/property/entities/property.entity';
-import { Tenant } from 'src/tenant/entities/tenant.entity';
-import { Tax } from 'src/tax/entities/tax.entity';
+import { BaseEntity } from '../../common/entities/base.entity';
+import { Company } from '../../company/entities/company.entity';
+import { Property } from '../../property/entities/property.entity';
+import { Tenant } from '../../tenant/entities/tenant.entity';
+import { Tax } from '../../tax/entities/tax.entity';
 import {
   PaymentFrequency,
   PaymentMethod,
@@ -29,24 +29,32 @@ import {
 @Entity('contracts')
 export class Contract extends BaseEntity {
 
-  /* --- CONTEXTO Y SEGURIDAD (Multi-tenancy) --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 🏢 CONTEXTO Y SEGURIDAD (MULTI-TENANCY)
+   * ───────────────────────────────────────────────────────────────── */
 
   @Index()
   @Column({ name: 'company_id', type: 'uuid' })
-  companyId: string;
+  @ApiProperty({ description: 'ID de la empresa propietaria del contrato' })
+  companyId!: string;
 
   @ManyToOne(() => Company)
   @JoinColumn({ name: 'company_id' })
-  company: Company;
+  @ApiProperty({ type: () => Company })
+  company!: Company;
 
-  /* --- VÍNCULOS OPERATIVOS --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 🏠 VÍNCULOS OPERATIVOS
+   * ───────────────────────────────────────────────────────────────── */
 
   @Column({ name: 'property_id', type: 'uuid' })
-  propertyId: string;
+  @ApiProperty({ description: 'ID del activo inmobiliario' })
+  propertyId!: string;
 
   @ManyToOne(() => Property, { eager: false })
   @JoinColumn({ name: 'property_id' })
-  property: Property;
+  @ApiProperty({ type: () => Property })
+  property!: Property;
 
   @ManyToMany(() => Tenant, (tenant) => tenant.contracts, { eager: true })
   @JoinTable({
@@ -54,11 +62,14 @@ export class Contract extends BaseEntity {
     joinColumn: { name: 'contract_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'tenant_id', referencedColumnName: 'id' },
   })
-  tenants: Tenant[];
+  @ApiProperty({ type: () => [Tenant], description: 'Inquilinos firmantes del contrato' })
+  tenants!: Tenant[];
 
-  /* --- ECONOMÍA (Rigor Financiero) --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 💰 ECONOMÍA (RIGOR FINANCIERO)
+   * ───────────────────────────────────────────────────────────────── */
 
-  @ApiProperty({ example: 1200.00 })
+  @ApiProperty({ description: 'Renta base mensual (sin impuestos)', example: 1200.00 })
   @Column({
     name: 'base_rent',
     type: 'decimal',
@@ -66,9 +77,9 @@ export class Contract extends BaseEntity {
     scale: 2,
     transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
-  baseRent: number;
+  baseRent!: number;
 
-  @ApiProperty({ example: 2400.00 })
+  @ApiProperty({ description: 'Importe de la fianza legal', example: 2400.00 })
   @Column({
     name: 'deposit_amount',
     type: 'decimal',
@@ -77,8 +88,9 @@ export class Contract extends BaseEntity {
     default: 0,
     transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
-  depositAmount: number;
+  depositAmount!: number;
 
+  @ApiPropertyOptional({ description: 'Garantía adicional o aval', example: 1200.00 })
   @Column({ 
     name: 'additional_guarantee', 
     type: 'decimal', 
@@ -87,19 +99,25 @@ export class Contract extends BaseEntity {
     default: 0,
     transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
-  additionalGuarantee: number;
+  additionalGuarantee!: number;
 
-  /* --- FISCALIDAD --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * ⚖️ FISCALIDAD
+   * ───────────────────────────────────────────────────────────────── */
 
   @ManyToOne(() => Tax, { eager: true })
   @JoinColumn({ name: 'tax_iva_id' })
-  taxIva: Tax;
+  @ApiProperty({ type: () => Tax, description: 'Impuesto indirecto aplicable (IVA/IGIC)' })
+  taxIva!: Tax;
 
   @ManyToOne(() => Tax, { nullable: true, eager: true })
   @JoinColumn({ name: 'tax_irpf_id' })
-  taxIrpf: Tax;
+  @ApiPropertyOptional({ type: () => Tax, description: 'Retención aplicable (IRPF)' })
+  taxIrpf?: Tax;
 
-  /* --- CONFIGURACIÓN DE FACTURACIÓN --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * ⚙️ CONFIGURACIÓN DE FACTURACIÓN
+   * ───────────────────────────────────────────────────────────────── */
 
   @Column({
     type: 'enum',
@@ -107,7 +125,8 @@ export class Contract extends BaseEntity {
     default: PaymentFrequency.MONTHLY,
     name: 'payment_frequency'
   })
-  paymentFrequency: PaymentFrequency;
+  @ApiProperty({ enum: PaymentFrequency })
+  paymentFrequency!: PaymentFrequency;
 
   @Column({ 
     type: 'enum', 
@@ -115,7 +134,8 @@ export class Contract extends BaseEntity {
     default: PaymentMethod.TRANSFER,
     name: 'payment_method'
   })
-  paymentMethod: PaymentMethod;
+  @ApiProperty({ enum: PaymentMethod })
+  paymentMethod!: PaymentMethod;
 
   @Column({
     type: 'enum',
@@ -123,46 +143,56 @@ export class Contract extends BaseEntity {
     default: ContractStatus.DRAFT,
     name: 'status'
   })
-  status: ContractStatus;
+  @ApiProperty({ enum: ContractStatus })
+  status!: ContractStatus;
 
   @Column({ name: 'billing_day', type: 'int', default: 1 })
-  billingDay: number;
+  @ApiProperty({ description: 'Día del mes en que se genera la factura', example: 1 })
+  billingDay!: number;
 
-  /* --- TEMPORALIDAD (Rigor Temporal) --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 📅 TEMPORALIDAD (RIGOR TEMPORAL)
+   * ───────────────────────────────────────────────────────────────── */
 
   @Column({ name: 'start_date', type: 'date' })
-  startDate: Date;
+  @ApiProperty({ example: '2026-01-01' })
+  startDate!: Date;
 
   @Column({ name: 'end_date', type: 'date' })
-  endDate: Date;
+  @ApiProperty({ example: '2027-01-01' })
+  endDate!: Date;
 
   @Column({ name: 'grace_period_days', type: 'int', default: 0 })
-  gracePeriodDays: number;
+  @ApiProperty({ description: 'Días de carencia inicial' })
+  gracePeriodDays!: number;
 
   @Column({ name: 'notice_period_days', type: 'int', default: 30 })
-  noticePeriodDays: number;
+  @ApiProperty({ description: 'Días de preaviso para rescisión' })
+  noticePeriodDays!: number;
 
   @Column({ name: 'actual_termination_date', type: 'date', nullable: true })
+  @ApiPropertyOptional({ description: 'Fecha real de fin si hay rescisión anticipada' })
   actualTerminationDate?: Date;
 
   @Column({ name: 'next_billing_date', type: 'date', nullable: true })
-  nextBillingDate: Date;
+  @ApiPropertyOptional({ description: 'Fecha de la próxima factura automática' })
+  nextBillingDate?: Date;
 
-  /* --- LOGICA DE SINCRONIZACIÓN --- */
+  /* ─────────────────────────────────────────────────────────────────
+   * 🔄 LÓGICA DE SINCRONIZACIÓN
+   * ───────────────────────────────────────────────────────────────── */
 
   @BeforeInsert()
   @BeforeUpdate()
   syncMetadata(): void {
     if (this.startDate) this.startDate = new Date(this.startDate);
     if (this.endDate) this.endDate = new Date(this.endDate);
-    
-    // El cálculo de nextBillingDate se delega al Service para mayor control
-    // sobre los periodos de carencia y prorrateos iniciales.
   }
 
   /**
-   * @description Helper para la UI de Angular: Días hasta el vencimiento.
+   * @description Días restantes hasta el vencimiento del contrato.
    */
+  @ApiProperty({ description: 'Días hasta el fin del contrato (campo calculado)' })
   get daysUntilExpiration(): number {
     if (!this.endDate) return 0;
     const diff = new Date(this.endDate).getTime() - new Date().getTime();

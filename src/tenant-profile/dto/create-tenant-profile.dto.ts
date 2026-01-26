@@ -82,7 +82,7 @@ export class CreateTenantProfileDto {
   })
   @ValidateNested()
   @Type(() => CreateFiscalDto)
-  fiscalIdentity: CreateFiscalDto;
+  fiscalIdentity!: CreateFiscalDto;
 
   @ApiProperty({
     description: 'Array de direcciones (Fiscal, Envío, Notificaciones)',
@@ -91,5 +91,5 @@ export class CreateTenantProfileDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateAddressDto)
-  addresses: CreateAddressDto[];
+  addresses!: CreateAddressDto[];
 }
